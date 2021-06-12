@@ -1,0 +1,353 @@
+#!/bin/bash -efu
+
+. pipeline-sh-functions
+
+message_time=1
+
+# Entry point
+altboot_parsed="/.initrd/pipeline/$PROG.conf"
+[ ! -f "$altboot_parsed" ] ||
+	fatal "step $PROG has already passed"
+pipeline_destdir="$destdir"
+
+. altboot-sh-functions
+
+ALTBOOT="${ALTBOOT-}"
+AUTOMATIC="${AUTOMATIC-}"
+STAGENAME="${STAGENAME:-altinst}"
+
+
+altboot_setup()
+{
+	enter "altboot_setup"
+
+	local altboot key value part line="$AUTOMATIC"
+
+	local vars="method disk partition uuid label"
+	vars="$vars server directory domain user pass"
+	vars="$vars overlays imgsize options timeout url"
+
+	_real_method_choice()
+	{
+		local text="installation method not specified"
+		text="$text, dialogs are disabled"
+
+		[ -z "$NOASK" ] ||
+			IM_die "$text"
+		text="Please choose the installation method."
+
+		while ! IM_choice method "$text"	\
+				nfs   "NFS server"	\
+				ftp   "FTP server"	\
+				http  "HTTP server"	\
+				cifs  "SAMBA server"	\
+				cdrom "CD-ROM Drive"	\
+				disk  "Hard Disk Drive"	\
+				#
+		do
+			: # Nothing
+		done
+	}
+
+	for key in $vars; do
+		eval "local $key="
+	done
+
+	while [ -n "$line" ]; do
+		part="${line%%,*}"
+		key="${part%%:*}"
+		value="${part#$key:}"
+		line="${line#$part}"
+		line="${line#,}"
+
+		for part in $vars; do
+			if [ "$part" = "$key" ]; then
+				eval "$key=\"$value\""
+				break
+			fi
+		done
+	done
+
+	if [ ${#directory} -ge 3 ]; then
+		value=$(( ${#directory} - 1 ))
+		[ "${directory:$value:1}" != "/" ] ||
+			directory="${directory:0:$value}"
+	fi
+
+	case "$method" in
+	''|auto)
+		_real_method_choice
+		;;
+	nfs|ftp|http|url|cifs|cdrom|disk)
+		;;
+	*)
+		message "unsupported $PROG method specified: '$method'"
+		_real_method_choice
+		;;
+	esac
+
+	vars="NFS CIFS DOWNLOAD LOCALDEV SQUASHFS CHECKSUM LIVEBOOT"
+
+	for key in $vars; do
+		eval "local ALTBOOT_${key}0="
+	done
+
+	case "$method" in
+	ftp|http|url)
+		value="to=RD;method=$method"
+		if [ "$method" = "url" ]; then
+			value="$value;url=$url"
+		elif [ -n "$server" ] || [ -n "$directory" ]; then
+			value="$value;server=$server;directory=$directory"
+			[ -z "$user" ] || [ "$method" != "ftp" ] ||
+				value="$value;user=$user;pass=$pass"
+		fi
+		[ -z "$imgsize" ] ||
+			value="$value;imgsize=$imgsize"
+		[ -z "$timeout" ] ||
+			value="$value;timeout=$timeout"
+		altboot="download,iso9660"
+		ALTBOOT_DOWNLOAD0="$value"
+		overlays=
+		LOWMEM=1
+		;;
+
+	nfs|cifs)
+		altboot="$method"
+		if [ -n "$overlays" -o -n "${PROFILE-}" ]; then
+			overlays="overlays=$overlays"
+			[ -z "${PROFILE-}" ] ||
+				overlays="$overlays;profile=$PROFILE"
+			[ -z "$directory" ] ||
+				overlays="$overlayas;directory=$directory"
+		fi
+		value="server=$server"
+		[ -z "$directory" ] ||
+			value="$value;directory=$directory"
+		[ -z "$timeout" ] ||
+			value="$value;timeout=$timeout"
+		[ -z "$options" ] ||
+			value="$value;options=$options"
+		if [ "$method" = "nfs" ]; then
+			ALTBOOT_NFS0="$value"
+		else
+			[ -z "$domain" ] ||
+				value="$value;domain=$domain"
+			[ -z "$user" ] ||
+				value="$value;user=$user;pass=$pass"
+			ALTBOOT_CIFS0="$value"
+		fi
+		;;
+
+	*) # cdrom, disk (localdev)
+		if [ "$method" = "cdrom" ]; then
+			directory=
+		else
+			method="disk"
+			LOWMEM=1
+		fi
+		value="method=$method"
+		altboot="localdev"
+		[ -z "$disk" ] ||
+			value="$value;disk=$disk"
+		[ -z "$partition" ] ||
+			value="$value;part=$partition"
+		[ -z "$uuid" ] ||
+			value="$value;uuid=$uuid"
+		[ -z "$label" ] ||
+			value="$value;label=$label"
+		[ -z "$directory" ] ||
+			value="$value;directory=$directory"
+		[ -z "$options" ] ||
+			value="$value;options=$options"
+		[ -z "$timeout" ] ||
+			value="$value;timeout=$timeout"
+		ALTBOOT_LOCALDEV0="$value"
+		overlays=
+		;;
+	esac
+
+	[ -z "${UPDATEMODULES-}" ] ||
+		altboot="oemsetup,$altboot"
+
+	if [ -n "${LOWMEM-}" ]; then
+		if [ -n "${HASH-}" ]; then
+			altboot="$altboot,checksum"
+			ALTBOOT_CHECKSUM0=":$HASH:/$STAGENAME"
+		fi
+		altboot="$altboot,squashfs"
+		ALTBOOT_SQUASHFS0="/$STAGENAME"
+	else
+		altboot="$altboot,download,squashfs"
+		ALTBOOT_DOWNLOAD0="to=RD;method=url;url=file:///$STAGENAME"
+		ALTBOOT_SQUASHFS0="-"
+		if [ -n "${HASH-}" ]; then
+			altboot="$altboot,checksum"
+			ALTBOOT_CHECKSUM0="$HASH"
+		fi
+	fi
+
+	if [ "$STAGENAME" = "altinst" ]; then
+		RESCUE=""; LIVE=""; LIVE_RW=""
+	fi
+	value=
+	ALTBOOT_LIVEBOOT0="stagename=$STAGENAME;method=$method"
+	if [ "$STAGENAME" = "live" -o -n "${LIVE-}" ]; then
+		value="${value:+$value,}live_ro"
+		[ -z "$overlays" ] ||
+			ALTBOOT_LIVEBOOT0="$ALTBOOT_LIVEBOOT0;$overlays"
+	fi
+	[ "$STAGENAME" != "rescue" ] && [ -z "${RESCUE-}" ] ||
+		value="${value:+$value,}rescue"
+	[ -z "${LIVE_RW-}" ] ||
+		value="${value:+$value,}live_rw"
+	[ -z "$value" ] ||
+		ALTBOOT_LIVEBOOT0="$ALTBOOT_LIVEBOOT0;flags=$value"
+	[ -z "$timeout" ] ||
+		ALTBOOT_LIVEBOOT0="$ALTBOOT_LIVEBOOT0;timeout=$timeout"
+	altboot="$altboot,liveboot"
+
+	OEM_CDIMAGE_PATH="${OEM_CDIMAGE_PATH:-/image}"
+
+	{ printf 'ALTBOOT="%s"\n' "$altboot"
+	  printf 'ALTBOOT_STAGE2COMPAT=1\n'
+
+	  for key in $vars; do
+		eval "value=\"\${ALTBOOT_${key}0}\""
+		printf 'ALTBOOT_%s0="%s"\n' "$key" "$value"
+		printf 'ALTBOOT_%s=%s\n' "$key" "${value:+1}"
+	  done
+
+	} >"$altboot_parsed"
+
+	leave "altboot_setup"
+}
+
+altboot_forget_args()
+{
+	enter "altboot_forget_args"
+
+	cat <<-EOF
+		[ -f "$altboot_finished" ] ||
+		    mntdir="$mntdir/$PROG"
+		unset HASH
+		unset STAGENAME
+		unset PROFILE
+		unset UPDATEMODULES
+		unset RESCUE
+		unset LIVE
+		unset LIVE_RW
+		unset LOWMEM
+	EOF
+
+	leave "altboot_forget_args"
+}
+
+
+IM_on
+
+[ "$AUTOMATIC" != 0 ] ||
+	AUTOMATIC="method:auto"
+[ -n "$AUTOMATIC" ] && altboot_setup ||
+	printf 'AUTOMATIC=\n' >"$altboot_parsed"
+altboot_forget_args >>"$altboot_parsed"
+
+. "$altboot_parsed"
+
+mkdir -p -- "$mntdir"
+
+pipenum=0
+pipe="$ALTBOOT"
+datadir=
+destdir=
+
+while [ -n "$pipe" ]; do
+	name="${pipe%%,*}"
+	exe="$handlerdir/$name"
+
+	if [ -x "$exe" ]; then
+		assign "callnum" "\${callnum_$name:-0}"
+		datadir="$mntdir/src/pipe$pipenum"
+		destdir="$mntdir/dst/pipe$pipenum"
+		mkdir -p -- "$datadir" "$destdir"
+
+		if mountpoint -q -- "$destdir"; then
+			message "[$callnum] Handler: $PROG->$exe skipped"
+		else
+			message "[$callnum] Handler: $PROG->$exe"
+
+			export name callnum datadir destdir prevdir
+
+			rc=0
+			[ -z "$ALTBOOT_DEBUG" -o ! -x "$handlerdir/debug" ] ||
+				"$handlerdir/debug" ||:
+			"$exe" || rc=$?
+
+			if [ "$rc" != 0 ]; then
+				[ "$rc" != 2 ] ||
+					break
+				message "[$callnum] Handler failed (rc=$rc)"
+				sleep 1
+				continue
+			fi
+		fi
+
+		prevdir="$destdir"
+		callnum=$((1 + $callnum))
+		assign "callnum_$name" "\$callnum"
+	fi
+
+	pipenum=$((1 + $pipenum))
+	pipe="${pipe#$name}"
+	pipe="${pipe#,}"
+done
+
+if [ -n "$destdir" ]; then
+	if [ -L "$destdir" ]; then
+		destdir="$(readlink-e "$destdir")"
+		run rmdir -- "$pipeline_destdir" ||:
+		run ln -snf -- "$destdir" "$pipeline_destdir"
+	elif mountpoint -q -- "$destdir"; then
+		run mount --move -- "$destdir" "$pipeline_destdir"
+		run rmdir -- "$destdir" ||:
+		destdir="$pipeline_destdir"
+	elif [ -d "$destdir" ]; then
+		run rmdir -- "$pipeline_destdir" ||:
+		run mv -f -- "$destdir" "$pipeline_destdir"
+		destdir="$pipeline_destdir"
+	fi
+fi
+
+if [ -n "$ALTBOOT_DEBUG" ] && [ -x "$handlerdir/debug" ]; then
+	prevdir="$destdir"
+	name=rootfs
+	callnum=0
+	destdir=
+	datadir=
+
+	message "[$callnum] Handler: $PROG->$handlerdir/$name"
+
+	export name callnum datadir destdir prevdir
+
+	"$handlerdir/$name" ||:
+fi
+
+reset
+IM_off
+
+if [ -n "$ALTBOOT_STAGE2COMPAT" ]; then
+	grep -s " $mntdir/" /proc/mounts |
+		cut -f2 -d' ' |
+		sort -r |
+	while read destdir; do
+		run umount -- "$destdir" ||:
+	done
+
+#	run rm -rf -- "$mntdir" ||:
+
+	[ ! -s "$altboot_envfile" ] ||
+		cat "$altboot_envfile" >> /.initrd/kernenv
+	message "Spawning init..."
+fi
+
+:> "$altboot_finished"

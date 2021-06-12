@@ -1,0 +1,16 @@
+[2021-06-05 00:23:59] bootchained: Starting server [INITRAMFS 2.17.0]...
+[2021-06-05 00:23:59] bootchain-loop: [0] Switching to foreground
+[2021-06-05 00:23:59] bootchain-loop: TTY2 will be activated after 8 seconds
+[2021-06-05 00:24:00] bootchain-loop: [0] Handler: /lib/bootchain/altboot
+[2021-06-05 00:24:00] bootchain-loop: [0] Handler: /lib/bootchain/download
+[2021-06-05 00:24:00] download: retrieving image file size: 'ftp://192.168.15.1/srv/public/netinst/current'
+[2021-06-05 00:24:19] download: available: 620607 KiB, required: 620607 KiB
+[2021-06-05 00:24:19] download: downloading image: 'ftp://192.168.15.1/srv/public/netinst/current'
+[2021-06-05 00:24:20] bootchain-loop: [0] Handler: /lib/bootchain/iso9660
+[2021-06-05 00:24:20] bootchain-loop: [0] Handler: /lib/bootchain/squashfs
+[2021-06-05 00:24:20] bootchain-loop: [0] Handler: /lib/bootchain/liveboot
+[2021-06-05 00:24:20] liveboot: running rescue
+[2021-06-05 00:24:20] liveboot: remounting / with overlayfs
+[2021-06-05 00:24:20] liveboot: rootfs overlayed with overlayfs
+[2021-06-05 00:24:20] liveboot: Spawning init...
+[2021-06-05 00:24:20] bootchain-loop: [0] Handler: /lib/bootchain/rootfs

@@ -1,0 +1,13 @@
+register_parameter string AUTOMATIC
+register_parameter string HASH
+register_parameter string PROFILE
+register_parameter string STAGENAME
+register_parameter bool RESCUE
+register_parameter bool LIVE
+register_parameter bool LOWMEM
+register_parameter bool LIVE_RW
+register_array string OVERLAYROOT
+register_array string ALTBOOT_DOWNLOAD
+register_array string ALTBOOT_SQUASHFS
+register_array string ALTBOOT_CHECKSUM
+register_array string ALTBOOT_LIVEBOOT

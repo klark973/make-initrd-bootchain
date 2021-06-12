@@ -1,0 +1,4 @@
+#!/bin/bash -efu
+
+[ -z "${LIVE_RW-}" ] ||
+	VALUE="${VALUE:+$VALUE,}live_rw"

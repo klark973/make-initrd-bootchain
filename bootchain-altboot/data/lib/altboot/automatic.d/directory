@@ -1,0 +1,7 @@
+#!/bin/bash -efu
+
+if [ ${#directory} -ge 3 ]; then
+	VALUE=$(( ${#directory} - 1 ))
+	[ "${directory:$VALUE:1}" != "/" ] ||
+		directory="${directory:0:$VALUE}"
+fi

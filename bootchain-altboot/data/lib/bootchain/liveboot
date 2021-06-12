@@ -1,0 +1,153 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+check_parameter ALTBOOT_LIVEBOOT
+
+# You can change defaults in /etc/sysconfig/bootchain
+OEM_OVERLAYS_DIR="${OEM_OVERLAYS_DIR:-/tmp/overlays}"
+OEM_IMAGES_BASE="${OEM_IMAGES_BASE:-/tmp/images}"
+
+need_overlay=1
+livecd_overlays=
+live_rw=
+
+b_a()
+{
+	get_bootarg LIVEBOOT "$1"
+}
+
+b_a stagename
+b_a method
+b_a directory
+b_a overlayroot
+b_a profile
+b_a overlays
+b_a flags
+b_a timeout
+
+
+mount_overlays()
+{
+	enter "mount_overlays"
+
+	local msg="" dirp="$1"
+	local img images imgdir
+
+	run ls -l -- "$dirp/" >/dev/null 2>&1 ||:
+	images="$(run find "$dirp/$profile" -maxdepth 1 -type f \
+			-name '*.iso' -o -name '*.squashfs' |sort)"
+
+	for img in $images _; do
+		[ -r "$img" ] ||
+			continue
+		imgdir="$prevdir.rw/rw$OEM_OVERLAYS_DIR/${img##*/}"
+
+		run mkdir -p -- "$imgdir"
+
+		if run mount -o ro,loop -- "$img" "$imgdir"; then
+			livecd_overlays="$imgdir:$livecd_overlays"
+			msg="${msg:+$msg }${img##*/}"
+		fi
+	done
+
+	[ -n "$msg" ] && msg="overlays found: $msg" ||
+		msg="no overlays found for profile '$profile'"
+	message "$msg"
+
+	leave "mount_overlays"
+}
+
+do_overlay()
+{
+	enter "do_overlay"
+
+	local opts="$prevdir.ro"
+	opts="$opts,upperdir=$prevdir.rw/rw"
+	opts="$opts,workdir=$prevdir.rw/wk"
+
+	message "remounting / with overlayfs"
+
+	run mkdir -p -- "$prevdir.rw" "$prevdir.ro"
+	[ -z "$live_rw" ] ||
+		use_hooks rw-overlay.d
+	mountpoint -q -- "$prevdir.rw" ||
+		run mount -t tmpfs -o mode=755 -- none "$prevdir.rw"
+	run mkdir -p -- "$prevdir.rw/rw" "$prevdir.rw/wk"
+	run mount --move -- "$prevdir" "$prevdir.ro"
+	[ "$stagename" != live ] && [ "$flags" = "${flags//*live_ro*/}" ] ||
+		use_hooks livecd-slice.d
+	opts="lowerdir=${livecd_overlays}${opts}"
+	run mount -t overlay -o "$opts" -- overlay "$prevdir"
+	run mkdir -p -- "$prevdir/.ro" "$prevdir/.rw"
+	run mount --move -- "$prevdir.ro" "$prevdir/.ro"
+	run mount --move -- "$prevdir.rw" "$prevdir/.rw"
+	run rmdir -- "$prevdir.rw" "$prevdir.ro"
+
+	message "rootfs overlayed with overlayfs"
+
+	if [ -n "$OEM_CDROOT" ] &&
+		mountpoint -q -- "$OEM_CDROOT"
+	then
+		run mkdir -p -- "${prevdir}${OEM_CDROOT}"
+		run mount --move -- "$OEM_CDROOT" "${prevdir}${OEM_CDROOT}"
+	fi
+
+	use_hooks liveboot-post.d
+
+	[ ! -r /etc/resolv.conf ] || [ ! -d "$prevdir/etc" ] ||
+		run cp -Lf -- /etc/resolv.conf "$prevdir/etc/"
+	bypass_results "$prevdir"
+
+	leave "do_overlay"
+}
+
+
+# Entry point
+[ -z "$ALTBOOT_OLDROOT" ] ||
+	launch_step_once
+debug "$PROG started ($(get_parameter ALTBOOT_LIVEBOOT))"
+
+[ -L /etc/mtab ] ||
+	run ln -snf /proc/mounts /etc/mtab
+[ -n "$prevdir" ] && mountpoint -q -- "$prevdir" ||
+	fatal "no previous step results to use with $PROG"
+[ -n "$method" ] ||
+	method="$(stage2_getenv METHOD)"
+profile="${profile:-default}"
+timeout="${timeout:-20}"
+
+use_hooks liveboot-init.d
+
+if [ "$overlayroot" = disabled ]; then
+	message "rootfs has return back to the read/write mode"
+	need_overlay=
+elif [ "$overlayroot" = tmpfs ]; then
+	message "rootfs switched to the read-only mode, using tmpfs as overlay"
+elif [ -n "$overlayroot" ] && [ -n "$live_rw" ]; then
+	message "rootfs switched to the read-only mode, using $live_rw as overlay"
+elif [ "$stagename" = rescue ]; then
+	message "running rescue"
+elif [ "$stagename" = live ]; then
+	message "running live"
+elif [ -n "$stagename" ] && [ "$flags" != "${flags//*live_ro*/}" ]; then
+	message "running live '$stagename'"
+	stagename=live
+elif grep -qs " $prevdir squashfs " /proc/mounts; then
+	message "running unknown rootfs from squashfs"
+	live_rw=
+else
+	message "running unknown rootfs directly"
+	need_overlay=
+	live_rw=
+fi
+
+use_hooks liveboot-pre.d
+
+if [ -z "$need_overlay" ]; then
+	bypass_results
+else
+	do_overlay
+fi
+
+debug "$PROG finished"

@@ -1,0 +1,57 @@
+#!/bin/bash -efu
+
+. bootchain-sh-functions
+
+pidfile="/var/run/$PROG.pid"
+
+
+exit_handler()
+{
+	local rc=$?
+
+	trap - EXIT
+	rm -f -- "$pidfile"
+	wait
+
+	exit $rc
+}
+
+debug()
+{
+	[ -z "$BC_DEBUG" ] ||
+		message "$*"
+}
+
+
+# Entry point
+[ ! -f "$pidfile" ] ||
+	fatal "already running"
+set_cleanup_handler exit_handler
+echo "$$" >"$pidfile"
+
+if [ "${RDLOG-}" = console ]; then
+	BC_LOGFILE=/dev/console
+elif [ -z "${NOTTYS-}" ] &&
+	[ -n "$BC_LOG_VT" ] &&
+	[ ! -c "$BC_LOGFILE" ] &&
+	command -v openvt >/dev/null
+then
+	touch -- "$BC_LOGFILE"
+	[ -e "/dev/tty$BC_LOG_VT" ] ||
+		mknod "/dev/tty$BC_LOG_VT" c 4 "$BC_LOG_VT"
+	openvt -f -w -c$BC_LOG_VT -- /sbin/bootchain-logvt &
+fi
+
+exec >"$BC_LOGFILE" 2>&1
+message "Starting server [$(initrd_version)]..."
+debug "Booting with /proc/cmdline:"
+fdump /proc/cmdline
+
+run mkdir -p -- "$mntdir" "$BC_PASSED"
+
+mountpoint -q -- "$mntdir" ||
+	run mount -t tmpfs tmpfs "$mntdir" ||:
+
+export chainsteps="${BOOTCHAIN-}"
+
+bootchain-loop

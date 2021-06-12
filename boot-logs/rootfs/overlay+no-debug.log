@@ -1,0 +1,11 @@
+[2021-05-30 15:17:54] bootchained: Starting server [INITRAMFS 2.16.0]...
+[2021-05-30 15:17:54] bootchain-loop: [0] Handler: /lib/bootchain/waitdev
+[2021-05-30 15:17:55] waitdev: target device found: /dev/sda3
+[2021-05-30 15:17:55] bootchain-loop: [1] Handler: /lib/bootchain/waitdev
+[2021-05-30 15:17:55] waitdev: target device found: /dev/sda2
+[2021-05-30 15:17:55] bootchain-loop: [0] Handler: /lib/bootchain/mountfs
+[2021-05-30 15:17:55] bootchain-loop: [0] Handler: /lib/bootchain/liveboot
+[2021-05-30 15:17:55] liveboot: rootfs switched to the read-only mode, using /dev/disk/by-label/OVERLAY as overlay
+[2021-05-30 15:17:55] liveboot: remounting / with overlayfs
+[2021-05-30 15:17:55] liveboot: rootfs overlayed with overlayfs
+[2021-05-30 15:17:55] bootchain-loop: [0] Handler: /lib/bootchain/rootfs

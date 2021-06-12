@@ -1,0 +1,37 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+check_parameter ALTBOOT_SQUASHFS
+
+devname=
+
+get_bootarg SQUASHFS
+debug "$PROG started ($SQUASHFS)"
+
+[ -z "$prevdir" ] ||
+	prevdir="$(readlink-e "$prevdir")"
+if [ -n "$prevdir" ] && mountpoint -q -- "$prevdir"; then
+	backfile="${prevdir}${SQUASHFS}"
+	[ -r "$backfile" ] ||
+		fatal "second stage file not found: '${SQUASHFS:1}'"
+	lomount devname "$backfile"
+elif [ -z "$prevdir" ] || [ ! -r "$prevdir/DEVNAME" -a ! -b "$prevdir/dev" ]; then
+	fatal "no previous step results to use with $PROG"
+elif [ -r "$prevdir/DEVNAME" ]; then
+	read -r devname <"$prevdir/DEVNAME" ||:
+else
+	devname="$prevdir/dev"
+fi
+
+[ -b "$devname" ] ||
+	fatal "invalid device or device name: '$devname'"
+
+if [ -z "$ALTBOOT_STAGE2COMPAT" ]; then
+	run mount -t squashfs -r -- "$devname" "$destdir"
+else
+	run mount -t squashfs -r -- "$devname" "$rootmnt"
+	passthru_results "$rootmnt"
+fi
+
+debug "$PROG finished"

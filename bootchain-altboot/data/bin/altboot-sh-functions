@@ -1,0 +1,247 @@
+#!/bin/bash -efu
+
+if [ -z "${__altboot_sh_functions-}" ]; then
+__altboot_sh_functions=1
+
+. bootchain-sh-functions
+. interactive-sh-functions
+
+ALTBOOT_OLDROOT=
+
+altboot_parsed=/.initrd/bootchain/altboot.conf
+altboot_envfile=/.initrd/bootchain/altboot.env
+altboot_auto=/.initrd/bootchain/altboot.auto
+altboot_hooksdir=/lib/altboot
+
+[ ! -s "$altboot_parsed" ] ||
+	. "$altboot_parsed"
+
+# You can change defaults in /etc/sysconfig/bootchain
+IM_BACKTITLE="${OEM_WELCOME_TEXT:-Welcome to GNU/Linux!}"
+OEM_DISTRIBUTION="${OEM_DISTRIBUTION:-GNU/Linux distribution}"
+
+# CDROOT not used by default
+OEM_CDROOT="${OEM_CDROOT-}"
+
+
+get_bootarg()
+{
+	enter "get_bootarg"
+
+	local __value __argname="$1" __varname="${2-}"
+
+	__value="$(get_parameter "ALTBOOT_${__argname}")"
+
+	if [ -z "${__varname}" ]; then
+		assign "${__argname}" "${__value}"
+		leave "get_bootarg"
+		return 0
+	fi
+
+	local __part __key
+
+	while [ -n "${__value}" ]; do
+		__part="${__value%%;*}"
+		__value="${__value#$__part}"
+		__value="${__value#;}"
+		__key="${__part%%=*}"
+
+		if [ "${__key}" = "${__varname}" ]; then
+			assign "${__varname}" "${__part#$__key=}"
+			leave "get_bootarg"
+			return 0
+		fi
+	done
+
+	assign "${__varname}"
+	leave "get_bootarg"
+}
+
+lomount()
+{
+	enter "lomount"
+
+	local __loopdev
+	local __varname="$1" backdev="$2" imgdir="${3-}"
+
+	__loopdev="$(run losetup -Lrf --show -- "$backdev" ||:)"
+
+	if [ -z "${__loopdev}" ] || [ ! -b "${__loopdev}" ]; then
+		message "losetup failed, may be no free loopback device?"
+		leave "lomount"
+		return 1
+	fi
+
+	debug "losetup('$backdev') result: '${__loopdev}'"
+
+	if [ -n "$imgdir" ]; then
+		if run mount -t iso9660 -o ro -- "${__loopdev}" "$imgdir"; then
+			debug "${__loopdev} has mounted to '$imgdir' as ISO-9660"
+		else
+			message "can't mount target ISO-image: '$backdev'"
+			run losetup -d -- "${__loopdev}" ||:
+			leave "lomount"
+			return 1
+		fi
+	fi
+
+	[ -z "${__varname}" ] ||
+		assign "${__varname}" "${__loopdev}"
+	leave "lomount"
+}
+
+stage2_setenv()
+{
+	enter "stage2_setenv"
+
+	local from to key="$1" value="${2-}"
+
+	[ -f "$altboot_envfile" ] ||
+		:> "$altboot_envfile"
+	debug "ARGS: $key=${value:+\"$value\"}"
+
+	if [ "$#" = 1 ]; then
+		sed -i -e "/^$key=.*$/d" "$altboot_envfile"
+	elif ! grep -qsE "^$key=" "$altboot_envfile"; then
+		printf '%s="%s"\n' "$key" "${value//\"/\\\"}" >>"$altboot_envfile"
+	else
+		from="^$key=.*$"
+		to="$(printf '%s="%s"' "$key" "${value//\"/\\\"}")"
+		sed -i -e "s|$from|$to|" "$altboot_envfile"
+	fi
+
+	leave "stage2_setenv"
+}
+
+stage2_getenv()
+{
+	local key="$1" value
+
+	enter "stage2_getenv"
+	debug "KEY: '$key'"
+
+	if [ -s "$altboot_envfile" ]; then
+		value="$(grep -sE "^$key=" "$altboot_envfile" |cut -f2- -d=)"
+		eval "value=$value" 2>/dev/null ||:
+		debug "stage2_getenv('$key') result: '$value'"
+		printf '%s' "$value"
+	fi
+
+	leave "stage2_getenv"
+}
+
+get_free_ramdisk()
+{
+	enter "get_free_ramdisk"
+
+	local i=0 varname="$1"
+	local rddir=/.initrd/ramdisks
+
+	while [ -b "/dev/ram$i" ]; do
+		if [ ! -f "$rddir/$i" ]; then
+			assign "$varname" "/dev/ram$i"
+			leave "get_free_ramdisk"
+			return 0
+		fi
+		i=$((1 + $i))
+	done
+
+	assign "$varname"
+	leave "get_free_ramdisk"
+	return 1
+}
+
+mark_used_ramdisk()
+{
+	enter "mark_used_ramdisk"
+
+	local minor="${1#/dev/ram}"
+	local rddir=/.initrd/ramdisks
+
+	run mkdir -p -- "$rddir"
+	run touch -- "$rddir/$minor"
+
+	leave "mark_used_ramdisk"
+}
+
+mark_free_ramdisk()
+{
+	enter "mark_free_ramdisk"
+
+	local minor="${1#/dev/ram}"
+	local rddir=/.initrd/ramdisks
+
+	run rm -f -- "$rddir/$minor"
+
+	leave "mark_free_ramdisk"
+}
+
+use_hooks()
+{
+	local _src _list _hooks="$1"
+
+	enter "use_hooks"
+	debug "HOOKS: '${_hooks}'"
+
+	if [ -d "$altboot_hooksdir/${_hooks}" ]; then
+		_list="$(find "$altboot_hooksdir/${_hooks}" \
+				-maxdepth 1 -type f |sort)"
+		for _src in ${_list} _; do
+			[ -s "${_src}" ] ||
+				continue
+			debug "USING: '${_hooks}/${_src##*/}'"
+			. "${_src}"
+		done
+	fi
+
+	leave "use_hooks"
+}
+
+altboot_restart()
+{
+	enter "altboot_restart"
+
+	local step
+
+	run rm -f -- "$altboot_envfile"
+	{ printf '%s\n' "AUTOMATIC=0"
+	  printf '%s\n' "UPDATEMODULES="
+	} >"$altboot_parsed"
+
+	for step in altboot ${ALTBOOT_STEPS-}; do
+		printf 'export callnum_%s=\n' "$step"
+		run rm -f -- "$BC_PASSED/$step"
+	done >>"$BC_NEXTCHAIN"
+
+	next_bootchain "retry,altboot"
+	leave "altboot_restart"
+
+	debug "$PROG finished"
+	exit 0
+}
+
+# Attn: wait_gateway() uses two global variables: $server and $timeout.
+# Also used `ip' utility which must be included to the initramfs image.
+#
+wait_gateway()
+{
+	enter "wait_gateway"
+	IM_ponder_start "[ Connecting... ]"
+
+	local i=0
+
+	while [ "$i" -lt "$timeout" ]; do
+		server="$(run ip route |
+				grep -sE '^default via ' |
+				cut -f3 -d' ')"
+		[ -z "$server" ] ||
+			break
+		i=$((1 + $i))
+		sleep 0.5
+	done
+
+	IM_ponder_stop
+	leave "wait_gateway"
+}
+
+fi # __altboot_sh_functions

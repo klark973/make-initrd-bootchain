@@ -1,0 +1,69 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+check_parameter OVERLAYROOT
+
+WAITDEV="${WAITDEV:-0}"
+MOUNTFS="${MOUNTFS:-0}"
+
+
+overlayroot_config()
+{
+	enter "overlayroot_config"
+
+	local usepart=1
+	local rootdev="${OVERLAYROOT%%;*}"
+	local overlay="${OVERLAYROOT#$rootdev;*}"
+	local steps="waitdev,mountfs,liveboot,rootfs"
+
+	[ "$overlay" != "$OVERLAYROOT" ] ||
+		overlay=tmpfs
+	case "$overlay" in
+	'')	overlay=tmpfs
+		usepart=
+		;;
+	tmpfs|disabled)
+		usepart=
+		;;
+	esac
+
+	if [ -n "$usepart" ]; then
+		steps="waitdev,$steps"
+		printf 'WAITDEV%s="%s"\n' "$WAITDEV" "$overlay"
+		WAITDEV=$((1 + $WAITDEV))
+		printf 'WAITDEV=%s\n' "$WAITDEV"
+	fi
+
+	printf 'WAITDEV%s="%s"\n' "$WAITDEV" "$rootdev"
+	WAITDEV=$((1 + $WAITDEV))
+	printf 'WAITDEV=%s\n' "$WAITDEV"
+	printf 'MOUNTFS%s="DEVNAME"\n' "$MOUNTFS"
+	MOUNTFS=$((1 + $MOUNTFS))
+	printf 'MOUNTFS=%s\n' "$MOUNTFS"
+	printf 'ALTBOOT_LIVEBOOT0="overlayroot=%s"\n' "$overlay"
+	printf 'ALTBOOT_LIVEBOOT=1\n'
+	printf 'ALTBOOT_STEPS="%s"\n' "${steps//,/ }"
+
+	# Replace bootchain steps
+	next_bootchain "noretry,$steps"
+
+	leave "overlayroot_config"
+}
+
+
+# Entry point
+launch_step_once
+debug "$PROG started (overlayroot='$OVERLAYROOT')"
+
+overlayroot_config >"$altboot_parsed"
+debug "$PROG steps configuration ($altboot_parsed):"
+fdump "$altboot_parsed"
+cat "$altboot_parsed" >>/.initrd/initenv
+rm -f -- "$altboot_parsed"
+IM_update_bootsplash "prepare"
+
+# shellcheck disable=SC2119
+bypass_results
+:> "$BC_PASSED/$PROG"
+debug "$PROG finished"

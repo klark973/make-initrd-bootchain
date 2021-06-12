@@ -1,0 +1,29 @@
+#!/bin/bash -efu
+
+case "$overlayroot" in
+disabled|tmpfs)
+	live_rw=0
+	;;
+'')
+	live_rw=1
+	;;
+UUID=?*)
+	[ ! -L "/dev/disk/by-uuid/${overlayroot#UUID=}" ] ||
+		live_rw="/dev/disk/by-uuid/${overlayroot#UUID=}"
+	;;
+LABEL=?*)
+	[ ! -L "/dev/disk/by-label/${overlayroot#LABEL=}" ] ||
+		live_rw="/dev/disk/by-label/${overlayroot#LABEL=}"
+	;;
+/dev/?*)
+	[ ! -b "$overlayroot" ] ||
+		live_rw="$overlayroot"
+	;;
+esac
+
+if [ "$live_rw" = 0 ]; then
+	live_rw=
+elif [ -n "$overlayroot" ] && [[ -z "$live_rw" || -n "$method" ]]; then
+	message "overlayroot will be ignored: '$overlayroot'"
+	overlayroot=
+fi

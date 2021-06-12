@@ -1,0 +1,6 @@
+register_parameter string BOOTCHAIN
+register_parameter string BC_LOG_VT
+register_alias BOOTCHAIN PIPELINE
+register_parameter bool BC_DEBUG
+register_array string MOUNTFS
+register_array string OVERLAYFS

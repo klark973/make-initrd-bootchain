@@ -1,0 +1,168 @@
+[2021-05-30 18:11:44] bootchained: Starting server [INITRAMFS 2.16.0]...
+[2021-05-30 18:11:44] bootchained: Booting with /proc/cmdline:
+============================================================
+BOOT_IMAGE=/boot/vmlinuz root=UUID=e199d396-eb13-4575-b4fa-d2d160c67b6c ro panic=30 splash root=bootchain bootchain=waitdev,mountfs,liveboot,rootfs waitdev=UUID=e199d396-eb13-4575-b4fa-d2d160c67b6c mountfs=DEVNAME altboot_liveboot=method= bc_debug
+============================================================
+
+[2021-05-30 18:11:44] bootchained: RUN: mkdir -p -- /dev/bootchain /.initrd/bootchain/passed
+[2021-05-30 18:11:44] bootchained: RUN: mount -t tmpfs tmpfs /dev/bootchain
+[2021-05-30 18:11:44] bootchain-loop: LET: callnum="0"
+[2021-05-30 18:11:44] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step0 /dev/bootchain/dst/step0
+[2021-05-30 18:11:44] bootchain-loop: [0] Handler: /lib/bootchain/waitdev
+[2021-05-30 18:11:44] debug: debug for waitdev [0] started
+[2021-05-30 18:11:44] debug: PREV DIR: 
+[2021-05-30 18:11:44] debug: Data DIR: /dev/bootchain/src/step0
+[2021-05-30 18:11:44] debug: DEST DIR: /dev/bootchain/dst/step0
+############################################################
+[2021-05-30 18:11:44] debug: debug for waitdev [0] finished
+[2021-05-30 18:11:44] bootchain-loop: RUN: /lib/bootchain/waitdev
+[2021-05-30 18:11:45] waitdev: target device found: /dev/sda2
+[2021-05-30 18:11:45] waitdev: [0] RUN: cp -a -- /dev/sda2 /dev/bootchain/dst/step0/dev
+[2021-05-30 18:11:45] bootchain-loop: RUN: touch /.initrd/bootchain/passed/waitdev
+[2021-05-30 18:11:45] bootchain-loop: LET: callnum_waitdev="1"
+[2021-05-30 18:11:45] bootchain-loop: remaining steps: mountfs,liveboot,rootfs
+[2021-05-30 18:11:45] bootchain-loop: LET: callnum="0"
+[2021-05-30 18:11:45] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step1 /dev/bootchain/dst/step1
+[2021-05-30 18:11:45] bootchain-loop: [0] Handler: /lib/bootchain/mountfs
+[2021-05-30 18:11:45] debug: debug for mountfs [0] started
+[2021-05-30 18:11:45] debug: PREV DIR: /dev/bootchain/dst/step0
+[2021-05-30 18:11:45] debug: Data DIR: /dev/bootchain/src/step1
+[2021-05-30 18:11:45] debug: DEST DIR: /dev/bootchain/dst/step1
+##############################
+Previous step results (/dev/bootchain/dst/step0):
+dev (8:2 -> /dev/sda2)
+DEVNAME (8:2 -> /dev/sda2)
+##############################
+[2021-05-30 18:11:45] debug: debug for mountfs [0] finished
+[2021-05-30 18:11:45] bootchain-loop: RUN: /lib/bootchain/mountfs
+[2021-05-30 18:11:45] mountfs: [0] RUN: mount -- /dev/sda2 /dev/bootchain/dst/step1
+[2021-05-30 18:11:45] bootchain-loop: RUN: touch /.initrd/bootchain/passed/mountfs
+[2021-05-30 18:11:45] bootchain-loop: LET: callnum_mountfs="1"
+[2021-05-30 18:11:45] bootchain-loop: remaining steps: liveboot,rootfs
+[2021-05-30 18:11:45] bootchain-loop: LET: callnum="0"
+[2021-05-30 18:11:45] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step2 /dev/bootchain/dst/step2
+[2021-05-30 18:11:45] bootchain-loop: [0] Handler: /lib/bootchain/liveboot
+[2021-05-30 18:11:45] debug: debug for liveboot [0] started
+[2021-05-30 18:11:45] debug: PREV DIR: /dev/bootchain/dst/step1
+[2021-05-30 18:11:45] debug: Data DIR: /dev/bootchain/src/step2
+[2021-05-30 18:11:45] debug: DEST DIR: /dev/bootchain/dst/step2
+##############################
+Previous step results (/dev/bootchain/dst/step1):
+bin/
+boot/
+dev/
+etc/
+home/
+lib/
+lib64/
+libx32/
+lost+found/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+tmp/
+
+Mount points and devices:
+/dev/sda2 on /dev/bootchain/dst/step1 type ext4 (rw,relatime)
+##############################
+[2021-05-30 18:11:45] debug: debug for liveboot [0] finished
+[2021-05-30 18:11:45] bootchain-loop: RUN: /lib/bootchain/liveboot
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: stagename=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: method=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: directory=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: overlayroot=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: profile=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: overlays=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: flags=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] LET: timeout=""
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 18:11:45] liveboot: [0] liveboot started (method=)
+[2021-05-30 18:11:45] liveboot: [0] RUN: ln -snf /proc/mounts /etc/mtab
+[2021-05-30 18:11:45] liveboot: [0] ENTER: stage2_getenv
+[2021-05-30 18:11:45] liveboot: [0] KEY: 'METHOD'
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: stage2_getenv
+[2021-05-30 18:11:45] liveboot: [0] ENTER: use_hooks
+[2021-05-30 18:11:45] liveboot: [0] HOOKS: 'liveboot-init.d'
+[2021-05-30 18:11:45] liveboot: [0] USING: 'liveboot-init.d/100-overlayroot'
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: use_hooks
+[2021-05-30 18:11:45] liveboot: running unknown rootfs directly
+[2021-05-30 18:11:45] liveboot: [0] ENTER: use_hooks
+[2021-05-30 18:11:45] liveboot: [0] HOOKS: 'liveboot-pre.d'
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: use_hooks
+[2021-05-30 18:11:45] liveboot: [0] ENTER: bypass_results
+[2021-05-30 18:11:45] liveboot: [0] RUN: mkdir -p -- /dev/bootchain/dst/step2
+[2021-05-30 18:11:45] liveboot: [0] RUN: mount --move -- /dev/bootchain/dst/step1 /dev/bootchain/dst/step2
+[2021-05-30 18:11:45] liveboot: [0] LEAVE: bypass_results
+[2021-05-30 18:11:45] liveboot: [0] liveboot finished
+[2021-05-30 18:11:45] bootchain-loop: RUN: touch /.initrd/bootchain/passed/liveboot
+[2021-05-30 18:11:45] bootchain-loop: LET: callnum_liveboot="1"
+[2021-05-30 18:11:45] bootchain-loop: remaining steps: rootfs
+[2021-05-30 18:11:45] bootchain-loop: LET: callnum="0"
+[2021-05-30 18:11:45] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step3 /dev/bootchain/dst/step3
+[2021-05-30 18:11:45] bootchain-loop: [0] Handler: /lib/bootchain/rootfs
+[2021-05-30 18:11:45] debug: debug for rootfs [0] started
+[2021-05-30 18:11:45] debug: PREV DIR: /dev/bootchain/dst/step2
+[2021-05-30 18:11:45] debug: Data DIR: /dev/bootchain/src/step3
+[2021-05-30 18:11:45] debug: DEST DIR: /dev/bootchain/dst/step3
+##############################
+Previous step results (/dev/bootchain/dst/step2):
+bin/
+boot/
+dev/
+etc/
+home/
+lib/
+lib64/
+libx32/
+lost+found/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+tmp/
+
+Mount points and devices:
+/dev/sda2 on /dev/bootchain/dst/step2 type ext4 (rw,relatime)
+##############################
+[2021-05-30 18:11:45] debug: debug for rootfs [0] finished
+[2021-05-30 18:11:45] bootchain-loop: RUN: /lib/bootchain/rootfs
+[2021-05-30 18:11:45] rootfs: [0] RUN: mount --move -- /dev/bootchain/dst/step2 /root
+[2021-05-30 18:11:45] bootchain-loop: RUN: touch /.initrd/bootchain/passed/rootfs
+[2021-05-30 18:11:45] bootchain-loop: [0] Handler: /lib/bootchain/debug
+[2021-05-30 18:11:45] debug: debug for STAGE2 [0] started
+[2021-05-30 18:11:45] debug: PREV DIR: /dev/bootchain/dst/step2
+[2021-05-30 18:11:45] debug: Data DIR: 
+[2021-05-30 18:11:45] debug: DEST DIR: 
+##############################
+Previous step results (/dev/bootchain/dst/step2):
+##############################
+[2021-05-30 18:11:45] debug: debug for STAGE2 [0] finished
+[2021-05-30 18:11:45] bootchain-loop: RUN: cp -Lf -- /var/log/bootchained.log /root/var/log/

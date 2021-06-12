@@ -1,0 +1,16 @@
+#!/bin/bash -efu
+
+mount_rw_overlay()
+{
+	enter "mount_rw_overlay"
+
+	local dev
+
+	dev="$(readlink-e "$live_rw" 2>/dev/null ||:)"
+	[ ! -b "$dev" ] || mountpoint -q -- "$prevdir.rw" ||
+		run mount -- "$dev" "$prevdir.rw"
+
+	leave "mount_rw_overlay"
+}
+
+[ -n "$method" ] || [ -z "$overlayroot" ] || mount_rw_overlay

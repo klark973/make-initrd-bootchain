@@ -1,0 +1,197 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+check_parameter ALTBOOT_NFS
+
+b_a()
+{
+	get_bootarg NFS "$1"
+}
+
+b_a server
+b_a directory
+b_a timeout
+b_a options
+
+# You can change defaults in /etc/sysconfig/bootchain
+OEM_NFS_NETINST="${OEM_NFS_NETINST:-/srv/public/netinst}"
+
+
+nfs_input_form()
+{
+	enter "nfs_input_form"
+
+	local title="[ NFS-server connection data ]"
+
+	local text="Please enter the name or IP address of the"
+	text="$text NFS-server, and the directory (or ISO image"
+	text="$text file) containing the $OEM_DISTRIBUTION."
+
+	while :; do
+		IM_form "$title" "$text" 3		\
+			server     64 "NFS-server"	\
+			directory 128 "Directory"	\
+			options    64 "Mount options"	\
+			||
+			altboot_restart
+		if [ -z "$server" ]; then
+			IM_errmsg "Valid NFS-server required!"
+		elif [ -z "$directory" ]; then
+			IM_errmsg "Valid Directory required!"
+		elif [ -n "${server//[^[:space:]]/}" ]; then
+			IM_errmsg "Invalid NFS-server: '$server'!"
+		elif [ -n "${directory//[^[:space:]]/}" ] ||
+			[ -n "$directory" ] && [ "${directory:0:1}" != "/" ]
+		then
+			IM_errmsg "Invalid Directory: '$directory'!"
+		else
+			break
+		fi
+	done
+
+	server="${server//\"/\\\"}"
+	directory="${directory//\"/\\\"}"
+	options="${options//\"/\\\"}"
+
+	leave "nfs_input_form"
+}
+
+is_server_online()
+{
+	enter "is_server_online"
+
+	if [ -z "$server" ] || [ -z "$directory" ]; then
+		leave "is_server_online"
+		return 1
+	fi
+
+	local rc=0 opts="${options-}"
+	local mp="$datadir" image="$destdir"
+	local dirty=0 isofile="" dirpart="$directory"
+
+	if [ -n "$ALTBOOT_OLDROOT" ]; then
+		[ -z "$OEM_CDROOT" ] ||
+			image="$OEM_CDROOT"
+		mp="$rootmnt"
+	fi
+
+	[ -n "$opts" ] ||
+		opts="${NFSOPTS:-intr,soft,nolock}"
+	run mkdir -p -- "$mp" "$image"
+	run mount.nfs "$server:$dirpart" "$mp" -o "ro,$opts" || rc=1
+
+	if [ "$rc" != 0 ]; then
+		message "can't mount directory from the NFS-server"
+
+		isofile="${dirpart##*/}"
+
+		if [ -z "$isofile" ] || [ "$isofile" = "$dirpart" ]; then
+			leave "is_server_online"
+			return 1
+		fi
+
+		dirpart="${dirpart%/$isofile}"
+
+		if [ -z "$dirpart" ]; then
+			leave "is_server_online"
+			return 1
+		fi
+
+		rc=0
+		message "assuming ISO-image, NFS-path: '$server:$dirpart'"
+		run mount.nfs "$server:$dirpart" "$mp" -o "ro,$opts" || rc=1
+
+		if [ "$rc" != 0 ]; then
+			leave "is_server_online"
+			return 1
+		fi
+	fi
+
+	message "$server:$dirpart has mounted successfully"
+
+	if [ -z "$isofile" ]; then
+		run mount --move -- "$mp" "$image" || rc=1
+	elif [ ! -s "${mp}/${isofile}" ]; then
+		message "however specified ISO-image not found: '$isofile'"
+		rc=1
+	else
+		lomount "" "$mp/$isofile" "$image" || rc=1
+		dirty=1
+	fi
+
+	if [ "$rc" != 0 ]; then
+		message "$server:$dirpart will be unmounted"
+		run umount -fl -- "$mp"
+		leave "is_server_online"
+		return 1
+	fi
+
+	if [ -n "$ALTBOOT_OLDROOT" ]; then
+		stage2_setenv METHOD "nfs"
+		stage2_setenv HOST "$server"
+		stage2_setenv PREFIX "$directory"
+		[ "$dirty" = 0 ] ||
+			stage2_setenv PIGGYBACK 1
+		bypass_results "$image"
+	fi
+
+	IM_update_bootsplash "found_media"
+	leave "is_server_online"
+}
+
+start_connection()
+{
+	IM_ponder_start "[ Connecting... ]"
+}
+
+connection_loop()
+{
+	enter "connection_loop"
+	IM_start_output form errmsg ponder
+	[ -n "$server" ] || wait_gateway
+
+	if [ -z "$server" ] || [ -z "$directory" ]; then
+		[ -z "$NOASKUSER" ] ||
+			fatal "server/directory not specified, dialogs are disabled"
+		directory="${directory:-$OEM_NFS_NETINST/current}"
+		nfs_input_form
+	fi
+
+	start_connection
+
+	local i=0
+
+	while ! is_server_online; do
+		if [ "$i" -ge "$timeout" ]; then
+			IM_ponder_stop
+
+			if [ -z "$NOASKUSER" ]; then
+				IM_errmsg "Connection timeout, try again!"
+				nfs_input_form
+			else
+				message "connection timeout, dialogs are disabled"
+				fatal "specified NFS-server does not responds"
+			fi
+
+			i=0
+			debug "connection timeout, go to the next ring"
+			start_connection
+			continue
+		fi
+		i=$((1 + $i))
+		sleep 1
+	done
+
+	IM_ponder_stop
+	leave "connection_loop"
+}
+
+
+# Entry point
+debug "$PROG started ($(get_parameter ALTBOOT_NFS))"
+
+timeout="${timeout:-20}"
+is_server_online || connection_loop
+
+debug "$PROG finished"

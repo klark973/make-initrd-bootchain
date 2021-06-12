@@ -1,0 +1,10 @@
+#!/bin/bash -efu
+
+case "$stagename" in
+live|rescue)
+	[ -n "$OEM_LIVE_STORAGE" ] && [ -n "$OEM_BAD_STORAGE" ] ||
+		live_rw=
+	[ "$flags" != "${flags//*live_rw*/}" ] ||
+		live_rw=
+	;;
+esac

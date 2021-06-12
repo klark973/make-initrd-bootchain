@@ -1,0 +1,324 @@
+#!/bin/bash -efu
+
+if [ -z "${__IM_sh_functions-}" ]; then
+__IM_sh_functions=1
+
+. /.initrd/initenv
+. initrd-sh-functions
+
+NOASK="${NOASK-}"
+[ -z "${QUIET-}" ] ||
+	NOASK=1
+NOLINES="${NOLINES-}"
+
+IM_BACKTITLE="${IM_BACKTITLE:-Welcome to GNU/Linux!}"
+
+_IM_entry_counter=0
+_IM_flag=/.initrd/interactive-mode
+[ -d "${_IM_flag}" ] ||
+	_IM_entry_counter=1000
+_IM_VT_number=2
+_IM_logfile=/var/log/pipelined.log
+_IM_max_width=
+_IM_ponder_finished="${_IM_flag}/PONDERING-STOPPED"
+_IM_ponder_pid=
+
+
+is_in_IM()
+{
+	[ -d "${_IM_flag}" ]
+}
+
+IM_on()
+{
+	_IM_entry_counter=$((1 + $_IM_entry_counter))
+
+	if is_in_IM; then
+		[ -n "${_IM_max_width}" ] ||
+			read -r _IM_max_width <"${_IM_flag}/width" ||
+				_IM_max_width=66
+		return
+	fi
+
+	chvt ${_IM_VT_number}
+	mkdir -p -- "${_IM_flag}"
+	rootdelay_pause
+	[ -f "${_IM_logfile}" ] ||
+		:> "${_IM_logfile}"
+	exec </dev/tty${_IM_VT_number}
+	exec >/dev/tty${_IM_VT_number}
+	export TERM="${TERM:-linux}"
+	export DIALOG_TTY=1
+
+	if [ -z "${_IM_max_width}" ]; then
+		local tmpf="$(mktemp -t)"
+		local junk x w
+
+		dialog --print-maxsize 2>"$tmpf" ||:
+		read -r junk x w <"$tmpf" || w=72
+		_IM_max_width=$(( $w - 6 ))
+		printf '%s' "${_IM_max_width}" >"${_IM_flag}/width"
+		rm -f -- "$tmpf"
+
+		if [ -z "$NOLINES" ]; then
+			local __lc="${LANG:-C}"
+
+			__lc="${__lc%.*}"
+
+			export LANG="${__lc}.utf-8"
+			export LANGUAGE="${__lc}.utf-8"
+		fi
+	fi
+}
+
+IM_off()
+{
+	is_in_IM ||
+		return 0
+	_IM_entry_counter=$(( $_IM_entry_counter - 1 ))
+	[ "${_IM_entry_counter}" = 0 ] ||
+		return 0
+	IM_ponder_stop
+	rootdelay_unpause
+	rm -rf -- "${_IM_flag}"
+
+	chvt 1
+	[ -f "${_IM_logfile}" ] ||
+		:> "${_IM_logfile}"
+	exec </dev/console 1>&2
+	export DIALOG_TTY=
+}
+
+IM_die()
+{
+	IM_off
+	fatal "$*"
+}
+
+IM_errmsg()
+{
+	[ -z "$NOASK" ] ||
+		return 1
+
+	local text="$1" height=2
+	local width=$(( 4 + ${#text} ))
+
+	if [ $width -lt 40 ]; then
+		width=40
+	elif [ $width -gt ${_IM_max_width} ]; then
+		height=$(( $width / ${_IM_max_width} + 2 ))
+		width=${_IM_max_width}
+	fi
+
+	[ ! -s /etc/dialogrc.error ] ||
+		export DIALOGRC=/etc/dialogrc.error
+	dialog  ${NOLINES:+--ascii-lines}	\
+		--backtitle "$IM_BACKTITLE"	\
+		--title "[ Error! ]"		\
+		--msgbox "\n$text" $((4 + $height)) $width ||:
+	[ ! -s /etc/dialogrc.error ] || export DIALOGRC=
+}
+
+IM_choice()
+{
+	[ -z "$NOASK" ] ||
+		return 1
+
+	local varname="$1" text="${2:-\n}"; shift 2
+	local height=1 width=$(( 4 + ${#text} ))
+	local rc=0 items=$(( $# / 2 ))
+
+	_calculate_items_width()
+	{
+		local label iw i=0
+
+		while [ $i -lt $items ]; do
+			label="$2"; shift 2
+			iw=$(( 4 + ${#label} ))
+			[ $iw -le $width ] ||
+				width=$iw
+			i=$((1 + $i))
+		done
+	}
+
+	[ $items -gt 0 ] ||
+		return 1
+	[ $width -gt "${_IM_max_width}" ] ||
+		_calculate_items_width "$@"
+	if [ $width -lt 40 ]; then
+		width=40
+	elif [ $width -gt ${_IM_max_width} ]; then
+		height=$(( $width / ${_IM_max_width} + 1 ))
+		width=${_IM_max_width}
+	fi
+	if [ $items -gt 7 ]; then
+		height=$((14 + $height))
+	else
+		height=$((7 + $height + $items))
+	fi
+
+	local dlgcmd="dialog ${NOLINES:+--ascii-lines}"
+	dlgcmd="$dlgcmd --backtitle \"$IM_BACKTITLE\""
+	dlgcmd="$dlgcmd --title \"[ Please choose... ]\""
+	dlgcmd="$dlgcmd --no-tags --menu \"\n$text\""
+	dlgcmd="$dlgcmd $height $width $items"
+
+	while [ $# -ge 2 ]; do
+		dlgcmd="$dlgcmd \"$1\" \"$2\""
+		shift 2
+	done
+
+	exec 3>&1
+	text=$(eval "$dlgcmd" 2>&1 1>&3) || rc=$?
+	exec 3>&-
+	[ $rc -eq 0 ] ||
+		return $rc
+	eval "$varname=\"$text\""
+}
+
+IM_form()
+{
+	[ -z "$NOASK" ] ||
+		return 1
+
+	local i=0 lw=0 formHeight=$(( $# / 3 - 1 ))
+	local title="$1" text="$2" textHeight="$3"
+	local label varname ilen itype; shift 3
+
+	_calculate_labels_width()
+	{
+		while [ $i -lt $formHeight ]; do
+			label="$3"; shift 3
+			[ ${#label} -le $lw ] ||
+				lw=${#label}
+			i=$((1 + $i))
+		done
+	}
+
+	[ $formHeight -gt 0 ] ||
+		return 1
+	[ -n "$title" ] ||
+		title="[ Please fill entries... ]"
+	_calculate_labels_width "$@"
+	lw=$((4 + $lw)); i=1
+
+	local width=60 rc=0 vars= values=
+	local height=$((7 + $textHeight + $formHeight))
+	local fieldWidth=$(( $width - $lw - 6 ))
+
+	local dlgcmd="dialog ${NOLINES:+--ascii-lines}"
+	dlgcmd="$dlgcmd --backtitle \"$IM_BACKTITLE\""
+	dlgcmd="$dlgcmd --insecure --title \"$title\""
+	dlgcmd="$dlgcmd --mixedform \"\n$text\""
+	dlgcmd="$dlgcmd $height $width $formHeight"
+
+	while [ $i -le $formHeight ]; do
+		varname="$1"
+		ilen="$2"
+		label="$3"
+		shift 3
+		itype=0
+		case "$varname" in
+		password*|passwd*|pass|pass1|pass2)
+			itype=1
+			;;
+		esac
+		vars="${vars}${varname} "
+		dlgcmd="$dlgcmd \"$label:\" $i 1 \"\${$varname}\""
+		dlgcmd="$dlgcmd $i $lw $fieldWidth $ilen $itype"
+		i=$((1 + $i))
+	done
+
+	exec 3>&1
+	values=$(eval "$dlgcmd" 2>&1 1>&3) || rc=$?
+	exec 3>&-
+	[ "$rc" = 0 ] ||
+		return $rc
+	i=1
+	while [ "$i" -le "$formHeight" ]; do
+		varname="$(echo "$vars" |cut -f$i -d ' ')"
+		rc="$(echo "$values" |sed -n -r ${i}p)"
+		eval "$varname=\"$rc\""
+		i=$((1 + $i))
+	done
+}
+
+IM_gauge()
+{
+	local title="$1" text="${2-}"
+	local height=1 width=$(( 4 + ${#text} ))
+
+	if [ $width -gt ${_IM_max_width} ]; then
+		height=$(( $width / ${_IM_max_width} + 1 ))
+		width=${_IM_max_width}
+	elif [ $width -lt 40 ]; then
+		[ $width -ne 4 ] ||
+			height=0
+		width=40
+	fi
+
+	dialog  ${NOLINES:+--ascii-lines}	\
+		--backtitle "$IM_BACKTITLE"	\
+		--title "$title"		\
+		--gauge "$text"			\
+		$((5 + $height)) $width
+}
+
+_IM_ponder_bg()
+{
+	local dlgcmd="IM_gauge \"$1\" \"$2\""
+	local delay="$3" step="$4" percent=0 forward=1
+
+	while [ ! -f "${_IM_ponder_finished}" ]; do
+		eval "echo $percent |$dlgcmd"
+
+		if [ $forward -ne 0 ]; then
+			if [ $percent -lt 100 ]; then
+				percent=$(( $percent + $step ))
+			else
+				percent=$(( $percent - $step ))
+				forward=0
+			fi
+		else
+			if [ $percent -gt 0 ]; then
+				percent=$(( $percent - $step ))
+			else
+				percent=$(( $percent + $step ))
+				forward=1
+			fi
+		fi
+
+		[ $percent -le 100 ] ||
+			percent=100
+		[ $percent -ge 0 ] ||
+			percent=0
+		sleep "$delay"
+	done
+
+	eval "echo 100 |$dlgcmd"
+}
+
+IM_ponder_start()
+{
+	local title="$1" text="${2-}"
+	local delay="${3:-0.25}"
+	local step="${4:-5}"
+
+	[ -z "${_IM_ponder_pid}" ] ||
+		return 0
+	rm -f -- "${_IM_ponder_finished}"
+	_IM_ponder_bg "$title" "$text" "$delay" "$step" &
+	_IM_ponder_pid=$!
+}
+
+IM_ponder_stop()
+{
+	[ -n "${_IM_ponder_pid}" ] ||
+		return 0
+	:> "${_IM_ponder_finished}"
+	wait "${_IM_ponder_pid}" 2>/dev/null ||:
+	rm -f -- "${_IM_ponder_finished}"
+	_IM_ponder_pid=
+}
+
+fi # __IM_sh_functions

@@ -1,0 +1,5 @@
+#!/bin/bash -efu
+
+# You can change defaults in /etc/sysconfig/bootchain
+OEM_LIVE_STORAGE="${OEM_LIVE_STORAGE-}"
+OEM_BAD_STORAGE="${OEM_BAD_STORAGE-}"

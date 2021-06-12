@@ -1,0 +1,24 @@
+#!/bin/bash -efu
+
+. pipeline-sh-functions
+
+check_parameter WAITDEV
+devspec="$(get_parameter WAITDEV)"
+
+while [ -n "$devspec" ]; do
+	envfile="/.initrd/pipeline/waitdev/$callnum"
+
+	if [ -s "$envfile" ]; then
+		devfile=
+		read -r devfile < "$envfile" ||:
+
+		if [ -n "$devfile" ]; then
+			if [ ! -e "$destdir/dev" ]; then
+				target="$(readlink-e "$devfile")"
+				run cp -a -- "$target" "$destdir/dev"
+			fi
+			break
+		fi
+	fi
+	sleep 1
+done

@@ -1,0 +1,17 @@
+altboot	DLG
+auto	DLG
+cifs	DLG
+nfs	DLG
+load	DLG
+local	DLG
+cdrom	DEV
+disk	DEV
+squash	DIR
+live	DIR
+stage2	DIR
+
+waitdev		
+getimage	
+overlayfs	
+mountfs		
+rootfs		

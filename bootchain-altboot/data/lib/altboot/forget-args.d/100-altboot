@@ -1,0 +1,12 @@
+#!/bin/bash -efu
+
+cat <<EOF
+unset AUTOMATIC
+unset STAGENAME
+unset PROFILE
+unset HASH
+unset RESCUE
+unset LIVE
+unset LOWMEM
+unset LIVE_RW
+EOF

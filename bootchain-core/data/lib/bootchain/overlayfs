@@ -1,0 +1,27 @@
+#!/bin/bash -efu
+
+. bootchain-sh-functions
+
+target="$(get_parameter OVERLAYFS)"
+
+[ -n "$target" ] || [ -n "$prevdir" ] ||
+	fatal "no previous step results to use as lower directory"
+
+chain="${target:-$prevdir}"
+lowerdirs=
+
+while [ -n "$chain" ]; do
+	name="${chain%%,*}"
+
+	dir="$(resolve_target "$name")"
+	lowerdirs="${lowerdirs:+$lowerdirs,}$dir"
+
+	chain="${chain#$name}"
+	chain="${chain#,}"
+done
+
+run mkdir -p -- "$datadir/rw" "$datadir/work"
+
+opts="lowerdir=$lowerdirs,upperdir=$datadir/rw,workdir=$datadir/work"
+
+run mount -t overlay -o "$opts" -- overlay "$destdir"

@@ -1,0 +1,240 @@
+#!/bin/bash -efu
+
+if [ -z "${__interactive_sh_functions-}" ]; then
+__interactive_sh_functions=1
+
+. /.initrd/initenv
+. initrd-sh-functions
+
+. shell-signal
+
+message_time=1
+
+# Public
+IM_BACKTITLE=
+IM_WIDGET_ARGS=
+NOTTYS="${NOTTYS-}"
+NOASKUSER="${NOASKUSER-}"
+NOLINES="${NOLINES-}"
+
+# Internal
+_IM_max_width=
+_IM_widgetsdir=/lib/IM-widgets
+_IM_flag=/.initrd/interactive-mode
+_IM_unsplashed="${_IM_flag}/BOOTSPLASH-STOPPED"
+_IM_activated="${_IM_flag}/VT-ACTIVATED"
+_IM_VT_number="${_IM_VT_number:-2}"
+
+
+IM_is_active()
+{
+	[ -d "${_IM_flag}" ] ||
+		return 1
+}
+
+IM_ponder_stop()
+{
+	: # Base implementation overrided in /lib/IM-widgets/ponder
+}
+
+_IM_exit_handler()
+{
+	local rc=$?
+
+	trap - EXIT
+
+	if IM_is_active; then
+		IM_ponder_stop
+		rootdelay_unpause
+		if [ -z "$NOTTYS" ]; then
+			clear
+			chvt 1
+		fi
+		IM_show_bootsplash
+		rm -rf -- "${_IM_flag}"
+	fi
+
+	exit $rc
+}
+
+IM_exec()
+{
+	local now=
+
+	if [ "${1-}" = "--now" ]; then
+		now=-s
+		shift
+	fi
+
+	! IM_is_active ||
+		fatal "already in interactive mode"
+
+	if [ -n "$NOTTYS" ]; then
+		exec "$@"
+	else
+		[ -e "/dev/tty${_IM_VT_number}" ] ||
+			mknod "/dev/tty${_IM_VT_number}" c 4 ${_IM_VT_number}
+		exec openvt -f -w $now -c${_IM_VT_number} -- "$@"
+	fi
+
+	fatal "exec failed in IM_exec()"
+}
+
+# shellcheck disable=SC2120
+IM_activate()
+{
+	local delay="${1-}"
+	local logfile="${2:-/var/log/IM.log}"
+
+	! IM_is_active ||
+		fatal "already in interactive mode"
+	set_cleanup_handler _IM_exit_handler
+
+	if [ -n "$NOTTYS" ]; then
+		exec </dev/console >/dev/console 2>>"$logfile"
+	else
+		exec	<"/dev/tty${_IM_VT_number}" \
+			>"/dev/tty${_IM_VT_number}" \
+			2>>"$logfile"
+	fi
+
+	mkdir -p -- "${_IM_flag}"
+
+	export TERM="${TERM:-linux}"
+	export DIALOG_TTY=1
+	export LC_ALL=C
+	export LANG=C
+
+	# Determinating maximum width
+	if [ -z "${_IM_max_width}" ]; then
+		local esc cols rows
+
+		# The snippet above by Oleg Nesterov (C) was modified for IM, see:
+		# https://lists.altlinux.org/pipermail/make-initrd/2021-June/000458.html
+		#
+		echo -ne "\e[s\e[1000;1000H\e[6n\e[u"
+		# shellcheck disable=SC2162
+		IFS=';[' read -s -t2 -dR esc rows cols || {
+			rows=24
+			cols=80
+		}
+		_IM_max_width=$(( $cols - 6 ))
+		stty rows "$rows" cols "$cols" 2>/dev/null ||:
+		printf '%s\n' "${_IM_max_width}" >"${_IM_flag}/MAX-WIDTH"
+	fi
+
+	# Activating IM VT
+	if [ -n "$NOTTYS" ]; then
+		activate-interactive-vt
+		message "TTY's not available, using current system console"
+	elif [ -z "$delay" ]; then
+		activate-interactive-vt
+		message "TTY${_IM_VT_number} now active"
+	else
+		activate-interactive-vt "$delay" &
+		message "TTY${_IM_VT_number} will be activated after $((1 + $delay)) seconds"
+	fi
+
+	# Warm up: back title do not displayed only with the first widget
+	# after openvt(), single dialog exec strangely solve this problem.
+	#
+	if [ -z "$NOTTYS" ]; then
+		dialog	$IM_WIDGET_ARGS			\
+			${NOLINES:+--ascii-lines}	\
+			--backtitle "WARM UP"		\
+			--title "[ Loading widgets ]"	\
+			--pause "" 7 40 0		\
+		||:
+	fi
+
+	# Also we need to load and to check all widgets before using them
+	IM_load_all
+}
+
+IM_load_widgets()
+{
+	local widget loaded
+
+	for widget in "$@" _; do
+		[ -s "${_IM_widgetsdir}/$widget" ] ||
+			continue
+		eval "loaded=\"\${__IM_${widget}_loaded-}\""
+
+		if [ -z "$loaded" ]; then
+			eval "__IM_${widget}_loaded=1"
+			. "${_IM_widgetsdir}/$widget"
+		fi
+	done
+}
+
+IM_load_all()
+{
+	local widget
+
+	# shellcheck disable=SC2045
+	for widget in $(ls -- "${_IM_widgetsdir}/"); do
+		IM_load_widgets "$widget"
+	done
+}
+
+IM_start_output()
+{
+	# shellcheck disable=SC2119
+	IM_is_active ||
+		IM_activate
+	[ -n "${_IM_max_width}" ] ||
+		read -r _IM_max_width <"${_IM_flag}/MAX-WIDTH" ||
+			_IM_max_width=66
+	IM_load_widgets "$@"
+}
+
+IM_start_input()
+{
+	[ -z "$NOASKUSER" ] ||
+		fatal "input widgets not allowed, dialogs are disabled"
+	IM_start_output "$@"
+	[ -f "${_IM_activated}" ] ||
+		activate-interactive-vt
+}
+
+IM_show_bootsplash()
+{
+	local cmd=plymouth
+
+	if IM_is_active &&
+		[ -f "${_IM_unsplashed}" ] &&
+		command -v $cmd >/dev/null &&
+		$cmd --ping >/dev/null 2>&1
+	then
+		$cmd unpause-progress --show-splash ||:
+		rm -f -- "${_IM_unsplashed}"
+	fi
+}
+
+IM_hide_bootsplash()
+{
+	local cmd=plymouth
+
+	if IM_is_active &&
+		[ ! -f "${_IM_unsplashed}" ] &&
+		command -v $cmd >/dev/null &&
+		$cmd --ping >/dev/null 2>&1
+	then
+		$cmd pause-progress --hide-splash ||:
+		:> "${_IM_unsplashed}"
+	fi
+}
+
+IM_update_bootsplash()
+{
+	local cmd=plymouth
+
+	if IM_is_active &&
+		command -v $cmd >/dev/null &&
+		$cmd --ping >/dev/null 2>&1
+	then
+		$cmd update --status="$1" ||:
+	fi
+}
+
+fi # __interactive_sh_functions

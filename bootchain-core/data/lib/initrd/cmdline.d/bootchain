@@ -1,0 +1,6 @@
+#!/bin/bash -efu
+
+. /.initrd/initenv
+
+[ "${ROOT-}" != bootchain ] ||
+	echo bootchain > /etc/initrd/method

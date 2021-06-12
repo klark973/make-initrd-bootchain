@@ -1,0 +1,102 @@
+#!/bin/sh -efux
+# NB: /etc/initrd.mk carefully prepared by earlier scripts
+
+# PUT THIS TO: features.in/initrd-pipeline/stage1/scripts.d/80-make-initrd-for-pipeline
+
+fatal() { echo "** error: $@" >&1; exit 1; }
+
+kver=
+for KFLAVOUR in $GLOBAL_KFLAVOURS; do
+	kver+=" $(rpm -qa 'kernel-image*' \
+		--qf '%{version}-%{name}-%{release}\n' \
+	| grep "$KFLAVOUR" \
+	| sed 's/kernel-image-//')"
+done
+
+[ -n "$kver" ] ||
+	fatal "no kernel version identified"
+
+[ -s /.in/modules ] ||
+	fatal "kernel modules set not found"
+
+echo "FEATURES += add-modules compress cleanup rdshell"  >> /etc/initrd.mk
+echo "FEATURES += bootchain-localdev bootchain-liverw"   >> /etc/initrd.mk
+echo "FEATURES += bootchain-waitdev bootchain-getimage"  >> /etc/initrd.mk
+echo "FEATURES += bootchain-nfs bootchain-cifs plymouth" >> /etc/initrd.mk
+
+echo "MODULES_TRY_ADD += $(grep -v ^# /.in/modules |
+	grep -v / |
+	grep .ko |
+	sort -u | tr -s '\n' ' ')" >> /etc/initrd.mk
+
+echo "MODULES_TRY_ADD += $(grep ^# -v /.in/modules |
+	grep -v .ko |
+	sort -u |
+	sed 's,$,/,g' | tr -s '\n' ' ')" >> /etc/initrd.mk
+
+echo "MODULES_TRY_ADD += virtio_net virtion-rng" >> /etc/initrd.mk
+
+cat >/etc/sysconfig/bootchain <<-EOF
+# /etc/sysconfig/bootchain: ALT Linux specific values
+
+# altboot back title
+OEM_WELCOME_TEXT="Welcome to ALT!"
+
+# Distribution name, for example
+OEM_DISTRIBUTION="ALT Workstation 10"
+
+# ISO-image mount point (required for ALT)
+OEM_CDROOT=/image
+
+# Default stage2 filename for boot from ISO-9660
+OEM_DEFAULT_STAGE2=altinst
+
+# Persistent storage device LABEL for Live-RW sessions
+OEM_LIVE_STORAGE=alt-live-storage
+
+# Live storage device LABEL for mark non-usable devices
+OEM_BAD_STORAGE=alt-slow-storage
+
+# Local storage device LABEL with the OEM drivers update
+OEM_SETUP_STORAGE=alt-drivers-update
+
+# HTTP and FTP base directory
+OEM_URL_NETINST=/pub/distributions/ALTLinux/p9/
+EOF
+
+dialog --create-rc /etc/dialogrc.tmp
+cat /etc/dialogrc.tmp |sed -E \
+	-e 's/^(use_colors).*/\1 = ON/' \
+	-e 's/^(use_shadow).*/\1 = ON/' \
+	-e 's/^(screen_color).*/\1 = \(WHITE,RED,ON\)/' \
+		> /etc/dialogrc.error
+rm -f /etc/dialogrc.tmp
+
+echo "PUT_FILES += /etc/sysconfig/bootchain" >> /etc/initrd.mk
+echo "PUT_FILES += /etc/dialogrc.error" >> /etc/initrd.mk
+
+MAKE_INITRD_OPTS="--no-checks AUTODETECT="
+MAKE_INITRD_VER="`make-initrd -V \
+	| sed -rn 's/^make-initrd version ([0-9.]+)/\1/p'`"
+
+[ -z "$GLOBAL_VERBOSE" ] ||
+	MAKE_INITRD_OPTS="$MAKE_INITRD_OPTS -v"
+
+cd /boot
+for KVER in $kver; do
+	make-initrd $MAKE_INITRD_OPTS -k "$KVER" ||
+		fatal "make-initrd failed"
+done
+
+case `arch` in
+e2k)
+	kname=image;;
+*)
+	kname=vmlinuz;;
+esac
+
+rm -f $kname initrd.img
+ln -s $kname-$KVER $kname
+ln -s initrd-$KVER.img initrd.img
+
+:

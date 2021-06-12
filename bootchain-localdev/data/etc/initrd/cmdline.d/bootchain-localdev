@@ -1,0 +1,2 @@
+register_parameter string UPDATEMODULES
+register_array string ALTBOOT_LOCALDEV

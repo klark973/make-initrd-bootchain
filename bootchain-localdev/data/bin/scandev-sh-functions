@@ -1,0 +1,323 @@
+#!/bin/bash -efu
+
+. bootchain-sh-functions
+. interactive-sh-functions
+
+disk=
+part=
+uuid=
+label=
+target=
+method=
+devices=
+
+
+start_scan()
+{
+	IM_ponder_start "[ Scanning devices... ]"
+}
+
+scan_devices()
+{
+	enter "scan_devices"
+
+	local udevdata="/run/udev/data"
+	local major minor nblocks devname
+	local x f excludes="0 1 2 7 35 37"
+
+	_udevd_field()
+	{
+		f="$udevdata/b$major:$minor"
+		[ -z "$udevdata" ] || [ ! -r "$f" ] ||
+			grep -sE "^E:$1=" "$f" |cut -f2- -d=
+	}
+
+	_blkid_field()
+	{
+		blkid -c /dev/null -o value \
+			-s $1 -- "/dev/$devname" 2>/dev/null ||:
+	}
+
+	_check_field()
+	{
+		local key="$1" value="$2"
+
+		x="$(_udevd_field "ID_FS_$key")"
+		[ -n "$x" ] ||
+			x="$(_blkid_field "$key")"
+		[ "$x" = "$value" ] ||
+			return 1
+	}
+
+	_check_cdrom()
+	{
+		[ -r "/sys/block/$devname/dev" ] ||
+			return 1
+		[ -z "$(_udevd_field ID_CDROM)" ] ||
+			return 0
+		_check_field TYPE "iso9660" ||
+			return 1
+	}
+
+	_check_volume()
+	{
+		x="$(_udevd_field ID_FS_USAGE)"
+		[ -z "$x" ] || [ "$x" = "filesystem" ] ||
+			return 1
+		x="$(_udevd_field ID_FS_TYPE)"
+		[ -n "$x" ] ||
+			x="$(_blkid_field TYPE)"
+		case "$x" in
+		''|swap|*_member)
+			return 1
+			;;
+		esac
+	}
+
+	devices=
+	[ -d "$udevdata" ] ||
+		udevdata=
+	if [ ! -r /proc/partitions ]; then
+		message "could not read partitions information"
+		message "may be /proc filesystem not mounted?"
+		leave "scan_devices"
+		return 0
+	fi
+
+	while read -r major minor nblocks devname; do
+		[ -n "$major" ] && [ "$major" != "major" ] ||
+			continue
+		[ -b "/dev/$devname" ] ||
+			continue
+		[ $nblocks -gt 1 ] ||
+			continue
+		f=0
+		for x in $excludes; do
+			if [ "$x" = "$major" ]; then
+				f=1
+				break
+			fi
+		done
+		[ "$f" = 0 ] ||
+			continue
+		if [ "$method" = "cdrom" ]; then
+			_check_cdrom ||
+				continue
+		else
+			_check_volume ||
+				continue
+		fi
+
+		debug "probing device: /dev/$devname ($major:$minor)"
+		devices="${devices:+$devices }$major:$minor:$devname"
+
+		[ -z "$target" ] ||
+			continue
+		if [ -n "$uuid" ]; then
+			_check_field UUID "$uuid" ||
+				continue
+			target="/dev/$devname"
+		fi
+		if [ -n "$label" ]; then
+			if _check_field LABEL "$label"; then
+				target="/dev/$devname"
+			else
+				target=
+				continue
+			fi
+		fi
+		if [ -n "$part" ]; then
+			if [ "$part" = "$devname" ]; then
+				target="/dev/$devname"
+			else
+				target=
+				continue
+			fi
+		fi
+		if [ "$disk" = "$devname" ]; then
+			target="/dev/$devname"
+		elif [ -n "$disk" ] && [ -z "$part" ]; then
+			target=
+		fi
+
+		[ -z "$target" ] ||
+			message "specified target found: $target ($major:$minor)"
+	done < /proc/partitions
+
+	leave "scan_devices"
+}
+
+device_choice()
+{
+	[ -n "$devices" ] ||
+		return 0
+	enter "device_choice"
+
+	local rc=0 udevdata="/run/udev/data"
+	local sysfs number devname text dlgcmd
+
+	_udevd_field()
+	{
+		local f="$udevdata/b$number"
+
+		[ -z "$udevdata" ] || [ ! -r "$f" ] ||
+			grep -sE "^E:$1=" "$f" |cut -f2- -d=
+	}
+
+	_blkid_field()
+	{
+		blkid -c /dev/null -o value \
+			-s $1 -- "/dev/$devname" 2>/dev/null ||:
+	}
+
+	_get_field()
+	{
+		local __x __varname="$1" __key="$2"
+
+		__x="$(_udevd_field "ID_FS_${__key}")"
+		[ -n "$__x" ] ||
+			__x="$(_blkid_field "${__key}")"
+		assign "${__varname}" "${__x}"
+	}
+
+	_get_model()
+	{
+		local __x __r="" __varname="$1"
+
+		[ ! -r "$sysfs/device/vendor" ] ||
+			read -r __r <"$sysfs/device/vendor"
+		if [ -r "$sysfs/device/model" ]; then
+			read -r __x <"$sysfs/device/model"
+			__r="${__r:+$__r }${__x}"
+		fi
+		if [ -r "$sysfs/device/serial" ]; then
+			read -r __x <"$sysfs/device/serial"
+			__r="${__r:+$__r }${__x}"
+		fi
+		assign "${__varname}" "${__r//\"/\'}"
+	}
+
+	_get_lbsize()
+	{
+		local __varname="$1"
+		local lbs="queue/logical_block_size"
+		local __bs partn whole="" path="$sysfs"
+
+		if [ ! -r "$path/$lbs" ]; then
+			if [ -r "$path/partition" ]; then
+				read -r partn <"$path/partition" ||
+					partn=
+				if [ -n "$partn" ]; then
+					case "$devname" in
+					*[0-9]p$partn)
+						whole="${devname%%p$partn}"
+						;;
+					*$partn)
+						whole="${devname%%$partn}"
+						;;
+					esac
+				fi
+			fi
+			[ -z "$whole" ] || [ ! -b "$whole" ] ||
+			[ ! -r "/sys/block/$whole/$devname/dev" ] ||
+				path="/sys/block/$whole"
+		fi
+
+		[ -r "$path/$lbs" ] &&
+		read -r __bs <"$path/$lbs" ||
+			__bs=512
+		assign "${__varname}" "${__bs}"
+	}
+
+	_fill_item_description()
+	{
+		local bs fssize fstype title=
+		local mul=1024 ms="KiB MiB GiB TiB"
+
+		if [ "$method" = "cdrom" ]; then
+			sysfs="/sys/block/$devname"
+			_get_model title
+		elif [ ! -r "/sys/block/$devname/size" ] ||
+			[ -r "/sys/block/$devname/dm/name" ] ||
+			[ "${devname:0:2}" = "md" ]
+		then
+			sysfs="$(readlink-e "/sys/dev/block/$number")"
+		else
+			sysfs="/sys/block/$devname"
+			ms="KB MB GB TB"
+			mul=1000
+			_get_model title
+		fi
+
+		[ -r "$sysfs/size" ] &&
+		read -r fssize <"$sysfs/size" ||
+			fssize=0
+		fssize="$(( $fssize * 512 ))"
+
+		for bs in bytes $ms; do
+			if [ "$bs" = "${ms##* }" ] || [ "$fssize" -lt "$mul" ]; then
+				fssize="$fssize $bs"
+				break
+			fi
+			fssize=$(( $fssize / $mul ))
+		done
+
+		_get_field fstype TYPE
+		[ -n "$fstype" ] ||
+			fstype="unknown"
+		_get_field bs LABEL
+
+		[ -z "$bs" ] ||
+			title="${bs//\"/\'}"
+		if [ -n "$title" ]; then
+			title=": '$title'"
+		else
+			_get_field bs UUID
+			[ -z "$bs" ] ||
+				title=", UUID=$bs"
+		fi
+
+		bs=
+		if [ -r "$sysfs/partition" ]; then
+			read -r bs <"$sysfs/partition" ||
+				bs=
+			[ -z "$bs" ] ||
+				bs="Part #$bs"
+		fi
+
+		text="$text (${bs:-Volume}: $fssize, ${fstype}${title})"
+	}
+
+	if [ "$method" = oem ]; then
+		text="Please choose the partition with the"
+		text="$text OEM Drivers Update."
+	elif [ "$method" = cdrom ]; then
+		text="Please choose the drive with the $OEM_DISTRIBUTION"
+		text="$text to boot from or cancel and try again."
+	else
+		text="Please choose the partition with the $OEM_DISTRIBUTION"
+		text="$text on the boot media or cancel and try again."
+	fi
+
+	[ -d "$udevdata" ] ||
+		udevdata=
+	dlgcmd="IM_choice devname \"$text\""
+
+	for text in $devices; do
+		number="${text%:*}"
+		devname="${text##*:}"
+		[ -r "/sys/block/$devname/dm/name" ] &&
+		read -r text <"/sys/block/$devname/dm/name" &&
+		[ -n "$text" ] && [ -L "/dev/mapper/$text" ] ||
+			text="$devname"
+		_fill_item_description
+		dlgcmd="$dlgcmd \"$devname\" \"$text\""
+	done
+
+	devname=
+	debug "RUN: $dlgcmd"
+	eval "$dlgcmd" && assign target "/dev/$devname" || rc=$?
+
+	leave "device_choice"
+	return $rc
+}

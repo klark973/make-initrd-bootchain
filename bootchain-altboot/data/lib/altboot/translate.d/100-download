@@ -1,0 +1,23 @@
+#!/bin/bash -efu
+
+case "$method" in
+ftp|http|url)
+	VALUE="to=RD;method=$method"
+	if [ "$method" = "url" ]; then
+		VALUE="$VALUE;url=$url"
+	elif [ -n "$server" ] || [ -n "$directory" ]; then
+		VALUE="$VALUE;server=$server;directory=$directory"
+		[ -z "$user" ] || [ "$method" != "ftp" ] ||
+			VALUE="$VALUE;user=$user;pass=$pass"
+	fi
+	[ -z "$imgsize" ] ||
+		VALUE="$VALUE;imgsize=$imgsize"
+	[ -z "$timeout" ] ||
+		VALUE="$VALUE;timeout=$timeout"
+	ALTBOOT="download,iso9660"
+	ALTBOOT_DOWNLOAD0="$VALUE"
+	overlays=
+	LOWMEM=1
+	VALUE=
+	;;
+esac

@@ -1,0 +1,6 @@
+#!ipxe
+
+kernel http://192.168.15.1/boot/vmlinuz
+initrd http://192.168.15.1/boot/initrd.img
+imgargs vmlinuz initrd=initrd.img fastboot root=bootchain bootchain=fg,altboot bc_debug automatic=method:nfs,network:dhcp,server:192.168.15.1,directory:/srv/public/netinst/current ip=dhcp stagename=altinst ramdisk_size=164873 lowmem vga=normal quiet nosplash lang=ru_RU
+boot

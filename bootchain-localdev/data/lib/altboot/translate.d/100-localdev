@@ -1,0 +1,30 @@
+#!/bin/bash -efu
+
+case "$method" in
+cdrom|disk)
+	ALTBOOT=localdev
+	VALUE="method=$method"
+	if [ "$method" = cdrom ]; then
+		directory="/$STAGENAME"
+		partition=
+	fi
+	[ -z "$disk" ] ||
+		VALUE="$VALUE;disk=$disk"
+	[ -z "$partition" ] ||
+		VALUE="$VALUE;part=$partition"
+	[ -z "$uuid" ] ||
+		VALUE="$VALUE;uuid=$uuid"
+	[ -z "$label" ] ||
+		VALUE="$VALUE;label=$label"
+	[ -z "$directory" ] ||
+		VALUE="$VALUE;directory=$directory"
+	[ -z "$options" ] ||
+		VALUE="$VALUE;options=$options"
+	[ -z "$timeout" ] ||
+		VALUE="$VALUE;timeout=$timeout"
+	[ -z "${UPDATEMODULES-}" ] ||
+		ALTBOOT="oemsetup,$ALTBOOT"
+	ALTBOOT_LOCALDEV0="$VALUE"
+	VALUE=
+	;;
+esac

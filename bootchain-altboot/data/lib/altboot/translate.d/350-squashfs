@@ -1,0 +1,22 @@
+#!/bin/bash -efu
+
+if [ -n "${LOWMEM-}" ]; then
+	if [ -n "${HASH-}" ]; then
+		ALTBOOT="$ALTBOOT,checksum"
+		ALTBOOT_CHECKSUM0=":$HASH:/$STAGENAME"
+	fi
+
+	ALTBOOT="$ALTBOOT,squashfs"
+	ALTBOOT_SQUASHFS0="/$STAGENAME"
+else
+	ALTBOOT="$ALTBOOT,download"
+	ALTBOOT_DOWNLOAD0="to=RD;method=url;url=file:///$STAGENAME"
+
+	if [ -n "${HASH-}" ]; then
+		ALTBOOT="$ALTBOOT,checksum"
+		ALTBOOT_CHECKSUM0="$HASH"
+	fi
+
+	ALTBOOT="$ALTBOOT,squashfs"
+	ALTBOOT_SQUASHFS0="-"
+fi

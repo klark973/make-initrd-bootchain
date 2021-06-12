@@ -1,0 +1,3 @@
+#!/bin/bash -efu
+
+altboot_add_method cifs "SAMBA server"

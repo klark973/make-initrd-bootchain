@@ -1,0 +1,70 @@
+#!/bin/bash -efu
+
+IM_form()
+{
+	IM_start_input
+
+	local i=0 lw=0 formHeight=$(( $# / 3 - 1 ))
+	local title="$1" text="$2" textHeight="$3"
+	local label varname ilen itype; shift 3
+
+	_calculate_labels_width()
+	{
+		while [ $i -lt $formHeight ]; do
+			label="$3"; shift 3
+			[ ${#label} -le $lw ] ||
+				lw=${#label}
+			i=$((1 + $i))
+		done
+	}
+
+	[ $formHeight -gt 0 ] ||
+		return 1
+	[ -n "$title" ] ||
+		title="[ Please fill entries... ]"
+	_calculate_labels_width "$@"
+	lw=$((4 + $lw)); i=1
+
+	local width=60 rc=0 vars="" values=""
+	local height=$((7 + $textHeight + $formHeight))
+	local fieldWidth=$(( $width - $lw - 6 ))
+
+	local dlgcmd="dialog $IM_WIDGET_ARGS ${NOLINES:+--ascii-lines}"
+	dlgcmd="$dlgcmd ${IM_BACKTITLE:+--backtitle \"$IM_BACKTITLE\"}"
+	dlgcmd="$dlgcmd --insecure --title \"$title\""
+	dlgcmd="$dlgcmd --mixedform \"\n$text\""
+	dlgcmd="$dlgcmd $height $width $formHeight"
+
+	while [ $i -le $formHeight ]; do
+		varname="$1"
+		ilen="$2"
+		label="$3"
+		shift 3
+		itype=0
+		case "$varname" in
+		password*|passwd*|pass|pass1|pass2)
+			itype=1
+			;;
+		esac
+		vars="${vars}${varname} "
+		dlgcmd="$dlgcmd \"$label:\" $i 1 \"\${$varname}\""
+		dlgcmd="$dlgcmd $i $lw $fieldWidth $ilen $itype"
+		i=$((1 + $i))
+	done
+
+	exec 3>&1
+	values=$(eval "$dlgcmd" 2>&1 1>&3) || rc=$?
+	exec 3>&-
+
+	[ -z "$NOTTYS" ] ||
+		reset
+	[ "$rc" = 0 ] ||
+		return $rc
+	i=1
+	while [ "$i" -le "$formHeight" ]; do
+		varname="$(echo "$vars" |cut -f$i -d ' ')"
+		rc="$(echo "$values" |sed -n -r ${i}p)"
+		eval "$varname=\"$rc\""
+		i=$((1 + $i))
+	done
+}

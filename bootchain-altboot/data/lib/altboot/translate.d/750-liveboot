@@ -1,0 +1,6 @@
+#!/bin/bash -efu
+
+[ -z "$VALUE" ] ||
+	ALTBOOT_LIVEBOOT0="$ALTBOOT_LIVEBOOT0;flags=$VALUE"
+[ -z "$timeout" ] ||
+	ALTBOOT_LIVEBOOT0="$ALTBOOT_LIVEBOOT0;timeout=$timeout"

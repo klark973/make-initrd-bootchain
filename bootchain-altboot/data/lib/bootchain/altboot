@@ -1,0 +1,159 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+AUTOMATIC="${AUTOMATIC-}"
+OEM_DEFAULT_STAGE2="${OEM_DEFAULT_STAGE2-}"
+STAGENAME="${STAGENAME:-$OEM_DEFAULT_STAGE2}"
+
+
+altboot_config()
+{
+	enter "altboot_config"
+
+	local KEY VALUE PART VARS LINE="$AUTOMATIC"
+	local DIRP="$altboot_hooksdir/automatic.d"
+	local METHODS_LIST="" METHODS_MENU=""
+
+	altboot_add_method()
+	{
+		METHODS_LIST="$METHODS_LIST $1"
+		METHODS_MENU="$METHODS_MENU $1 \"$2\""
+		debug "boot method registered: '$1'"
+	}
+
+	altboot_method_choice()
+	{
+		enter "altboot_method_choice"
+
+		local text="installation method not specified"
+		text="$text, dialogs are disabled"
+
+		[ -z "$NOASKUSER" ] ||
+			fatal "$text"
+		IM_start_input choice
+
+		[ -s "$altboot_auto" ] &&
+		read -r method <"$altboot_auto" ||
+			method=
+		IM_WIDGET_ARGS="${method:+--default-item \"$method\"}"
+		text="Please choose the installation method."
+		method=
+
+		while ! eval "IM_choice method \"$text\" $METHODS_MENU"; do
+			debug "boot method not selected, go to the next ring"
+			sleep 0.5
+		done
+
+		METHODS_LIST=
+		METHODS_MENU=
+		IM_WIDGET_ARGS=
+
+		printf '%s\n' "$method" >"$altboot_auto"
+		debug "SELECTED METHOD: '$method'"
+
+		leave "altboot_method_choice"
+	}
+
+	# Reset local variables
+	VARS="$(run ls -1 -- "$DIRP/" |sort)"
+	for KEY in ALTBOOT $VARS; do
+		eval "local $KEY="
+	done
+
+	# Parse AUTOMATIC=
+	while [ -n "$LINE" ]; do
+		PART="${LINE%%,*}"
+		KEY="${PART%%:*}"
+		VALUE="${PART#$KEY:}"
+		LINE="${LINE#$PART}"
+		LINE="${LINE#,}"
+
+		for PART in $VARS; do
+			if [ "$PART" = "$KEY" ]; then
+				eval "$KEY=\"$VALUE\""
+				break
+			fi
+		done
+	done
+
+	# Check parsed values
+	use_hooks automatic.d
+
+	# Register boot methods
+	use_hooks add-methods.d
+
+	# Check boot method
+	case "$method" in
+	''|auto)
+		altboot_method_choice
+		;;
+	url)
+		;;
+	*)
+		PART=
+		for KEY in $METHODS_LIST; do
+			if [ "$KEY" = "$method" ]; then
+				PART=1
+				break
+			fi
+		done
+		if [ -z "$PART" ]; then
+			message "unsupported $PROG method specified: '$method'"
+			altboot_method_choice
+		fi
+		;;
+	esac
+
+	# Reset global ALTBOOT arguments
+	DIRP="$altboot_hooksdir/global-args.d"
+	VARS="$(run ls -1 -- "$DIRP/" |sort)"
+	VALUE=
+
+	for KEY in $VARS; do
+		eval "local ALTBOOT_${KEY}0="
+	done
+
+	# Convert AUTOMATIC= to ALTBOOT*=
+	use_hooks translate.d
+
+	# Replace bootchain by altboot steps
+	next_bootchain "noretry,$ALTBOOT,rootfs"
+
+	{ printf 'ALTBOOT_OLDROOT=1\n'
+	  printf 'ALTBOOT_STEPS="%s"\n' "${ALTBOOT//,/ }"
+
+	  for KEY in $VARS; do
+		eval "VALUE=\"\${ALTBOOT_${KEY}0}\""
+		printf 'ALTBOOT_%s0="%s"\n' "$KEY" "$VALUE"
+		printf 'ALTBOOT_%s=%s\n' "$KEY" "${VALUE:+1}"
+	  done
+
+	} >"$altboot_parsed"
+
+	leave "altboot_config"
+}
+
+
+# Entry point
+launch_step_once
+debug "$PROG started (automatic='$AUTOMATIC', stagename='$STAGENAME')"
+
+[ -n "$STAGENAME" ] ||
+	fatal "stagename required or OEM_DEFAULT_STAGE2 must be defined"
+debug "WELCOME TEXT: '$OEM_WELCOME_TEXT'"
+debug "DISTRIBUTION: '$OEM_DISTRIBUTION'"
+
+[ "$AUTOMATIC" != 0 ] ||
+	AUTOMATIC="method:auto"
+[ -n "$AUTOMATIC" ] && altboot_config ||
+	:> "$altboot_parsed"
+use_hooks forget-args.d >>"$altboot_parsed"
+debug "$PROG steps configuration ($altboot_parsed):"
+fdump "$altboot_parsed"
+IM_update_bootsplash "prepare"
+
+# shellcheck disable=SC2119
+bypass_results
+:> "$BC_PASSED/$PROG"
+debug "$PROG finished"

@@ -1,0 +1,182 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+check_parameter ALTBOOT_NFS
+
+b_a()
+{
+	get_bootarg NFS $1
+}
+
+b_a server
+b_a directory
+b_a timeout
+b_a options
+
+
+nfs_input_form()
+{
+	enter "nfs_input_form"
+
+	local title="[ NFS-server connection data ]"
+
+	local text="Please enter the name or IP address of the"
+	text="$text NFS-server, and the directory (or ISO image"
+	text="$text file) containing the $OEM_DISTRIBUTION."
+
+	while :; do
+		IM_form "$title" "$text" 3		\
+			server     64 "NFS-server"	\
+			directory 128 "Directory"	\
+			options    64 "Mount options"	\
+			||
+			continue
+		if [ -z "$server" ]; then
+			IM_errmsg "Valid NFS-server required!"
+		elif [ -z "$directory" ]; then
+			IM_errmsg "Valid Directory required!"
+		elif [ -n "${server//[^[:space:]]/}" ]; then
+			IM_errmsg "Invalid NFS-server: '$server'!"
+		elif [ -n "${directory//[^[:space:]]/}" ] ||
+			[ -n "$directory" -a "${directory:0:1}" != "/" ]
+		then
+			IM_errmsg "Invalid Directory: '$directory'!"
+		else
+			break
+		fi
+	done
+
+	leave "nfs_input_form"
+}
+
+is_server_online()
+{
+	[ -n "$server" -a -n "$directory" ] ||
+		return 1
+	enter "is_server_online"
+
+	local rc=0 opts="${options-}"
+	local mp="$datadir" image="$destdir"
+	local dirty=0 isofile= dirpart="$directory"
+
+	if [ -n "$ALTBOOT_STAGE2COMPAT" ]; then
+		image="${OEM_CDIMAGE_PATH:-/image}"
+		mp="/root"
+	fi
+
+	[ -n "$opts" ] ||
+		opts="${NFSOPTS:-soft,nolock,retrans=10}"
+	run mkdir -p -- "$mp" "$image"
+	run mount.nfs "$server:$dirpart" "$mp" -o "ro,$opts" || rc=1
+
+	if [ "$rc" != 0 ]; then
+		message "can't mount directory from the NFS-server"
+
+		isofile="${dirpart##*/}"
+
+		if [ -z "$isofile" -o "$isofile" = "$dirpart" ]; then
+			leave "is_server_online"
+			return 1
+		fi
+
+		dirpart="${dirpart%/$isofile}"
+
+		if [ -z "$dirpart" ]; then
+			leave "is_server_online"
+			return 1
+		fi
+
+		rc=0
+		message "assuming ISO-image, NFS-path: '$server:$dirpart'"
+		run mount.nfs "$server:$dirpart" "$mp" -o "ro,$opts" || rc=1
+	fi
+
+	if [ "$rc" != 0 ]; then
+		leave "is_server_online"
+		return 1
+	fi
+
+	message "$server:$dirpart has mounted successfully"
+
+	if [ -z "$isofile" ]; then
+		run mount --move -- "$mp" "$image" || rc=1
+	elif [ ! -r "${mp}${directory}" ]; then
+		message "however specified ISO-image not found: '$isofile'"
+		rc=1
+	else
+		lomount "" "${mp}${directory}" "$image" || rc=1
+		dirty=1
+	fi
+
+	if [ "$rc" != 0 ]; then
+		message "$server:$dirpart will be unmounted"
+		run umount -fl -- "$mp"
+		leave "is_server_online"
+		return 1
+	fi
+
+	if [ -n "$ALTBOOT_STAGE2COMPAT" ]; then
+		stage2_setenv METHOD "nfs"
+		stage2_setenv HOST "$server"
+		stage2_setenv PREFIX "$directory"
+		[ "$dirty" = 0 ] ||
+			stage2_setenv PIGGYBACK 1
+		passthru_results "$image"
+	fi
+
+	leave "is_server_online"
+}
+
+start_connection()
+{
+	IM_ponder_start "[ Connecting... ]"
+}
+
+connection_loop()
+{
+	[ -z "$NOASK" ] || [ -n "$server" -a -n "$directory" ] ||
+		fatal "server/directory not specified, dialogs are disabled"
+	enter "connection_loop"
+
+	IM_on
+
+	[ -n "$NOASK" ] || [ -n "$server" -a -n "$directory" ] ||
+		nfs_input_form
+	start_connection
+
+	local i=0
+
+	while ! is_server_online; do
+		if [ "$i" -ge "$timeout" ]; then
+			IM_ponder_stop
+
+			if [ -z "$NOASK" ]; then
+				IM_errmsg "Connection timeout, try again!"
+				nfs_input_form
+			else
+				message "connection timeout, dialogs are disabled"
+				leave "connection_loop"
+				IM_die "specified NFS-server does not responds"
+			fi
+
+			debug "connection timeout, go to the next ring"
+			start_connection
+			i=0
+			continue
+		fi
+
+		i=$((1 + $i))
+		sleep 1
+	done
+
+	IM_ponder_stop
+	IM off
+
+	leave "connection_loop"
+}
+
+
+# Entry point
+timeout="${timeout:-20}"
+is_server_online || connection_loop

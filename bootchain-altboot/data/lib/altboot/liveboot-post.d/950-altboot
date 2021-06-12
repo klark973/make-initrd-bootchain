@@ -1,0 +1,25 @@
+#!/bin/bash -efu
+
+altboot_cleanup()
+{
+	enter "altboot_cleanup"
+
+	local mp
+
+	if grep -qs " $mntdir/" /proc/mounts; then
+		grep -s " $mntdir/" /proc/mounts |
+			cut -f2 -d' ' |
+			sort -r |
+		while read -r mp; do
+			run umount -- "$mp" ||:
+		done
+	fi
+
+	[ ! -s "$altboot_envfile" ] ||
+		cat "$altboot_envfile" >> /.initrd/kernenv
+	message "Spawning init..."
+
+	leave "altboot_cleanup"
+}
+
+[ -z "$ALTBOOT_OLDROOT" ] || altboot_cleanup

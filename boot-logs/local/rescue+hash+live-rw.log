@@ -1,0 +1,600 @@
+[2021-05-30 16:19:34] bootchained: Starting server [INITRAMFS 2.16.0]...
+[2021-05-30 16:19:34] bootchained: Booting with /proc/cmdline:
+============================================================
+BOOT_IMAGE=/boot/vmlinuz fastboot live root=bootchain bootchain=fg,altboot bc_debug automatic=method:cdrom,uuid:2021-05-30-12-55-00-00 stagename=rescue ramdisk_size=497773 splash=0 showopts max_loop=16 forensic hash=613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec live_rw
+============================================================
+
+[2021-05-30 16:19:34] bootchained: RUN: mkdir -p -- /dev/bootchain /.initrd/bootchain/passed
+[2021-05-30 16:19:34] bootchained: RUN: mount -t tmpfs tmpfs /dev/bootchain
+[2021-05-30 16:19:34] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:34] bootchain-loop: [0] Switching to foreground
+[2021-05-30 16:19:34] bootchain-loop: LET: callnum_fg="1"
+[2021-05-30 16:19:34] bootchain-loop: TTY2 will be activated after 2 seconds
+[2021-05-30 16:19:35] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:35] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step0 /dev/bootchain/dst/step0
+[2021-05-30 16:19:35] bootchain-loop: [0] Handler: /lib/bootchain/altboot
+[2021-05-30 16:19:35] debug: debug for altboot [0] started
+[2021-05-30 16:19:35] debug: PREV DIR: 
+[2021-05-30 16:19:35] debug: Data DIR: /dev/bootchain/src/step0
+[2021-05-30 16:19:35] debug: DEST DIR: /dev/bootchain/dst/step0
+############################################################
+[2021-05-30 16:19:35] debug: debug for altboot [0] finished
+[2021-05-30 16:19:35] bootchain-loop: RUN: /lib/bootchain/altboot
+[2021-05-30 16:19:35] altboot: [0] altboot started (automatic='method:cdrom,uuid:2021-05-30-12-55-00-00')
+[2021-05-30 16:19:35] altboot: [0] WELCOME TEXT: 'Welcome to ALT!'
+[2021-05-30 16:19:35] altboot: [0] DISTRIBUTION: 'ALT Workstation 10'
+[2021-05-30 16:19:35] altboot: [0] ENTER: altboot_config
+[2021-05-30 16:19:35] altboot: [0] RUN: ls -1 -- /lib/altboot/automatic.d/
+[2021-05-30 16:19:35] altboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:35] altboot: [0] HOOKS: 'automatic.d'
+[2021-05-30 16:19:35] altboot: [0] USING: 'automatic.d/directory'
+[2021-05-30 16:19:35] altboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:35] altboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:35] altboot: [0] HOOKS: 'add-methods.d'
+[2021-05-30 16:19:35] altboot: [0] USING: 'add-methods.d/100-nfs'
+[2021-05-30 16:19:35] altboot: [0] boot method registered: 'nfs'
+[2021-05-30 16:19:35] altboot: [0] USING: 'add-methods.d/150-ftp'
+[2021-05-30 16:19:35] altboot: [0] boot method registered: 'ftp'
+[2021-05-30 16:19:35] altboot: [0] USING: 'add-methods.d/250-http'
+[2021-05-30 16:19:35] altboot: [0] boot method registered: 'http'
+[2021-05-30 16:19:35] altboot: [0] USING: 'add-methods.d/450-cifs'
+[2021-05-30 16:19:35] altboot: [0] boot method registered: 'cifs'
+[2021-05-30 16:19:35] altboot: [0] USING: 'add-methods.d/750-cdrom'
+[2021-05-30 16:19:35] altboot: [0] boot method registered: 'cdrom'
+[2021-05-30 16:19:35] altboot: [0] USING: 'add-methods.d/850-disk'
+[2021-05-30 16:19:35] altboot: [0] boot method registered: 'disk'
+[2021-05-30 16:19:35] altboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:35] altboot: [0] RUN: ls -1 -- /lib/altboot/global-args.d/
+[2021-05-30 16:19:35] altboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:35] altboot: [0] HOOKS: 'translate.d'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/050-overlays'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/070-lowmem'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/100-cifs'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/100-download'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/100-localdev'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/100-nfs'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/350-squashfs'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/520-liverw'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/550-liveboot'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/650-liverw'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/750-liveboot'
+[2021-05-30 16:19:35] altboot: [0] USING: 'translate.d/950-liveboot'
+[2021-05-30 16:19:35] altboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:35] altboot: [0] BOOTCHAIN REPLACED: 'localdev,download,checksum,squashfs,liveboot,rootfs'
+[2021-05-30 16:19:35] altboot: [0] LEAVE: altboot_config
+[2021-05-30 16:19:35] altboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:35] altboot: [0] HOOKS: 'forget-args.d'
+[2021-05-30 16:19:35] altboot: [0] USING: 'forget-args.d/100-altboot'
+[2021-05-30 16:19:35] altboot: [0] USING: 'forget-args.d/300-localdev'
+[2021-05-30 16:19:35] altboot: [0] USING: 'forget-args.d/400-liverw'
+[2021-05-30 16:19:35] altboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:35] altboot: [0] altboot steps configuration (/.initrd/bootchain/altboot.conf):
+============================================================
+ALTBOOT_OLDROOT=1
+ALTBOOT_STEPS="localdev download checksum squashfs liveboot"
+ALTBOOT_CHECKSUM0="613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec"
+ALTBOOT_CHECKSUM=1
+ALTBOOT_CIFS0=""
+ALTBOOT_CIFS=
+ALTBOOT_DOWNLOAD0="to=RD;method=url;url=file:///rescue"
+ALTBOOT_DOWNLOAD=1
+ALTBOOT_LIVEBOOT0="stagename=rescue;method=cdrom;flags=live_ro,rescue,live_rw"
+ALTBOOT_LIVEBOOT=1
+ALTBOOT_LOCALDEV0="method=cdrom;uuid=2021-05-30-12-55-00-00;directory=/rescue"
+ALTBOOT_LOCALDEV=1
+ALTBOOT_NFS0=""
+ALTBOOT_NFS=
+ALTBOOT_SQUASHFS0="-"
+ALTBOOT_SQUASHFS=1
+unset AUTOMATIC
+unset STAGENAME
+unset PROFILE
+unset HASH
+unset RESCUE
+unset LIVE
+unset LOWMEM
+unset UPDATEMODULES
+unset LIVE_RW
+============================================================
+
+[2021-05-30 16:19:35] altboot: [0] ENTER: bypass_results
+[2021-05-30 16:19:35] altboot: [0] LEAVE: bypass_results
+[2021-05-30 16:19:35] altboot: [0] altboot finished
+[2021-05-30 16:19:35] bootchain-loop: chain will be reloaded by /.initrd/bootchain/bootchain.next:
+============================================================
+chainsteps="localdev,download,checksum,squashfs,liveboot,rootfs"
+============================================================
+
+[2021-05-30 16:19:35] bootchain-loop: RUN: rm -f -- /.initrd/bootchain/bootchain.next
+[2021-05-30 16:19:35] bootchain-loop: remaining steps: localdev,download,checksum,squashfs,liveboot,rootfs
+[2021-05-30 16:19:35] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:35] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step1 /dev/bootchain/dst/step1
+[2021-05-30 16:19:35] bootchain-loop: [0] Handler: /lib/bootchain/localdev
+[2021-05-30 16:19:35] debug: debug for localdev [0] started
+[2021-05-30 16:19:35] debug: PREV DIR: /dev/bootchain/dst/step0
+[2021-05-30 16:19:35] debug: Data DIR: /dev/bootchain/src/step1
+[2021-05-30 16:19:35] debug: DEST DIR: /dev/bootchain/dst/step1
+##############################
+Previous step results (/dev/bootchain/dst/step0):
+##############################
+[2021-05-30 16:19:35] debug: debug for localdev [0] finished
+[2021-05-30 16:19:35] bootchain-loop: RUN: /lib/bootchain/localdev
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: method="cdrom"
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: disk=""
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: part=""
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: uuid="2021-05-30-12-55-00-00"
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: label=""
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: directory="/rescue"
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: timeout=""
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] ENTER: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] LET: options=""
+[2021-05-30 16:19:35] localdev: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:35] localdev: [0] localdev started (method=cdrom;uuid=2021-05-30-12-55-00-00;directory=/rescue)
+[2021-05-30 16:19:35] localdev: [0] ENTER: main_loop
+[2021-05-30 16:19:35] localdev: [0] Idle before scan devices
+[2021-05-30 16:19:36] localdev: [0] ENTER: scan_devices
+[2021-05-30 16:19:36] localdev: [0] probing device: /dev/sda (8:0)
+[2021-05-30 16:19:36] localdev: specified target found: /dev/sda (8:0)
+[2021-05-30 16:19:36] localdev: [0] LEAVE: scan_devices
+[2021-05-30 16:19:36] localdev: [0] ENTER: is_target_found
+[2021-05-30 16:19:36] localdev: [0] RUN: mkdir -p -- /image
+[2021-05-30 16:19:36] localdev: [0] RUN: mount -t iso9660 -o ro -- /dev/sda1 /image
+[2021-05-30 16:19:36] localdev: [0] CD-ROM target replaced to the first partition: /dev/sda1
+[2021-05-30 16:19:36] localdev: [0] ENTER: stage2_setenv
+[2021-05-30 16:19:36] localdev: [0] ARGS: DEVICE='sda1'
+[2021-05-30 16:19:36] localdev: [0] LEAVE: stage2_setenv
+[2021-05-30 16:19:36] localdev: [0] ENTER: stage2_setenv
+[2021-05-30 16:19:36] localdev: [0] ARGS: METHOD='cdrom'
+[2021-05-30 16:19:36] localdev: [0] LEAVE: stage2_setenv
+[2021-05-30 16:19:36] localdev: [0] ENTER: stage2_setenv
+[2021-05-30 16:19:36] localdev: [0] ARGS: PREFIX='/'
+[2021-05-30 16:19:36] localdev: [0] LEAVE: stage2_setenv
+[2021-05-30 16:19:36] localdev: [0] ENTER: bypass_results
+[2021-05-30 16:19:36] localdev: [0] RUN: rmdir -- /dev/bootchain/dst/step1
+[2021-05-30 16:19:36] localdev: [0] RUN: ln -snf -- /image /dev/bootchain/dst/step1
+[2021-05-30 16:19:36] localdev: [0] LEAVE: bypass_results
+[2021-05-30 16:19:36] localdev: [0] LEAVE: is_target_found
+[2021-05-30 16:19:36] localdev: [0] TARGET: '/dev/sda1'
+[2021-05-30 16:19:37] localdev: [0] LEAVE: main_loop
+[2021-05-30 16:19:37] localdev: [0] localdev finished
+[2021-05-30 16:19:37] bootchain-loop: RUN: touch /.initrd/bootchain/passed/localdev
+[2021-05-30 16:19:37] bootchain-loop: LET: callnum_localdev="1"
+[2021-05-30 16:19:37] bootchain-loop: remaining steps: download,checksum,squashfs,liveboot,rootfs
+[2021-05-30 16:19:37] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:37] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step2 /dev/bootchain/dst/step2
+[2021-05-30 16:19:37] bootchain-loop: [0] Handler: /lib/bootchain/download
+[2021-05-30 16:19:37] debug: debug for download [0] started
+[2021-05-30 16:19:37] debug: PREV DIR: /image
+[2021-05-30 16:19:37] debug: Data DIR: /dev/bootchain/src/step2
+[2021-05-30 16:19:37] debug: DEST DIR: /dev/bootchain/dst/step2
+##############################
+Previous step results (/image):
+2021-05-30-12-55-00-00
+EFI/
+boot/
+docs/
+license.all.html
+license.ru.html
+rescue
+##############################
+[2021-05-30 16:19:37] debug: debug for download [0] finished
+[2021-05-30 16:19:37] bootchain-loop: RUN: /lib/bootchain/download
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: to="RD"
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: method="url"
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: url="file:///rescue"
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: server=""
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: directory=""
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: user=""
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: pass=""
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: imgsize=""
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] ENTER: get_bootarg
+[2021-05-30 16:19:37] download: [0] LET: timeout=""
+[2021-05-30 16:19:37] download: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:37] download: [0] download started (to=RD;method=url;url=file:///rescue)
+[2021-05-30 16:19:37] download: [0] ENTER: get_free_ramdisk
+[2021-05-30 16:19:37] download: [0] LET: to="/dev/ram0"
+[2021-05-30 16:19:37] download: [0] LEAVE: get_free_ramdisk
+[2021-05-30 16:19:37] download: [0] ENTER: mark_used_ramdisk
+[2021-05-30 16:19:37] download: [0] RUN: mkdir -p -- /.initrd/ramdisks
+[2021-05-30 16:19:37] download: [0] RUN: touch -- /.initrd/ramdisks/0
+[2021-05-30 16:19:37] download: [0] LEAVE: mark_used_ramdisk
+[2021-05-30 16:19:37] download: [0] ENTER: get_file_size
+[2021-05-30 16:19:37] download: retrieving file size: '/image/rescue'
+[2021-05-30 16:19:37] download: [0] RUN: stat -L -c%s -- /image/rescue
+[2021-05-30 16:19:37] download: [0] LEAVE: get_file_size
+[2021-05-30 16:19:37] download: [0] ENTER: check_avail_space
+[2021-05-30 16:19:37] download: [0] LEAVE: check_avail_space
+[2021-05-30 16:19:37] download: [0] ENTER: download_image
+[2021-05-30 16:19:37] download: downloading image: '/image/rescue'
+[2021-05-30 16:19:38] download: [0] RUN: sync
+[2021-05-30 16:19:38] download: [0] LEAVE: download_image
+[2021-05-30 16:19:38] download: [0] ENTER: lomount
+[2021-05-30 16:19:38] download: [0] RUN: losetup -Lrf --show -- /dev/ram0
+[2021-05-30 16:19:38] download: [0] losetup('/dev/ram0') result: '/dev/loop0'
+[2021-05-30 16:19:38] download: [0] LET: devname="/dev/loop0"
+[2021-05-30 16:19:38] download: [0] LEAVE: lomount
+[2021-05-30 16:19:38] download: [0] DEVNAME: /dev/loop0
+[2021-05-30 16:19:38] download: [0] FILESIZE: 509718528
+[2021-05-30 16:19:38] download: [0] RUN: cp -a -- /dev/loop0 /dev/bootchain/dst/step2/dev
+[2021-05-30 16:19:38] download: [0] ENTER: stage2_getenv
+[2021-05-30 16:19:38] download: [0] KEY: 'METHOD'
+[2021-05-30 16:19:38] download: [0] stage2_getenv('METHOD') result: 'cdrom'
+[2021-05-30 16:19:38] download: [0] LEAVE: stage2_getenv
+[2021-05-30 16:19:38] download: [0] download finished
+[2021-05-30 16:19:38] bootchain-loop: RUN: touch /.initrd/bootchain/passed/download
+[2021-05-30 16:19:38] bootchain-loop: LET: callnum_download="1"
+[2021-05-30 16:19:38] bootchain-loop: remaining steps: checksum,squashfs,liveboot,rootfs
+[2021-05-30 16:19:38] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:38] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step3 /dev/bootchain/dst/step3
+[2021-05-30 16:19:38] bootchain-loop: [0] Handler: /lib/bootchain/checksum
+[2021-05-30 16:19:38] debug: debug for checksum [0] started
+[2021-05-30 16:19:38] debug: PREV DIR: /dev/bootchain/dst/step2
+[2021-05-30 16:19:38] debug: Data DIR: /dev/bootchain/src/step3
+[2021-05-30 16:19:38] debug: DEST DIR: /dev/bootchain/dst/step3
+##############################
+Previous step results (/dev/bootchain/dst/step2):
+dev (7:0 -> /dev/loop0)
+DEVNAME (7:0 -> /dev/loop0)
+FILESIZE (509718528)
+##############################
+[2021-05-30 16:19:38] debug: debug for checksum [0] finished
+[2021-05-30 16:19:38] bootchain-loop: RUN: /lib/bootchain/checksum
+[2021-05-30 16:19:38] checksum: [0] ENTER: get_bootarg
+[2021-05-30 16:19:38] checksum: [0] LET: CHECKSUM="613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec"
+[2021-05-30 16:19:38] checksum: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:38] checksum: [0] checksum started (613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec)
+[2021-05-30 16:19:38] checksum: [0] ENTER: check_prevstep_results
+[2021-05-30 16:19:38] checksum: [0] LEAVE: check_prevstep_results
+[2021-05-30 16:19:38] checksum: [0] hash summa: 613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec
+[2021-05-30 16:19:38] checksum: [0] hash data size: 509718528
+[2021-05-30 16:19:38] checksum: [0] hash check program: sha256sum
+[2021-05-30 16:19:38] checksum: calculating image checksum for '/dev/loop0'...
+[2021-05-30 16:19:41] checksum: [0] calculated hash: 613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec
+[2021-05-30 16:19:41] checksum: checksum verified successfully
+[2021-05-30 16:19:41] checksum: [0] ENTER: bypass_results
+[2021-05-30 16:19:41] checksum: [0] RUN: rmdir -- /dev/bootchain/dst/step3
+[2021-05-30 16:19:41] checksum: [0] RUN: mv -f -- /dev/bootchain/dst/step2 /dev/bootchain/dst/step3
+[2021-05-30 16:19:41] checksum: [0] LEAVE: bypass_results
+[2021-05-30 16:19:41] checksum: [0] checksum finished
+[2021-05-30 16:19:41] bootchain-loop: RUN: touch /.initrd/bootchain/passed/checksum
+[2021-05-30 16:19:41] bootchain-loop: LET: callnum_checksum="1"
+[2021-05-30 16:19:41] bootchain-loop: remaining steps: squashfs,liveboot,rootfs
+[2021-05-30 16:19:41] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:41] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step4 /dev/bootchain/dst/step4
+[2021-05-30 16:19:41] bootchain-loop: [0] Handler: /lib/bootchain/squashfs
+[2021-05-30 16:19:41] debug: debug for squashfs [0] started
+[2021-05-30 16:19:41] debug: PREV DIR: /dev/bootchain/dst/step3
+[2021-05-30 16:19:41] debug: Data DIR: /dev/bootchain/src/step4
+[2021-05-30 16:19:41] debug: DEST DIR: /dev/bootchain/dst/step4
+##############################
+Previous step results (/dev/bootchain/dst/step3):
+dev (7:0 -> /dev/loop0)
+DEVNAME (7:0 -> /dev/loop0)
+FILESIZE (509718528)
+##############################
+[2021-05-30 16:19:41] debug: debug for squashfs [0] finished
+[2021-05-30 16:19:41] bootchain-loop: RUN: /lib/bootchain/squashfs
+[2021-05-30 16:19:41] squashfs: [0] ENTER: get_bootarg
+[2021-05-30 16:19:41] squashfs: [0] LET: SQUASHFS="-"
+[2021-05-30 16:19:41] squashfs: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:41] squashfs: [0] squashfs started (-)
+[2021-05-30 16:19:41] squashfs: [0] RUN: mount -t squashfs -r -- /dev/loop0 /root
+[2021-05-30 16:19:41] squashfs: [0] ENTER: bypass_results
+[2021-05-30 16:19:41] squashfs: [0] RUN: rmdir -- /dev/bootchain/dst/step4
+[2021-05-30 16:19:41] squashfs: [0] RUN: ln -snf -- /root /dev/bootchain/dst/step4
+[2021-05-30 16:19:41] squashfs: [0] LEAVE: bypass_results
+[2021-05-30 16:19:41] squashfs: [0] squashfs finished
+[2021-05-30 16:19:41] bootchain-loop: RUN: touch /.initrd/bootchain/passed/squashfs
+[2021-05-30 16:19:41] bootchain-loop: LET: callnum_squashfs="1"
+[2021-05-30 16:19:41] bootchain-loop: remaining steps: liveboot,rootfs
+[2021-05-30 16:19:41] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:41] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step5 /dev/bootchain/dst/step5
+[2021-05-30 16:19:41] bootchain-loop: [0] Handler: /lib/bootchain/liveboot
+[2021-05-30 16:19:41] debug: debug for liveboot [0] started
+[2021-05-30 16:19:41] debug: PREV DIR: /root
+[2021-05-30 16:19:41] debug: Data DIR: /dev/bootchain/src/step5
+[2021-05-30 16:19:41] debug: DEST DIR: /dev/bootchain/dst/step5
+##############################
+Previous step results (/root):
+bin/
+boot/
+dev/
+etc/
+home/
+image/
+lib/
+lib64/
+libx32/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+tmp/
+##############################
+[2021-05-30 16:19:41] debug: debug for liveboot [0] finished
+[2021-05-30 16:19:41] bootchain-loop: RUN: /lib/bootchain/liveboot
+[2021-05-30 16:19:41] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] LET: stagename="rescue"
+[2021-05-30 16:19:41] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] LET: method="cdrom"
+[2021-05-30 16:19:41] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] LET: directory=""
+[2021-05-30 16:19:41] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] LET: overlayroot=""
+[2021-05-30 16:19:41] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] LET: profile=""
+[2021-05-30 16:19:41] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:41] liveboot: [0] LET: overlays=""
+[2021-05-30 16:19:41] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:42] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:42] liveboot: [0] LET: flags="live_ro,rescue,live_rw"
+[2021-05-30 16:19:42] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:42] liveboot: [0] ENTER: get_bootarg
+[2021-05-30 16:19:42] liveboot: [0] LET: timeout=""
+[2021-05-30 16:19:42] liveboot: [0] LEAVE: get_bootarg
+[2021-05-30 16:19:42] liveboot: [0] liveboot started (stagename=rescue;method=cdrom;flags=live_ro,rescue,live_rw)
+[2021-05-30 16:19:42] liveboot: [0] RUN: ln -snf /proc/mounts /etc/mtab
+[2021-05-30 16:19:42] liveboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:42] liveboot: [0] HOOKS: 'liveboot-init.d'
+[2021-05-30 16:19:42] liveboot: [0] USING: 'liveboot-init.d/100-overlayroot'
+[2021-05-30 16:19:42] liveboot: [0] USING: 'liveboot-init.d/400-liverw'
+[2021-05-30 16:19:42] liveboot: [0] USING: 'liveboot-init.d/700-cifs'
+[2021-05-30 16:19:42] liveboot: [0] USING: 'liveboot-init.d/700-nfs'
+[2021-05-30 16:19:42] liveboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:42] liveboot: running rescue
+[2021-05-30 16:19:42] liveboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:42] liveboot: [0] HOOKS: 'liveboot-pre.d'
+[2021-05-30 16:19:42] liveboot: [0] USING: 'liveboot-pre.d/400-liverw'
+[2021-05-30 16:19:42] liveboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:42] liveboot: [0] ENTER: do_overlay
+[2021-05-30 16:19:42] liveboot: remounting / with overlayfs
+[2021-05-30 16:19:42] liveboot: [0] RUN: mkdir -p -- /root.rw /root.ro
+[2021-05-30 16:19:42] liveboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:42] liveboot: [0] HOOKS: 'rw-overlay.d'
+[2021-05-30 16:19:42] liveboot: [0] USING: 'rw-overlay.d/100-overlayroot'
+[2021-05-30 16:19:42] liveboot: [0] USING: 'rw-overlay.d/400-liverw'
+[2021-05-30 16:19:42] liveboot: [0] ENTER: liverw_disk_slice
+[2021-05-30 16:19:42] liveboot: [0] ENTER: create_disk_slice
+[2021-05-30 16:19:42] liveboot: [0] ENTER: stage2_getenv
+[2021-05-30 16:19:42] liveboot: [0] KEY: 'DEVICE'
+[2021-05-30 16:19:42] liveboot: [0] stage2_getenv('DEVICE') result: 'sda1'
+[2021-05-30 16:19:42] liveboot: [0] LEAVE: stage2_getenv
+[2021-05-30 16:19:42] liveboot: [0] whole disk drive: '/dev/sda'
+[2021-05-30 16:19:42] liveboot: [0] RUN: mktemp -t
+[2021-05-30 16:19:42] liveboot: [0] writing tmpfile: '/tmp/tmp.JZhbrx'
+[2021-05-30 16:19:42] liveboot: searching unpartitioned space on the drive /dev/sda
+[2021-05-30 16:19:42] liveboot: [0] RUN: sfdisk -F -- /dev/sda
+============================================================
+GPT PMBR size mismatch (1193491 != 8388607) will be corrected by write.
+The backup GPT table is not on the end of the device.
+Unpartitioned space /dev/sda: 0 B, 0 bytes, 0 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+============================================================
+
+[2021-05-30 16:19:42] liveboot: [0] RUN: sfdisk -f --relocate gpt-bak-std -- /dev/sda
+============================================================
+GPT PMBR size mismatch (1193491 != 8388607) will be corrected by write.
+The backup GPT table is not on the end of the device. This problem will be corrected by write.
+
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Re-reading the partition table failed.: Device or resource busy
+The kernel still uses the old table. The new table will be used at the next reboot or after you run partprobe(8) or partx(8).
+Syncing disks.
+============================================================
+
+[2021-05-30 16:19:42] liveboot: [0] RUN: sfdisk -F -- /dev/sda
+============================================================
+Unpartitioned space /dev/sda: 3.43 GiB, 3683615232 bytes, 7194561 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+
+  Start     End Sectors  Size
+1193984 8388544 7194561  3.4G
+============================================================
+
+[2021-05-30 16:19:42] liveboot: [0] unpartitioned space on the /dev/sda: 3683615232 bytes
+[2021-05-30 16:19:42] liveboot: creating a new partition on the drive /dev/sda
+[2021-05-30 16:19:42] liveboot: [0] RUN: echo ',' |sfdisk -f -a --no-reread --no-tell-kernel -- /dev/sda
+============================================================
+The device contains 'iso9660' signature and it may remain on the device. It is recommended to wipe the device with wipefs(8) or sfdisk --wipe, in order to avoid possible collisions.
+
+Disk /dev/sda: 4 GiB, 4294967296 bytes, 8388608 sectors
+Disk model: QEMU HARDDISK   
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: B7582812-DAF6-439E-BD99-5B1CBDDB0974
+
+Old situation:
+
+Device       Start     End Sectors   Size Type
+/dev/sda1       64 1178363 1178300 575.3M Microsoft basic data
+/dev/sda2  1178364 1192827   14464   7.1M EFI System
+/dev/sda3  1192828 1193427     600   300K Microsoft basic data
+
+/dev/sda4: Created a new partition 4 of type 'Linux filesystem' and of size 3.4 GiB.
+/dev/sda5: Done.
+
+New situation:
+Disklabel type: gpt
+Disk identifier: B7582812-DAF6-439E-BD99-5B1CBDDB0974
+
+Device       Start     End Sectors   Size Type
+/dev/sda1       64 1178363 1178300 575.3M Microsoft basic data
+/dev/sda2  1178364 1192827   14464   7.1M EFI System
+/dev/sda3  1192828 1193427     600   300K Microsoft basic data
+/dev/sda4  1193984 8388544 7194561   3.4G Linux filesystem
+
+The partition table has been altered.
+============================================================
+
+[2021-05-30 16:19:43] liveboot: new partition device: '/dev/sda4'
+[2021-05-30 16:19:43] liveboot: [0] RUN: rm -f -- /tmp/tmp.JZhbrx
+[2021-05-30 16:19:43] liveboot: [0] RUN: sfdisk -f -l -- /dev/sda
+[2021-05-30 16:19:43] liveboot: [0] RUN: addpart /dev/sda 4 1193984 7194561
+[2021-05-30 16:19:43] liveboot: creating filesystem on /dev/sda4
+[2021-05-30 16:19:43] liveboot: [0] RUN: mke2fs -t ext4 -O ^has_journal,sparse_super2 -E packed_meta_blocks=1,num_backup_sb=1 -L alt-live-storage -- /dev/sda4
+mke2fs 1.45.6 (20-Mar-2020)
+Discarding device blocks:   4096/899320             done                            
+Creating filesystem with 899320 4k blocks and 224896 inodes
+Filesystem UUID: 34379dba-2f3c-4188-865c-17a8403b1cc8
+Superblock backups stored on blocks: 
+	32768
+
+Allocating group tables: done                            
+Writing inode tables:  0/28     done                            
+Writing superblocks and filesystem accounting information:  0/28     done
+
+[2021-05-30 16:19:45] liveboot: [0] in create_disk_slice(): mke2fs success
+[2021-05-30 16:19:45] liveboot: [0] RUN: udevadm trigger -- /dev/sda4
+[2021-05-30 16:19:45] liveboot: [0] RUN: udevadm settle -t5 -- /dev/sda4
+[2021-05-30 16:19:45] liveboot: [0] LEAVE: create_disk_slice
+[2021-05-30 16:19:45] liveboot: [0] ENTER: mount_disk_slice
+[2021-05-30 16:19:45] liveboot: [0] RUN: mount -o noatime,nodiratime,barrier=0,delalloc,nobh,errors=remount-ro -- /dev/sda4 /root.rw
+[2021-05-30 16:19:45] liveboot: [0] LEAVE: mount_disk_slice
+[2021-05-30 16:19:45] liveboot: [0] LEAVE: liverw_disk_slice
+[2021-05-30 16:19:45] liveboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:45] liveboot: [0] RUN: mkdir -p -- /root.rw/rw /root.rw/wk
+[2021-05-30 16:19:46] liveboot: [0] RUN: mount --move -- /root /root.ro
+[2021-05-30 16:19:46] liveboot: [0] RUN: mount -t overlay -o lowerdir=/root.ro,upperdir=/root.rw/rw,workdir=/root.rw/wk -- overlay /root
+[2021-05-30 16:19:46] liveboot: [0] RUN: mkdir -p -- /root/.ro /root/.rw
+[2021-05-30 16:19:46] liveboot: [0] RUN: mount --move -- /root.ro /root/.ro
+[2021-05-30 16:19:46] liveboot: [0] RUN: mount --move -- /root.rw /root/.rw
+[2021-05-30 16:19:46] liveboot: [0] RUN: rmdir -- /root.rw /root.ro
+[2021-05-30 16:19:46] liveboot: rootfs overlayed with overlayfs
+[2021-05-30 16:19:46] liveboot: [0] RUN: mkdir -p -- /root/image
+[2021-05-30 16:19:46] liveboot: [0] RUN: mount --move -- /image /root/image
+[2021-05-30 16:19:46] liveboot: [0] ENTER: use_hooks
+[2021-05-30 16:19:46] liveboot: [0] HOOKS: 'liveboot-post.d'
+[2021-05-30 16:19:46] liveboot: [0] USING: 'liveboot-post.d/950-altboot'
+[2021-05-30 16:19:46] liveboot: [0] ENTER: altboot_cleanup
+[2021-05-30 16:19:46] liveboot: Spawning init...
+[2021-05-30 16:19:46] liveboot: [0] LEAVE: altboot_cleanup
+[2021-05-30 16:19:46] liveboot: [0] LEAVE: use_hooks
+[2021-05-30 16:19:46] liveboot: [0] RUN: cp -Lf -- /etc/resolv.conf /root/etc/
+[2021-05-30 16:19:46] liveboot: [0] ENTER: bypass_results
+[2021-05-30 16:19:46] liveboot: [0] RUN: rmdir -- /dev/bootchain/dst/step5
+[2021-05-30 16:19:46] liveboot: [0] RUN: ln -snf -- /root /dev/bootchain/dst/step5
+[2021-05-30 16:19:46] liveboot: [0] LEAVE: bypass_results
+[2021-05-30 16:19:46] liveboot: [0] LEAVE: do_overlay
+[2021-05-30 16:19:46] liveboot: [0] liveboot finished
+[2021-05-30 16:19:46] bootchain-loop: RUN: touch /.initrd/bootchain/passed/liveboot
+[2021-05-30 16:19:46] bootchain-loop: LET: callnum_liveboot="1"
+[2021-05-30 16:19:46] bootchain-loop: remaining steps: rootfs
+[2021-05-30 16:19:46] bootchain-loop: LET: callnum="0"
+[2021-05-30 16:19:46] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step6 /dev/bootchain/dst/step6
+[2021-05-30 16:19:46] bootchain-loop: [0] Handler: /lib/bootchain/rootfs
+[2021-05-30 16:19:46] debug: debug for rootfs [0] started
+[2021-05-30 16:19:46] debug: PREV DIR: /root
+[2021-05-30 16:19:46] debug: Data DIR: /dev/bootchain/src/step6
+[2021-05-30 16:19:46] debug: DEST DIR: /dev/bootchain/dst/step6
+##############################
+Previous step results (/root):
+bin/
+boot/
+dev/
+etc/
+home/
+image/
+lib/
+lib64/
+libx32/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+tmp/
+
+Mount points and devices:
+/dev/sda1 on /root/image type iso9660 (ro,relatime,nojoliet,check=s,map=n,blocksize=2048)
+/dev/loop0 on /root/.ro type squashfs (ro,relatime)
+/dev/sda4 on /root/.rw type ext4 (rw,noatime,nodiratime,nobarrier,errors=remount-ro)
+##############################
+[2021-05-30 16:19:46] debug: debug for rootfs [0] finished
+[2021-05-30 16:19:46] bootchain-loop: RUN: /lib/bootchain/rootfs
+[2021-05-30 16:19:46] bootchain-loop: RUN: touch /.initrd/bootchain/passed/rootfs
+[2021-05-30 16:19:46] bootchain-loop: [0] Handler: /lib/bootchain/debug
+[2021-05-30 16:19:46] debug: debug for STAGE2 [0] started
+[2021-05-30 16:19:46] debug: PREV DIR: /root
+[2021-05-30 16:19:46] debug: Data DIR: 
+[2021-05-30 16:19:46] debug: DEST DIR: 
+##############################
+Previous step results (/root):
+bin/
+boot/
+dev/
+etc/
+home/
+image/
+lib/
+lib64/
+libx32/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+tmp/
+
+Mount points and devices:
+/dev/sda1 on /root/image type iso9660 (ro,relatime,nojoliet,check=s,map=n,blocksize=2048)
+/dev/loop0 on /root/.ro type squashfs (ro,relatime)
+/dev/sda4 on /root/.rw type ext4 (rw,noatime,nodiratime,nobarrier,errors=remount-ro)
+##############################
+[2021-05-30 16:19:46] debug: debug for STAGE2 [0] finished
+[2021-05-30 16:19:46] bootchain-loop: RUN: cp -Lf -- /var/log/bootchained.log /root/var/log/

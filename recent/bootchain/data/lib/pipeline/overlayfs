@@ -1,0 +1,26 @@
+#!/bin/bash -efu
+
+. pipeline-sh-functions
+
+target="$(get_parameter OVERLAYFS)"
+
+[ -n "$target" ] || [ -n "$prevdir" ] ||
+	fatal "no previous step to use as lower directory"
+
+pipe="${target:-$prevdir}"
+lowerdirs=
+
+while [ -n "$pipe" ]; do
+	name="${pipe%%,*}"
+
+	dir="$(resolve_target "$name")"
+	lowerdirs="${lowerdirs:+$lowerdirs,}$dir"
+
+	pipe="${pipe#$name}"
+	pipe="${pipe#,}"
+done
+
+mkdir -p -- "$datadir/rw" "$datadir/work"
+
+run mount -o "lowerdir=$lowerdirs,upperdir=$datadir/rw,workdir=$datadir/work" \
+	-t overlay overlay "$destdir"

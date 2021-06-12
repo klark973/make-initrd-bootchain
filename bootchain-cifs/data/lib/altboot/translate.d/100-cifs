@@ -1,0 +1,18 @@
+#!/bin/bash -efu
+
+if [ "$method" = cifs ]; then
+	VALUE="server=$server"
+	[ -z "$directory" ] ||
+		VALUE="$VALUE;directory=$directory"
+	[ -z "$timeout" ] ||
+		VALUE="$VALUE;timeout=$timeout"
+	[ -z "$options" ] ||
+		VALUE="$VALUE;options=$options"
+	[ -z "$domain" ] ||
+		VALUE="$VALUE;domain=$domain"
+	[ -z "$user" ] ||
+		VALUE="$VALUE;user=$user;pass=$pass"
+	ALTBOOT_CIFS0="$VALUE"
+	ALTBOOT=cifs
+	VALUE=
+fi

@@ -1,0 +1,123 @@
+#!/bin/bash -efu
+
+# TODO: read additional machine data for non-x86 platforms
+
+show_help()
+{
+	cat <<-EOF
+	Usage: $0 [<options>]
+
+	Options:
+	-d, --drivers   Show drivers set unique ID
+	-i, --instance  Show hardware instance unique ID
+	-h, --help      Show this help message
+	EOF
+	exit 0
+}
+
+# Use DMI fields only on hardware that supports it
+
+show_dmi_info()
+{
+	local objects="bios_vendor board_name board_vendor board_version"
+	objects="$objects chassis_type chassis_vendor chassis_version sys_vendor"
+	objects="$objects product_family product_name product_sku product_version"
+	local f d dmi=/sys/class/dmi/id
+
+	[ -d "$dmi" ] ||
+		dmi=/sys/devices/virtual/dmi/id
+	[ -d "$dmi" ] ||
+		return 0
+	[ -z "${1-}" ] ||
+		objects="$objects product_uuid bios_version board_serial chassis_serial"
+
+	for f in $objects; do
+		[ -r "$dmi/$f" ] ||
+			continue
+		read -r d <"$dmi/$f"
+		[ -n "${d//[[:space:]]*/}" ] ||
+			continue
+		printf '%s: %s\n' "$f" "$d"
+	done
+}
+
+# Accessing PCI device resources through sysfs, see:
+# https://www.kernel.org/doc/html/latest/PCI/sysfs-pci.html
+# We reading fields, such as class, device, etc... as PCI ID's
+# (bus codes) according to Conventional PCI 3.0 specification.
+
+scan_pci_bus()
+{
+	local sysfs d h="[0-9a-f]"
+	local glob="$h$h$h$h\:$h$h\:$h$h.$h"
+
+	handle_field()
+	{
+		[ -r "$sysfs/$1" ] && read -r d <"$sysfs/$1" || d="-"
+		printf " %s" "$d"
+	}
+
+	find /sys/devices -mindepth 2 -maxdepth 2 -type d -name "$glob" |
+		grep '/sys/devices/pci' |
+		sort |
+	while read -r sysfs; do
+		printf "%s" "${sysfs##*/}"
+		handle_field class
+		handle_field vendor
+		handle_field device
+		handle_field subsystem_vendor
+		handle_field subsystem_device
+		handle_field revision
+		printf '\n'
+	done
+}
+
+show_cpu_info()
+{
+	local regex="vendor_id|cpu family|model"
+	regex="$regex|siblings|stepping|microcode"
+	regex="$regex|cache size|cpu cores|clflush size"
+	regex="$regex|cache_alignment|address sizes"
+
+	if [ -r /proc/cpuinfo ]; then
+		grep -E "^($regex)" /proc/cpuinfo |
+			sort -u |
+			sed -e 's/[[:space:]]*:/:/g'
+	fi
+}
+
+show_hw_info()
+{
+	printf 'platform: '
+	uname -m
+	show_dmi_info
+	scan_pci_bus
+}
+
+show_instance_info()
+{
+	printf 'platform: '
+	uname -m
+	show_cpu_info
+	show_dmi_info instance
+	scan_pci_bus
+}
+
+
+# Entry point
+case "${1-}" in
+-d|--drivers)
+	show_hw_info |sha256sum |cut -f1 -d' '
+	;;
+-i|--instance)
+	show_instance_info |sha256sum |cut -f1 -d' '
+	;;
+-h|--help)
+	show_help
+	;;
+*)	printf 'Hardware info:\n'
+	show_hw_info
+	printf '\nInstance info:\n'
+	show_instance_info
+	;;
+esac

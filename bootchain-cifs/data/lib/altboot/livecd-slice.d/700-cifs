@@ -1,0 +1,66 @@
+#!/bin/bash -efu
+
+cifs_slice()
+{
+	enter "cifs_slice"
+
+	local server
+
+	server="$(stage2_getenv HOST)"
+
+	if [ -z "$server" ]; then
+		message "SAMBA server not defined"
+		leave "cifs_slice"
+		return 0
+	fi
+
+	local prefix parentdir="${prefix%/?*}"
+	local opts mp dirpart share service mnt=
+
+	prefix="$(stage2_getenv PREFIX)"
+	opts="$(stage2_getenv SMBOPTS)"
+	[ -n "$opts" ] ||
+		opts="${CIFSOPTS-}"
+	[ -n "$overlays" ] ||
+		overlays="${parentdir:-$OEM_CIFS_NETINST}/overlays-live"
+	service="${overlays:1}"
+	share="${service%%/*}"
+	service="//$server/$share"
+	dirpart="${overlays#/$share}"
+
+	message "mounting CIFS overlays from ${service}${dirpart}"
+	mp="$(grep -s "$service /" /proc/mounts |cut -f2 -d' ')"
+
+	if [ -n "$mp" ]; then
+		debug "resource $service already mounted to $mp"
+	else
+		mp="$prevdir.rw/rw$OEM_IMAGES_BASE"
+
+		run mkdir -p -- "$mp"
+
+		if run mount.cifs "$service" "$mp" -o "ro${opts:+,$opts}"; then
+			debug "$service has mounted to $mp"
+			mnt=1
+		else
+			message "CIFS mount failed"
+			run rmdir -- "$mp" ||:
+			leave "cifs_slice"
+			return 0
+		fi
+	fi
+
+	if [ -d "${mp}${dirpart}/$profile" ]; then
+		mount_overlays "${mp}${dirpart}"
+	else
+		message "however specified profile not found: '$profile'"
+
+		if [ -n "$mnt" ]; then
+			run umount -fl -- "$mp" ||:
+			run rmdir -- "$mp" ||:
+		fi
+	fi
+
+	leave "cifs_slice"
+}
+
+[ "$method" != cifs ] || cifs_slice

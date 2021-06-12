@@ -1,0 +1,45 @@
+#!/bin/bash -efu
+
+. bootchain-sh-functions
+
+check_parameter WAITDEV
+
+timeout=
+timecnt=/.initrd/bootchain/waitdev/TIMECNT
+
+[ ! -s "$timecnt" ] ||
+	read -r timeout <"$timecnt" ||:
+[ "$timeout" != 0 ] ||
+	exit 0
+devspec="$(get_parameter WAITDEV)"
+
+while [ -n "$devspec" ]; do
+	envfile="/.initrd/bootchain/waitdev/$callnum"
+
+	if [ -s "$envfile" ]; then
+		devfile=
+		read -r devfile <"$envfile" ||:
+
+		if [ -n "$devfile" ]; then
+			target="$(readlink-e "$devfile" 2>/dev/null ||:)"
+
+			if [ -b "$target" ] || [ -c "$target" ]; then
+				message "target device found: $target"
+				printf '%s\n' "$target" >"$destdir/DEVNAME"
+				run cp -a -- "$target" "$destdir/dev"
+				break
+			fi
+		fi
+	fi
+
+	sleep 1
+	[ -n "$timeout" ] ||
+		continue
+	timeout=$(( $timeout - 1 ))
+	if [ "$timeout" = 0 ]; then
+		message "device waiting timeout exceedded"
+		break
+	fi
+done
+
+[ -z "$timeout" ] || printf '%s\n' "$timeout" >"$timecnt"

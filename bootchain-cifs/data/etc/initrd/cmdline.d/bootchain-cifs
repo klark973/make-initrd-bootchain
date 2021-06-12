@@ -1,0 +1,2 @@
+register_parameter string CIFSOPTS
+register_array string ALTBOOT_CIFS

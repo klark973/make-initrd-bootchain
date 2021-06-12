@@ -1,0 +1,12 @@
+#!/bin/bash -efu
+
+dir=/.initrd/bootchain/waitdev
+mkdir -p -- "$dir"
+
+[ -z "${WAITDEV_TIMEOUT-}" ] ||
+	printf '%s\n' "$WAITDEV_TIMEOUT" >"$dir/TIMECNT"
+i=0
+while [ "$i" -lt "${WAITDEV:-0}" ]; do
+	touch "$dir/$i"
+	i=$((1 + $i))
+done

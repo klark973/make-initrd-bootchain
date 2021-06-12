@@ -1,0 +1,29 @@
+#!/bin/bash -efu
+
+IM_errmsg()
+{
+	IM_start_input
+
+	local text="$1" height=2
+	local width=$(( 4 + ${#text} ))
+
+	if [ $width -lt 40 ]; then
+		width=40
+	elif [ $width -gt ${_IM_max_width} ]; then
+		height=$(( $width / ${_IM_max_width} + 2 ))
+		width=${_IM_max_width}
+	fi
+
+	[ ! -s /etc/dialogrc.error ] ||
+		export DIALOGRC=/etc/dialogrc.error
+	dialog	$IM_WIDGET_ARGS					\
+		${NOLINES:+--ascii-lines}			\
+		${IM_BACKTITLE:+--backtitle "$IM_BACKTITLE"}	\
+		--title "[ Error! ]"				\
+		--msgbox "\n$text"				\
+		$((4 + $height)) $width ||:
+	[ -z "$NOTTYS" ] ||
+		reset
+	[ ! -s /etc/dialogrc.error ] ||
+		export DIALOGRC=
+}

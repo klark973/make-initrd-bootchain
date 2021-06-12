@@ -1,0 +1,7 @@
+#!/bin/bash -efu
+
+if [ -n "$overlays" ] || [ -n "${PROFILE-}" ]; then
+	overlays="overlays=$overlays;profile=${PROFILE-}"
+	[ -z "$directory" ] ||
+		overlays="$overlays;directory=$directory"
+fi

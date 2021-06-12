@@ -1,0 +1,15 @@
+[2021-05-30 18:49:24] bootchained: Starting server [INITRAMFS 9.1]...
+[2021-05-30 18:49:24] bootchain-loop: [0] Switching to foreground
+[2021-05-30 18:49:24] bootchain-loop: TTY2 will be activated after 8 seconds
+[2021-05-30 18:49:25] bootchain-loop: [0] Handler: /lib/bootchain/altboot
+[2021-05-30 18:49:25] bootchain-loop: [0] Handler: /lib/bootchain/localdev
+[2021-05-30 18:49:26] localdev: specified target found: /dev/sr0 (11:0)
+[2021-05-30 18:49:27] bootchain-loop: [0] Handler: /lib/bootchain/squashfs
+[2021-05-30 18:49:27] bootchain-loop: [0] Handler: /lib/bootchain/liveboot
+[2021-05-30 18:49:27] liveboot: running live
+[2021-05-30 18:49:27] liveboot: remounting / with overlayfs
+[2021-05-30 18:49:27] liveboot: mounting local overlays for profile '/default'
+[2021-05-30 18:49:27] liveboot: however specified profile not found: '/default'
+[2021-05-30 18:49:27] liveboot: rootfs overlayed with overlayfs
+[2021-05-30 18:49:27] liveboot: Spawning init...
+[2021-05-30 18:49:27] bootchain-loop: [0] Handler: /lib/bootchain/rootfs

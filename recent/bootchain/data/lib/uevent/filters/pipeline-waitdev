@@ -1,0 +1,35 @@
+#!/bin/bash -efu
+
+. /.initrd/initenv
+. initrd-sh-functions
+
+get_dev_wpfx()
+{
+	local retval="$1" name="$2"
+
+	case "$name" in
+	CDROM:*)
+		[ "${ID_CDROM-}" = "1" ] ||
+		[ "${ID_FS_TYPE-}" = "iso9660" ] ||
+			return 1
+		name="${name#CDROM:}"
+		name="${name:-/dev/sr0}"
+		;;
+	esac
+
+	get_dev "$retval" "$name"
+}
+
+mkdir -p -- /.initrd/pipeline/waitdev
+cd /.initrd/pipeline/waitdev
+
+i=0
+while [ "$i" -lt "${WAITDEV:-0}" ]; do
+	eval "spec=\"\${WAITDEV$i-}\""
+
+	if [ -n "$spec" ] && get_dev_wpfx dev "$spec"; then
+		printf '%s\n' "$dev" >"$i"
+	fi
+
+	i=$(($i + 1))
+done

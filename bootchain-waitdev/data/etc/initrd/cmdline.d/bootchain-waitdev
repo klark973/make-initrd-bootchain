@@ -1,0 +1,2 @@
+register_array string WAITDEV
+register_parameter number WAITDEV_TIMEOUT

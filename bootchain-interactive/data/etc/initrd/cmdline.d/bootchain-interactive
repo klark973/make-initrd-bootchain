@@ -1,0 +1,3 @@
+register_parameter bool NOTTYS
+register_parameter bool NOASKUSER
+register_parameter bool NOLINES

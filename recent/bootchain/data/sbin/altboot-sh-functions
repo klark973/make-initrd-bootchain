@@ -1,0 +1,242 @@
+#!/bin/bash -efu
+
+if [ -z "${__altboot_sh_functions-}" ]; then
+__altboot_sh_functions=1
+
+. pipeline-sh-functions
+. IM-sh-functions
+
+message_time=1
+
+ALTBOOT_STAGE2COMPAT=
+ALTBOOT_DEBUG="${ALTBOOT_DEBUG-}"
+
+altboot_config=/etc/sysconfig/altboot
+altboot_parsed=/.initrd/pipeline/altboot.conf
+altboot_envfile=/.initrd/pipeline/altboot.env
+altboot_finished=/.initrd/pipeline/altboot.finished
+
+[ ! -s "$altboot_config" ] ||
+	. "$altboot_config"
+[ ! -s "$altboot_parsed" ] ||
+	. "$altboot_parsed"
+
+# Reset compatibility flag for nested pipeline steps with callnum > 0
+[ "$PROG" = "altboot" ] || [ "${callnum:-0}" = 0 ] ||
+	ALTBOOT_STAGE2COMPAT=
+
+# You can change defaults in /etc/sysconfig/altboot
+OEM_DISTRIBUTION="${OEM_DISTRIBUTION:-GNU/Linux distribution}"
+IM_BACKTITLE="${OEM_WELCOME_TEXT:-$IM_BACKTITLE}"
+
+if [ -n "$ALTBOOT_STAGE2COMPAT" ]; then
+	OEM_CDIMAGE_PATH="${OEM_CDIMAGE_PATH:-/image}"
+else
+	OEM_CDIMAGE_PATH="${OEM_CDIMAGE_PATH-}"
+fi
+
+
+debug()
+{
+	[ -z "$ALTBOOT_DEBUG" ] ||
+		message "[$callnum] $*"
+}
+
+enter()
+{
+	debug "ENTER: $*"
+}
+
+leave()
+{
+	debug "LEAVE: $*"
+}
+
+run()
+{
+	debug "RUN: $*"
+	"$@" || return $?
+}
+
+assign()
+{
+	local _v= _k="$1" _e="${2-}"
+
+	eval "_v=\"${_e}\""
+	eval "${_k}=\"${_e}\""
+	debug "LET: ${_k}=\"${_v}\""
+}
+
+get_bootarg()
+{
+	enter "get_bootarg"
+
+	local __argname="$1"
+	local __varname="${2-}"
+	local __value="$(get_parameter "ALTBOOT_${__argname}")"
+
+	if [ -z "${__varname}" ]; then
+		assign "${__argname}" "${__value}"
+		leave "get_bootarg"
+		return
+	fi
+
+	local __part __key
+
+	while [ -n "${__value}" ]; do
+		__part="${__value%%;*}"
+		__value="${__value#$__part}"
+		__value="${__value#;}"
+		__key="${__part%%=*}"
+
+		if [ "${__key}" = "${__varname}" ]; then
+			assign "${__varname}" "${__part#$__key=}"
+			leave "get_bootarg"
+			return
+		fi
+	done
+
+	assign "${__varname}"
+	leave "get_bootarg"
+}
+
+passthru_results()
+{
+	enter "passthru_results"
+
+	local realdir="${1-}"
+	local srcdir="${realdir:-$prevdir}"
+
+	if [ -n "$srcdir" ] && [ "$srcdir" != "$destdir" ]; then
+		run rmdir -- "$destdir" ||:
+
+		if [ -n "$realdir" ]; then
+			run ln -snf -- "$realdir" "$destdir"
+		elif mountpoint -q -- "$prevdir"; then
+			run mount --move -- "$prevdir" "$destdir"
+		else
+			run mv -f -- "$prevdir" "$destdir"
+		fi
+	fi
+
+	leave "passthru_results"
+}
+
+lomount()
+{
+	enter "lomount"
+
+	local __varname="$1" backdev="$2" imgdir="${3-}"
+	local __loopdev="$(run losetup -Lrf --show -- "$backdev" ||:)"
+
+	if [ -z "${__loopdev}" -o ! -b "${__loopdev}" ]; then
+		message "losetup failed, may be no free loopback device?"
+		leave "lomount"
+		return 1
+	fi
+
+	debug "losetup('$backdev') result: '${__loopdev}'"
+
+	if [ -n "$imgdir" ]; then
+		if run mount -t iso9660 -o ro -- "${__loopdev}" "$imgdir"; then
+			debug "${__loopdev} has mounted to '$imgdir' as ISO-9660"
+		else
+			message "can't mount target ISO-image: '$backdev'"
+			run losetup -d -- "${__loopdev}" ||:
+			leave "lomount"
+			return 1
+		fi
+	fi
+
+	[ -z "${__varname}" ] ||
+		assign "${__varname}" "${__loopdev}"
+	leave "lomount"
+}
+
+stage2_setenv()
+{
+	enter "stage2_setenv"
+
+	local from to key="$1" value="${2-}"
+
+	[ -f "$altboot_envfile" ] ||
+		:> "$altboot_envfile"
+	debug "ARGS: $key=${value:+'$value'}"
+
+	if [ "$#" = 1 ]; then
+		sed -i -e "/^$key=.*$/d" "$altboot_envfile"
+	elif ! grep -qsE "^$key=" "$altboot_envfile"; then
+		printf '%s="%s"\n' "$key" "${value//\"/\\\"}" >>"$altboot_envfile"
+	else
+		from="^$key=.*$"
+		to="$(printf '%s="%s"' "$key" "${value//\"/\\\"}")"
+		sed -i -e "s|$from|$to|" "$altboot_envfile"
+	fi
+
+	leave "stage2_setenv"
+}
+
+stage2_getenv()
+{
+	local key="$1" value
+
+	enter "stage2_getenv"
+	debug "KEY: '$key'"
+
+	if [ -s "$altboot_envfile" ]; then
+		value="$(grep -sE "^$key=" "$altboot_envfile" |cut -f2- -d=)"
+		eval "value=$value" 2>/dev/null ||:
+		debug "stage2_getenv('$key') result: '$value'"
+		printf '%s' "$value"
+	fi
+
+	leave "stage2_getenv"
+}
+
+get_free_ramdisk()
+{
+	enter "get_free_ramdisk"
+
+	local i=0 varname="$1"
+	local rddir=/.initrd/ramdisks
+
+	while [ -b "/dev/ram$i" ]; do
+		if [ ! -f "$rddir/$i" ]; then
+			assign "$varname" "/dev/ram$i"
+			leave "get_free_ramdisk"
+			return 0
+		fi
+		i=$((1 + $i))
+	done
+
+	assign "$varname"
+	leave "get_free_ramdisk"
+	return 1
+}
+
+mark_used_ramdisk()
+{
+	enter "mark_used_ramdisk"
+
+	local minor="${1#/dev/ram}"
+	local rddir=/.initrd/ramdisks
+
+	run mkdir -p -- "$rddir"
+	run touch -- "$rddir/$minor"
+
+	leave "mark_used_ramdisk"
+}
+
+mark_free_ramdisk()
+{
+	enter "mark_free_ramdisk"
+
+	local minor="${1#/dev/ram}"
+	local rddir=/.initrd/ramdisks
+
+	run rm -f -- "$rddir/$minor"
+
+	leave "mark_free_ramdisk"
+}
+
+fi # __altboot_sh_functions

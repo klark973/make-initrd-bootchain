@@ -1,0 +1,60 @@
+#!/bin/bash -efu
+
+IM_choice()
+{
+	IM_start_input
+
+	local varname="$1" text="${2:-\n}"; shift 2
+	local height=1 width=$(( 4 + ${#text} ))
+	local rc=0 items=$(( $# / 2 ))
+
+	_calculate_items_width()
+	{
+		local label iw i=0
+
+		while [ $i -lt $items ]; do
+			label="$2"; shift 2
+			iw=$(( 4 + ${#label} ))
+			[ $iw -le $width ] ||
+				width=$iw
+			i=$((1 + $i))
+		done
+	}
+
+	[ $items -gt 0 ] ||
+		return 1
+	[ $width -gt "${_IM_max_width}" ] ||
+		_calculate_items_width "$@"
+	if [ $width -lt 40 ]; then
+		width=40
+	elif [ $width -gt ${_IM_max_width} ]; then
+		height=$(( $width / ${_IM_max_width} + 1 ))
+		width=${_IM_max_width}
+	fi
+	if [ $items -gt 7 ]; then
+		height=$((14 + $height))
+	else
+		height=$((7 + $height + $items))
+	fi
+
+	local dlgcmd="dialog $IM_WIDGET_ARGS ${NOLINES:+--ascii-lines}"
+	dlgcmd="$dlgcmd ${IM_BACKTITLE:+--backtitle \"$IM_BACKTITLE\"}"
+	dlgcmd="$dlgcmd --title \"[ Please choose... ]\""
+	dlgcmd="$dlgcmd --no-tags --menu \"\n$text\""
+	dlgcmd="$dlgcmd $height $width $items"
+
+	while [ $# -ge 2 ]; do
+		dlgcmd="$dlgcmd \"$1\" \"$2\""
+		shift 2
+	done
+
+	exec 3>&1
+	text="$(eval "$dlgcmd" 2>&1 1>&3)" || rc=$?
+	exec 3>&-
+
+	[ -z "$NOTTYS" ] ||
+		reset
+	[ $rc -eq 0 ] ||
+		return $rc
+	eval "$varname=\"$text\""
+}

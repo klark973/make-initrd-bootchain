@@ -1,0 +1,14 @@
+#!/bin/bash -efu
+
+if [ "$method" = nfs ]; then
+	VALUE="server=$server"
+	[ -z "$directory" ] ||
+		VALUE="$VALUE;directory=$directory"
+	[ -z "$timeout" ] ||
+		VALUE="$VALUE;timeout=$timeout"
+	[ -z "$options" ] ||
+		VALUE="$VALUE;options=$options"
+	ALTBOOT_NFS0="$VALUE"
+	ALTBOOT=nfs
+	VALUE=
+fi

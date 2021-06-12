@@ -1,0 +1,239 @@
+#!/bin/bash -efu
+
+create_disk_slice()
+{
+	enter "create_disk_slice"
+
+	local devname
+
+	# At first, use exported value
+	devname="$(stage2_getenv DEVICE)"
+
+	# Fallback: if DEVICE has not exported to the stage2
+	if [ -z "$devname" ] && [ -n "$OEM_CDROOT" ]; then
+		devname="$(mountpoint -d -- "$OEM_CDROOT" ||:)"
+		devname="/sys/dev/block/$devname/uevent"
+		[ ! -f "$devname" ] && devname="" ||
+			devname="$(grep -sE '^DEVNAME=' "$devname" |cut -f2- -d=)"
+	fi
+	if [ -z "$devname" ] || [ ! -b "/dev/$devname" ]; then
+		message "stage2-compatible live-rw boot media not found"
+		leave "create_disk_slice"
+		return 0
+	fi
+
+	local minsize=$((1024 * 1024 * 1024))
+	local tmpf devpath start lenght partn whole=
+
+	# if DEVICE is a partition, search a parent whole disk drive
+	devpath="/sys/dev/block/$(mountpoint -x -- "/dev/$devname")"
+
+	if [ -r "$devpath/partition" ]; then
+		read -r partn <"$devpath/partition" ||
+			partn=
+		if [ -n "$partn" ]; then
+			case "$devname" in
+			*[0-9]p$partn)
+				whole="${devname%%p$partn}"
+				;;
+			*$partn)
+				whole="${devname%%$partn}"
+				;;
+			esac
+		fi
+	fi
+
+	if [ -n "$whole" ] && [ -b "/dev/$whole" ] &&
+		[ -r "/sys/block/$whole/$devname/dev" ]
+	then
+		whole="/dev/$whole"
+		debug "whole disk drive: '$whole'"
+	else
+		message "/dev/$devname is a whole disk, partitions appending is inpossible"
+		leave "create_disk_slice"
+		return 0
+	fi
+
+	# Check for DEVICE is not read-only
+	devpath="/sys/dev/block/$(mountpoint -x -- "$whole")"
+	[ -r "$devpath/ro" ] && read -r partn <"$devpath/ro" ||
+		partn=0
+	if [ "$partn" != 0 ]; then
+		message "$whole is read-only, partitions appending is inpossible"
+		leave "create_disk_slice"
+		return 0
+	fi
+
+	# Prepare to dialog
+	IM_start_output ponder errmsg
+	IM_ponder_start "[ Creating persistent storage... ]"
+
+	# Use for store output
+	tmpf="$(run mktemp -t ||:)"
+	if [ ! -f "$tmpf" ]; then
+		message "mktemp failed"
+		IM_ponder_stop
+		leave "create_disk_slice"
+		return 0
+	fi
+	debug "writing tmpfile: '$tmpf'"
+
+	# Check for unpartitioned disk space
+	message "searching unpartitioned space on the drive $whole"
+	debug "RUN: sfdisk -F -- $whole"
+	LC_ALL=C sfdisk -F -- "$whole" >"$tmpf" 2>&1 ||:
+	[ ! -s "$tmpf" ] || fdump "$tmpf"
+
+	# At first, try to fix backup GPT PMBR problem
+	partn="The backup GPT table is not on the end of the device"
+	if grep -qs "$partn" "$tmpf"; then
+		partn="sfdisk -f --relocate gpt-bak-std"
+		debug "RUN: $partn -- $whole"
+		LC_ALL=C $partn -- "$whole" >"$tmpf" 2>&1 ||:
+		[ ! -s "$tmpf" ] || fdump "$tmpf"
+		debug "RUN: sfdisk -F -- $whole"
+		LC_ALL=C sfdisk -F -- "$whole" >"$tmpf" 2>&1 ||:
+		[ ! -s "$tmpf" ] || fdump "$tmpf"
+	fi
+
+	# Determinate free space
+	lenght="$(head -n1 "$tmpf" |
+			grep -sE '^Unpartitioned space ' |
+			cut -f6 -d' ')"
+	debug "unpartitioned space on the $whole: $lenght bytes"
+
+	# Free space must be at least 1 GiB
+	if [ "$lenght" -lt "$minsize" ]; then
+		partn="not enough space to create new R/W-partition"
+		run rm -f -- "$tmpf"
+		message "$partn"
+		IM_ponder_stop
+		[ -n "$NOASKUSER" ] ||
+			IM_errmsg "N${partn:1}! Don't use sessions with this boot media."
+		leave "create_disk_slice"
+		return 0
+	fi
+
+	# Try to create a new partition
+	message "creating a new partition on the drive $whole"
+	partn="sfdisk -f -a --no-reread --no-tell-kernel"
+	debug "RUN: echo ',' |$partn -- $whole"
+	echo "," |LC_ALL=C $partn -- "$whole" >"$tmpf" 2>&1 ||:
+	[ ! -s "$tmpf" ] || fdump "$tmpf"
+	devname="$(grep -s ": Created a new partition " "$tmpf" |cut -f1 -d:)"
+	message "new partition device: '$devname'"
+	run rm -f -- "$tmpf"
+
+	# On success only
+	if [ -n "$devname" ]; then
+		devpath="$(run sfdisk -f -l -- "$whole" |
+				grep -s "$devname " |
+				sed 's/  */ /g')"
+		start="$(echo "$devpath" |cut -f2 -d' ')"
+		lenght="$(echo "$devpath" |cut -f4 -d' ')"
+		partn="${devname#$whole}"
+		partn="${partn#p}"
+
+		# Tell kernel about changes
+		run addpart "$whole" "$partn" "$start" "$lenght" 1>&2 ||:
+		partn=0
+
+		# Wait until kernel re-reads partitions table
+		while [ "$partn" -lt "$timeout" ]; do
+			[ ! -b "$devname" ] ||
+				break
+			partn=$((1 + $partn))
+			sleep 1
+		done
+	fi
+
+	# On fail only
+	if [ ! -b "$devname" ]; then
+		partn="can't create a new partition on the drive $whole"
+		message "$partn"
+		IM_ponder_stop
+		[ -n "$NOASKUSER" ] ||
+			IM_errmsg "C${partn:1}! Don't use sessions with this boot media."
+		leave "create_disk_slice"
+		return 0
+	fi
+
+	# Format a new partition
+	message "creating filesystem on $devname"
+
+	local opts="-t ext4 -O ^has_journal,sparse_super2"
+	opts="$opts -E packed_meta_blocks=1,num_backup_sb=1"
+
+	if run mke2fs $opts -L "$OEM_LIVE_STORAGE" -- "$devname" 1>&2; then
+		debug "in create_disk_slice(): mke2fs success"
+
+		# Tell udevd about changes
+		run udevadm trigger -- "$devname" 1>&2 ||:
+		run udevadm settle -t5 -- "$devname" 1>&2 ||:
+		partn=0
+
+		# Wait until udevd create the symlink
+		while [ "$partn" -lt "$timeout" ]; do
+			[ ! -L "/dev/disk/by-label/$OEM_LIVE_STORAGE" ] ||
+				break
+			partn=$((1 + $partn))
+			sleep 0.5
+		done
+
+		IM_ponder_stop
+	else
+		debug "in create_disk_slice(): mke2fs failed (rc=$?)"
+
+		# Try to mark new partition as _BAD_ storage
+		run e2label "$devname" "$OEM_BAD_STORAGE" 1>&2 ||
+			run wipefs -q -a -- "$devname" 1>&2 ||:
+
+		# Tell udevd about changes, but not wait
+		run udevadm trigger -- "$devname" 1>&2 ||:
+		run udevadm settle -t5 -- "$devname" 1>&2 ||:
+
+		partn="Can't create filesystem on the partition $devname"
+		partn="$partn! Don't use sessions with this boot media."
+		IM_ponder_stop
+		[ -n "$NOASKUSER" ] ||
+			IM_errmsg "$partn"
+		run rm -f -- "/dev/disk/by-label/$OEM_LIVE_STORAGE"
+	fi
+
+	leave "create_disk_slice"
+}
+
+mount_disk_slice()
+{
+	enter "mount_disk_slice"
+
+	local dev opts="noatime,nodiratime,barrier=0"
+	opts="$opts,delalloc,nobh,errors=remount-ro"
+
+	dev="$(readlink-e "$1" 2>/dev/null ||:)"
+	[ ! -b "$dev" ] || mountpoint -q -- "$prevdir.rw" ||
+		run mount -o "$opts" -- "$dev" "$prevdir.rw"
+
+	leave "mount_disk_slice"
+}
+
+liverw_disk_slice()
+{
+	enter "liverw_disk_slice"
+
+	local live="/dev/disk/by-label/$OEM_LIVE_STORAGE"
+	local bad="/dev/disk/by-label/$OEM_BAD_STORAGE"
+
+	case "$method" in
+	disk|cdrom)
+		[ -L "$live" ] || [ -L "$bad" ] ||
+			create_disk_slice
+		[ ! -L "$live" ] ||
+			mount_disk_slice "$live"
+		;;
+	esac
+
+	leave "liverw_disk_slice"
+}
+
+liverw_disk_slice

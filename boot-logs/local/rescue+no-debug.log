@@ -1,0 +1,16 @@
+[2021-05-30 16:01:32] bootchained: Starting server [INITRAMFS 2.16.0]...
+[2021-05-30 16:01:32] bootchain-loop: [0] Switching to foreground
+[2021-05-30 16:01:32] bootchain-loop: TTY2 will be activated after 8 seconds
+[2021-05-30 16:01:33] bootchain-loop: [0] Handler: /lib/bootchain/altboot
+[2021-05-30 16:01:33] bootchain-loop: [0] Handler: /lib/bootchain/localdev
+[2021-05-30 16:01:34] localdev: specified target found: /dev/sr0 (11:0)
+[2021-05-30 16:01:35] bootchain-loop: [0] Handler: /lib/bootchain/download
+[2021-05-30 16:01:35] download: retrieving file size: '/image/rescue'
+[2021-05-30 16:01:35] download: downloading image: '/image/rescue'
+[2021-05-30 16:01:36] bootchain-loop: [0] Handler: /lib/bootchain/squashfs
+[2021-05-30 16:01:36] bootchain-loop: [0] Handler: /lib/bootchain/liveboot
+[2021-05-30 16:01:36] liveboot: running rescue
+[2021-05-30 16:01:36] liveboot: remounting / with overlayfs
+[2021-05-30 16:01:36] liveboot: rootfs overlayed with overlayfs
+[2021-05-30 16:01:36] liveboot: Spawning init...
+[2021-05-30 16:01:36] bootchain-loop: [0] Handler: /lib/bootchain/rootfs

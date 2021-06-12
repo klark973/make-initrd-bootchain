@@ -1,0 +1,2 @@
+register_parameter string NFSOPTS
+register_array string ALTBOOT_NFS

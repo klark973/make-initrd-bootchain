@@ -1,0 +1,15 @@
+#!/bin/bash -efu
+
+if [ "$STAGENAME" != rescue ] && [ "$STAGENAME" != live ]; then
+	RESCUE=
+	LIVE=
+fi
+
+VALUE=
+ALTBOOT_LIVEBOOT0="stagename=$STAGENAME;method=$method"
+[ "$STAGENAME" != live ] && [ -z "${LIVE-}" ] ||
+	VALUE=live_ro
+[ "$STAGENAME" != rescue ] && [ -z "${RESCUE-}" ] ||
+	VALUE="${VALUE:+$VALUE,}rescue"
+[ -z "$overlays" ] ||
+	ALTBOOT_LIVEBOOT0="$ALTBOOT_LIVEBOOT0;$overlays"

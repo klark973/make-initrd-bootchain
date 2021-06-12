@@ -1,0 +1,2 @@
+register_parameter bool NOASK
+register_parameter bool NOLINES

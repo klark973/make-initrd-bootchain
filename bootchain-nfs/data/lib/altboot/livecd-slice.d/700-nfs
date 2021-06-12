@@ -1,0 +1,61 @@
+#!/bin/bash -efu
+
+nfs_slice()
+{
+	enter "nfs_slice"
+
+	local server dirp
+
+	server="$(stage2_getenv HOST)"
+	dirp="$(stage2_getenv PREFIX)"
+	[ -n "$dirp" ] || dirp="$directory"
+
+	local parentdir="${dirp%/?*}" mnt=
+	local opts="${NFSOPTS:-intr,soft,nolock}"
+	local mp="$prevdir.rw/rw$OEM_IMAGES_BASE"
+
+	if [ -z "$server" ]; then
+		# Fallback: if HOST not exported to the stage2
+		message "detecting IP-address of the connected NFS server"
+		server="$(run ss -n -o state established '( dport = :2049 )' |
+				sed '2!d;s/  */ /g' |
+				cut -f5 -d' ' |
+				cut -f1 -d:)"
+		if [ -z "$server" ]; then
+			message "NFS server not found"
+			leave "nfs_slice"
+			return 0
+		fi
+	fi
+
+	[ -n "$overlays" ] ||
+		overlays="${parentdir:-$OEM_NFS_NETINST}/overlays-live"
+	message "mounting NFS overlays from $server:$overlays"
+
+	run mkdir -p -- "$mp"
+
+	if run mount.nfs "$server:$overlays" "$mp" -o "ro,$opts"; then
+		debug "$server:$overlays has mounted to $mp"
+		mnt=1
+	else
+		message "NFS mount failed"
+		run rmdir -- "$mp" ||:
+		leave "nfs_slice"
+		return 0
+	fi
+
+	if [ -d "$mp/$profile" ]; then
+		mount_overlays "$mp"
+	else
+		message "however specified profile not found: '$profile'"
+
+		if [ -n "$mnt" ]; then
+			run umount -fl -- "$mp" ||:
+			run rmdir -- "$mp" ||:
+		fi
+	fi
+
+	leave "nfs_slice"
+}
+
+[ "$method" != nfs ] || nfs_slice

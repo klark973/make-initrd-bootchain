@@ -1,0 +1,6 @@
+#!/bin/bash -efu
+
+. /.initrd/initenv
+
+[ "${ROOT-}" != pipeline ] ||
+	echo bootchain > /etc/initrd/method

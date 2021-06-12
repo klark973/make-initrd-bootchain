@@ -1,0 +1,133 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+. scandev-sh-functions
+
+# You can change defaults in /etc/sysconfig/bootchain
+label="${OEM_SETUP_STORAGE:-OEMSETUP}"
+
+UPDATEMODULES="${UPDATEMODULES:-1}"
+update=initrd-update.img
+method=oem
+hardwait=7
+timeout=20
+profile=
+
+
+try_with_partition()
+{
+	[ -n "$target" ] ||
+		return 1
+	enter "try_with_partition"
+	debug "mounting target device: $target"
+
+	if run mount -o ro -- "$target" "$datadir"; then
+		message "$target has mounted successfully"
+	else
+		message "can't mount target device: $target"
+		leave "try_with_partition"
+		target=
+		return 1
+	fi
+
+	local dirp="${datadir}/OEM-setup/$profile"
+
+	if [ ! -s "$dirp/$update" ]; then
+		message "however OEM drivers update not found on the $target"
+		run umount -fl -- "$datadir"
+		leave "try_with_partition"
+		target=
+		return 1
+	fi
+
+	message "OEM drivers update found: $dirp/$update"
+
+	( cd /
+	  run gunzip -qnc -- "$dirp/$update" |
+		run cpio -idmu -H newc --quiet
+	  if [ ! -x "$rootmnt/update.sh" ]; then
+		run depmod -a ||:
+	  else
+		run "$rootmnt/update.sh"
+		rm -f -- "$rootmnt/update.sh"
+	  fi
+	)
+
+	message "OEM drivers update was applied"
+	run umount -fl -- "$datadir"
+	leave "try_with_partition"
+}
+
+main_loop()
+{
+	enter "main_loop"
+
+	local iter=0 nsec=0
+
+	IM_start_output choice errmsg ponder
+	start_scan
+
+	while :; do
+		debug "Idle before scan devices"
+		sleep 1
+		scan_devices
+		iter=$((1 + $iter))
+
+		if try_with_partition; then
+			IM_ponder_stop
+			break
+		fi
+
+		if [ "$iter" -ge "$hardwait" ]; then
+			if [ -z "$NOASKUSER" ]; then
+				IM_ponder_stop
+				device_choice && try_with_partition && break ||:
+			fi
+
+			nsec=$(( $nsec + $iter ))
+
+			if [ "$nsec" -ge "$timeout" ]; then
+				if [ -z "$NOASKUSER" ]; then
+					IM_errmsg "Device with OEM Drivers Update not found, try again!"
+				else
+					fatal "OEM drivers update not found, dialogs are disabled"
+				fi
+				nsec=0
+			fi
+
+			iter=0
+			[ -n "$NOASKUSER" ] ||
+				start_scan
+			debug "device not ready, go to the next ring"
+		fi
+	done
+
+	leave "main_loop"
+}
+
+
+# Entry point
+launch_step_once
+debug "$PROG started"
+
+case "$UPDATEMODULES" in
+1)	# Nothing
+	;;
+ID)	profile="$(machine-info --drivers)"
+	;;
+/*)	profile="${UPDATEMODULES:1}"
+	;;
+*)	profile="$UPDATEMODULES"
+	;;
+esac
+
+printf "unset UPDATEMODULES\n" >>"$altboot_parsed"
+
+profile="${profile:-default}"
+debug "profile: $profile"
+
+main_loop
+
+# shellcheck disable=SC2119
+bypass_results
+debug "$PROG finished"

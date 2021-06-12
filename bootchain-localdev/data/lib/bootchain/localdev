@@ -1,0 +1,307 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+. scandev-sh-functions
+
+check_parameter ALTBOOT_LOCALDEV
+
+target=
+devspec=
+devices=
+hardwait=7
+
+b_a()
+{
+	get_bootarg LOCALDEV "$1"
+}
+
+b_a method
+b_a disk
+b_a part
+b_a uuid
+b_a label
+b_a directory
+b_a timeout
+b_a options
+
+
+is_target_found()
+{
+	enter "is_target_found"
+
+	if [ -z "$target" ]; then
+		leave "is_target_found"
+		return 1
+	fi
+
+	local rc=0 opts="${options-}"
+	local image partdev mp="$destdir"
+
+	[ -z "$ALTBOOT_OLDROOT" ] || [ -z "$OEM_CDROOT" ] ||
+		mp="$OEM_CDROOT"
+	run mkdir -p -- "$mp"
+
+	if [ "$method" = cdrom ]; then
+		opts="-t iso9660 -o ro${opts:+,$opts}"
+
+		case "$target" in
+		*[0-9])	partdev="${target}p1";;
+		*)	partdev="${target}1";;
+		esac
+
+		if [ -b "$partdev" ] && run mount $opts -- "$partdev" "$mp"; then
+			debug "CD-ROM target replaced to the first partition: $partdev"
+			target="$partdev"
+		else
+			debug "mounting original target device as ISO-9660: $target"
+			run mount $opts -- "$target" "$mp" || rc=1
+		fi
+
+		if [ "$rc" != 0 ]; then
+			message "can't mount target CD/DVD/Pendrive: $target"
+			leave "is_target_found"
+			target=
+			return 1
+		fi
+
+		if [ -n "$directory" ] && [ ! -s "${mp}${directory}" ]; then
+			message "however specified squash file not found: '$directory'"
+			run umount -fl -- "$mp" ||:
+			leave "is_target_found"
+			target=
+			return 1
+		fi
+
+		if [ -n "$ALTBOOT_OLDROOT" ]; then
+			stage2_setenv DEVICE "${target#/dev/}"
+			stage2_setenv METHOD "cdrom"
+			stage2_setenv PREFIX "/"
+			bypass_results "$mp"
+		fi
+
+		IM_update_bootsplash "found_media"
+
+		leave "is_target_found"
+		return 0
+	fi
+
+	debug "mounting original disk target device: $target"
+	run mount -o "ro${opts:+,$opts}" -- "$target" "$mp" || rc=1
+
+	if [ "$rc" != 0 ]; then
+		message "can't mount target disk or partition: $target"
+		leave "is_target_found"
+		target=
+		return 1
+	fi
+
+	message "$target has mounted successfully"
+
+	if [ -z "$directory" ]; then
+		if [ -n "$ALTBOOT_OLDROOT" ]; then
+			stage2_setenv DEVICE "${target#/dev/}"
+			stage2_setenv METHOD "disk"
+			stage2_setenv PREFIX "/"
+			bypass_results "$mp"
+		fi
+
+		IM_update_bootsplash "found_media"
+
+		leave "is_target_found"
+		return 0
+	fi
+
+	if [ ! -s "${mp}${directory}" ]; then
+		message "however specified ISO-image not found: '$directory'"
+		run umount -fl -- "$mp"
+		leave "is_target_found"
+		target=
+		return 1
+	fi
+
+	message "assuming ISO-image, relative path: '$directory'"
+
+	image="$datadir"
+	[ -z "$ALTBOOT_OLDROOT" ] ||
+		image="$rootmnt"
+	run mkdir -p -- "$image"
+
+	if run mount --move -- "$mp" "$image"; then
+		lomount "" "${image}${directory}" "$mp" || rc=1
+	else
+		image="$mp"
+		rc=1
+	fi
+
+	if [ "$rc" != 0 ]; then
+		message "$target will be unmounted"
+		run umount -fl -- "$image"
+		leave "is_target_found"
+		target=
+		return 1
+	fi
+
+	if [ -n "$ALTBOOT_OLDROOT" ]; then
+		stage2_setenv DEVICE "${target#/dev/}"
+		stage2_setenv METHOD "disk"
+		stage2_setenv PREFIX "$directory"
+		stage2_setenv PIGGYBACK 1
+		bypass_results "$mp"
+	fi
+
+	IM_update_bootsplash "found_media"
+
+	leave "is_target_found"
+}
+
+boot_device_choice()
+{
+	enter "boot_device_choice"
+
+	# Rewind one step back when user has cancel choice
+	device_choice || altboot_restart
+
+	if [ -z "$target" ]; then
+		leave "boot_device_choice"
+		return 1
+	fi
+
+	debug "TARGET: '$target'"
+
+	local rc=0
+
+	if [ "$method" = cdrom ]; then
+		is_target_found || rc=$?
+		leave "boot_device_choice"
+		return $rc
+	fi
+
+	local title="[ Optional fields ]"
+
+	local text="Please enter the full path to an ISO-image"
+	text="$text containing the $OEM_DISTRIBUTION or leave"
+	text="$text this field blank to use mounted partition"
+	text="$text 'as is', or cancel to return step back."
+
+	while :; do
+		if ! IM_form "$title" "$text" 3		\
+			directory 128 "ISO-image"	\
+			options    64 "Mount options"	\
+			#
+		then
+			boot_device_choice || rc=$?
+			break
+		fi
+		if [ -n "${directory//[^[:space:]]/}" ] ||
+			[ -n "$directory" ] && [ "${directory:0:1}" != "/" ]
+		then
+			IM_errmsg "Invalid path: '$directory'!"
+			continue
+		elif is_target_found; then
+			debug "TARGET: '$target'"
+			break
+		elif [ -n "$directory" ]; then
+			IM_errmsg "Can't mount ISO-image: '$directory'!"
+			rc=1
+			break
+		else
+			IM_errmsg "Can't mount boot device: $target!"
+			rc=1
+			break
+		fi
+	done
+
+	directory="${directory//\"/\\\"}"
+	options="${options//\"/\\\"}"
+
+	leave "boot_device_choice"
+	return $rc
+}
+
+main_loop()
+{
+	enter "main_loop"
+
+	local iter=0 nsec=0
+
+	start_scan
+
+	while :; do
+		debug "Idle before scan devices"
+		sleep 1
+		scan_devices
+		iter=$((1 + $iter))
+
+		if is_target_found; then
+			debug "TARGET: '$target'"
+			IM_ponder_stop
+			break
+		fi
+
+		if [ "$iter" -ge "$hardwait" ]; then
+			if [ -z "$NOASKUSER" ]; then
+				IM_ponder_stop
+				boot_device_choice && break ||:
+			fi
+
+			nsec=$(( $nsec + $iter ))
+
+			if [ "$nsec" -ge "$timeout" ]; then
+				if [ -z "$NOASKUSER" ]; then
+					IM_errmsg "Boot device not defined, try again!"
+				elif [ -z "$devspec" ]; then
+					fatal "device not specified, dialogs are disabled"
+				else
+					fatal "specified device not found, dialogs are disabled"
+				fi
+				nsec=0
+			fi
+
+			iter=0
+			[ -n "$NOASKUSER" ] ||
+				start_scan
+			debug "device not ready, go to the next ring"
+		fi
+	done
+
+	leave "main_loop"
+}
+
+
+# Entry point
+debug "$PROG started ($(get_parameter ALTBOOT_LOCALDEV))"
+
+[ -z "${disk}${part}${uuid}${label}" ] ||
+	devspec=1
+
+# At first, try to use previous step results
+if [ -z "$devspec" ] && [ -n "$prevdir" ] && [ ! -f "$altboot_auto" ]; then
+	if [ -s "$prevdir/DEVNAME" ]; then
+		read -r target <"$prevdir/DEVNAME" ||:
+	elif [ -b "$prevdir/dev" ]; then
+		target="$prevdir/dev"
+	fi
+	if is_target_found; then
+		debug "TARGET: '$target'"
+		debug "$PROG finished"
+		exit 0
+	fi
+fi
+
+timeout="${timeout:-20}"
+label="${label//\\040/ }"
+IM_start_output choice form errmsg ponder
+
+# With method=auto and without devspec choose device manualy
+if [ -z "${NOASKUSER}${devspec}" ] && [ -f "$altboot_auto" ]; then
+	scan_devices
+
+	if boot_device_choice; then
+		debug "$PROG finished"
+		exit 0
+	fi
+fi
+
+main_loop
+
+debug "$PROG finished"

@@ -1,0 +1,59 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:            bootchain
+# Required-Start:      uevent udev
+# Should-Start:
+# Required-Stop:
+# Should-Stop:
+# Default-Start:       3 4 5
+# Default-Stop:
+# X-LFS-Provided-By:   LFS
+### END INIT INFO
+
+. /.initrd/initenv
+. /etc/init.d/template
+
+NAME=bootchained
+PIDFILE="/var/run/$NAME.pid"
+ARGS="--lockfile $LOCKFILE --pidfile $PIDFILE --name $NAME --displayname $NAME"
+
+use_hooks()
+{
+	local hook hdir="$1"
+
+	if [ -d "$hdir" ]; then
+		# shellcheck disable=SC2012
+		for hook in $(ls -1 -- "$hdir"/* |sort) _; do
+			[ -s "$hook" ] ||
+				continue
+			. "$hook"
+		done
+	fi
+}
+
+start() {
+	RETVAL=0
+
+	if [ "${ROOT-}" = bootchain ] || [ "${ROOT-}" = pipeline ]; then
+		use_hooks /lib/bootchain-prepare.d
+		start_daemon --background $ARGS "$NAME"
+		RETVAL=$?
+	fi
+
+	return $RETVAL
+}
+
+stop() {
+	RETVAL=0
+
+	if [ "${ROOT-}" = bootchain ] || [ "${ROOT-}" = pipeline ]; then
+		stop_daemon $ARGS "$NAME"
+		RETVAL=$?
+		rm -f -- "$PIDFILE"
+		use_hooks /lib/bootchain-cleanup.d
+	fi
+
+	return $RETVAL
+}
+
+switch "${1-}"

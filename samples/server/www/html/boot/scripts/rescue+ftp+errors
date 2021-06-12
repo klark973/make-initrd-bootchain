@@ -1,0 +1,6 @@
+#!ipxe
+
+kernel http://192.168.15.1/boot/vmlinuz
+initrd http://192.168.15.1/boot/initrd.img
+imgargs vmlinuz initrd=initrd.img fastboot live root=bootchain bootchain=fg,altboot bc_debug live_rw automatic=method:ftp,network:dhcp ip=dhcp stagename=rescue ramdisk_size=620607 splash=0 showopts
+boot

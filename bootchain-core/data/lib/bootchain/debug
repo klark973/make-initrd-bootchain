@@ -1,0 +1,84 @@
+#!/bin/bash -efu
+
+. bootchain-sh-functions
+
+
+listpvdir()
+{
+	# shellcheck disable=SC2012
+	if [ -z "${1-}" ]; then
+		ls -1F "$prevdir/" |sort |head -n20
+	else
+		ls -1F "$prevdir/" |sort |grep -svE "$1" |head -n20
+	fi
+}
+
+
+# Entry point
+message "$PROG for $name [$callnum] started"
+
+message "PREV DIR: $prevdir"
+message "Data DIR: $datadir"
+message "DEST DIR: $destdir"
+
+{ printf "##############################"
+
+  if [ -d "$prevdir" ]; then
+	printf "\nPrevious step results (%s):\n" "$prevdir"
+
+	if mountpoint -q -- "$prevdir"; then
+		listpvdir
+	elif [ ! -b "$prevdir/dev" ] &&
+		[ ! -c "$prevdir/dev" ] &&
+		[ ! -s "$prevdir/DEVNAME" ] &&
+		[ ! -s "$prevdir/FILESIZE" ]
+	then
+		listpvdir
+	else
+		if [ -b "$prevdir/dev" ] || [ -c "$prevdir/dev" ]; then
+			devno="$(mountpoint -x -- "$prevdir/dev")"
+			[ -b "$prevdir/dev" ] &&
+				devname=/sys/dev/block ||
+				devname=/sys/dev/char
+			devname="$(grep -sE ^DEVNAME= "$devname/$devno/uevent" |cut -f2- -d=)"
+			printf 'dev (%s -> %s)\n' "$devno" "/dev/$devname"
+		fi
+
+		if [ -s "$prevdir/DEVNAME" ]; then
+			read -r devname <"$prevdir/DEVNAME" ||
+				devname=
+			if [ -z "$devname" ]; then
+				printf 'DEVNAME\n'
+			else
+				devno="$(mountpoint -x -- "$devname")" ||
+					devno="ABSENT"
+				printf 'DEVNAME (%s -> %s)\n' "$devno" "$devname"
+			fi
+		fi
+
+		if [ -s "$prevdir/FILESIZE" ]; then
+			read -r fsize <"$prevdir/FILESIZE" ||
+				fsize="NOT READABLE"
+			printf 'FILESIZE (%s)\n' "$fsize"
+		fi
+
+		listpvdir "^(dev|DEVNAME|FILESIZE)$"
+	fi
+  fi
+
+  # FIXME: make this better to specify interested mount points only
+  [ -z "${OEM_CDROOT-}" ] && regex="$rootmnt" ||
+	regex="$rootmnt $OEM_CDROOT"
+  regex="$regex $mntdir"
+  regex="${regex//\//\\/}"
+  regex=" (${regex// /\|})\/"
+
+  if mount |grep -qsE "$regex"; then
+	printf "\nMount points and devices:\n"
+	mount |grep -sE "$regex"
+  fi
+
+  printf "##############################\n"
+} 1>&2
+
+message "$PROG for $name [$callnum] finished"

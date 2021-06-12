@@ -1,0 +1,680 @@
+[2021-06-04 16:38:29] bootchained: Starting server [INITRAMFS 2.17.0]...
+[2021-06-04 16:38:29] bootchained: Booting with /proc/cmdline:
+============================================================
+initrd=initrd.img fastboot live root=bootchain bootchain=fg,altboot bc_debug live_rw automatic=method:nfs,network:dhcp,server:192.168.15.1,directory:/srv/public/netinst/current ip=dhcp stagename=rescue ramdisk_size=520777 splash=0 showopts max_loop=16 forensic hash=738e8e7deec05443b369a9d02e2dc897630d693a6888ee9997f6d6bd09ecf552
+============================================================
+
+[2021-06-04 16:38:29] bootchained: RUN: mkdir -p -- /dev/bootchain /.initrd/bootchain/passed
+[2021-06-04 16:38:29] bootchained: RUN: mount -t tmpfs tmpfs /dev/bootchain
+[2021-06-04 16:38:29] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:29] bootchain-loop: [0] Switching to foreground
+[2021-06-04 16:38:29] bootchain-loop: LET: callnum_fg="1"
+[2021-06-04 16:38:29] bootchain-loop: TTY2 will be activated after 2 seconds
+[2021-06-04 16:38:30] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:30] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step0 /dev/bootchain/dst/step0
+[2021-06-04 16:38:30] bootchain-loop: [0] Handler: /lib/bootchain/altboot
+[2021-06-04 16:38:30] debug: debug for altboot [0] started
+[2021-06-04 16:38:30] debug: PREV DIR: 
+[2021-06-04 16:38:30] debug: Data DIR: /dev/bootchain/src/step0
+[2021-06-04 16:38:30] debug: DEST DIR: /dev/bootchain/dst/step0
+############################################################
+[2021-06-04 16:38:30] debug: debug for altboot [0] finished
+[2021-06-04 16:38:30] bootchain-loop: RUN: /lib/bootchain/altboot
+[2021-06-04 16:38:30] altboot: [0] altboot started (automatic='method:nfs,network:dhcp,server:192.168.15.1,directory:/srv/public/netinst/current')
+[2021-06-04 16:38:30] altboot: [0] WELCOME TEXT: 'Welcome to ALT!'
+[2021-06-04 16:38:30] altboot: [0] DISTRIBUTION: 'ALT Workstation 10'
+[2021-06-04 16:38:30] altboot: [0] ENTER: altboot_config
+[2021-06-04 16:38:30] altboot: [0] RUN: ls -1 -- /lib/altboot/automatic.d/
+[2021-06-04 16:38:30] altboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:30] altboot: [0] HOOKS: 'automatic.d'
+[2021-06-04 16:38:30] altboot: [0] USING: 'automatic.d/directory'
+[2021-06-04 16:38:30] altboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:30] altboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:30] altboot: [0] HOOKS: 'add-methods.d'
+[2021-06-04 16:38:30] altboot: [0] USING: 'add-methods.d/100-nfs'
+[2021-06-04 16:38:30] altboot: [0] boot method registered: 'nfs'
+[2021-06-04 16:38:30] altboot: [0] USING: 'add-methods.d/150-ftp'
+[2021-06-04 16:38:30] altboot: [0] boot method registered: 'ftp'
+[2021-06-04 16:38:30] altboot: [0] USING: 'add-methods.d/250-http'
+[2021-06-04 16:38:30] altboot: [0] boot method registered: 'http'
+[2021-06-04 16:38:30] altboot: [0] USING: 'add-methods.d/450-cifs'
+[2021-06-04 16:38:30] altboot: [0] boot method registered: 'cifs'
+[2021-06-04 16:38:31] altboot: [0] USING: 'add-methods.d/750-cdrom'
+[2021-06-04 16:38:31] altboot: [0] boot method registered: 'cdrom'
+[2021-06-04 16:38:31] altboot: [0] USING: 'add-methods.d/850-disk'
+[2021-06-04 16:38:31] altboot: [0] boot method registered: 'disk'
+[2021-06-04 16:38:31] altboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:31] altboot: [0] RUN: ls -1 -- /lib/altboot/global-args.d/
+[2021-06-04 16:38:31] altboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:31] altboot: [0] HOOKS: 'translate.d'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/050-overlays'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/070-lowmem'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/100-cifs'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/100-download'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/100-localdev'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/100-nfs'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/350-squashfs'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/520-liverw'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/550-liveboot'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/650-liverw'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/750-liveboot'
+[2021-06-04 16:38:31] altboot: [0] USING: 'translate.d/950-liveboot'
+[2021-06-04 16:38:31] altboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:31] altboot: [0] BOOTCHAIN REPLACED: 'nfs,download,checksum,squashfs,liveboot,rootfs'
+[2021-06-04 16:38:31] altboot: [0] LEAVE: altboot_config
+[2021-06-04 16:38:31] altboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:31] altboot: [0] HOOKS: 'forget-args.d'
+[2021-06-04 16:38:31] altboot: [0] USING: 'forget-args.d/100-altboot'
+[2021-06-04 16:38:31] altboot: [0] USING: 'forget-args.d/300-localdev'
+[2021-06-04 16:38:31] altboot: [0] USING: 'forget-args.d/400-liverw'
+[2021-06-04 16:38:31] altboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:31] altboot: [0] altboot steps configuration (/.initrd/bootchain/altboot.conf):
+============================================================
+ALTBOOT_OLDROOT=1
+ALTBOOT_STEPS="nfs download checksum squashfs liveboot"
+ALTBOOT_CHECKSUM0="738e8e7deec05443b369a9d02e2dc897630d693a6888ee9997f6d6bd09ecf552"
+ALTBOOT_CHECKSUM=1
+ALTBOOT_CIFS0=""
+ALTBOOT_CIFS=
+ALTBOOT_DOWNLOAD0="to=RD;method=url;url=file:///rescue"
+ALTBOOT_DOWNLOAD=1
+ALTBOOT_LIVEBOOT0="stagename=rescue;method=nfs;flags=live_ro,rescue,live_rw"
+ALTBOOT_LIVEBOOT=1
+ALTBOOT_LOCALDEV0=""
+ALTBOOT_LOCALDEV=
+ALTBOOT_NFS0="server=192.168.15.1;directory=/srv/public/netinst/current"
+ALTBOOT_NFS=1
+ALTBOOT_SQUASHFS0="-"
+ALTBOOT_SQUASHFS=1
+unset AUTOMATIC
+unset STAGENAME
+unset PROFILE
+unset HASH
+unset RESCUE
+unset LIVE
+unset LOWMEM
+unset UPDATEMODULES
+unset LIVE_RW
+============================================================
+
+[2021-06-04 16:38:31] altboot: [0] ENTER: bypass_results
+[2021-06-04 16:38:31] altboot: [0] LEAVE: bypass_results
+[2021-06-04 16:38:31] altboot: [0] altboot finished
+[2021-06-04 16:38:31] bootchain-loop: chain will be reloaded by /.initrd/bootchain/bootchain.next:
+============================================================
+chainsteps="nfs,download,checksum,squashfs,liveboot,rootfs"
+============================================================
+
+[2021-06-04 16:38:31] bootchain-loop: RUN: rm -f -- /.initrd/bootchain/bootchain.next
+[2021-06-04 16:38:31] bootchain-loop: remaining steps: nfs,download,checksum,squashfs,liveboot,rootfs
+[2021-06-04 16:38:31] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:31] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step1 /dev/bootchain/dst/step1
+[2021-06-04 16:38:31] bootchain-loop: [0] Handler: /lib/bootchain/nfs
+[2021-06-04 16:38:31] debug: debug for nfs [0] started
+[2021-06-04 16:38:31] debug: PREV DIR: /dev/bootchain/dst/step0
+[2021-06-04 16:38:31] debug: Data DIR: /dev/bootchain/src/step1
+[2021-06-04 16:38:31] debug: DEST DIR: /dev/bootchain/dst/step1
+##############################
+Previous step results (/dev/bootchain/dst/step0):
+##############################
+[2021-06-04 16:38:31] debug: debug for nfs [0] finished
+[2021-06-04 16:38:31] bootchain-loop: RUN: /lib/bootchain/nfs
+[2021-06-04 16:38:31] nfs: [0] ENTER: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] LET: server="192.168.15.1"
+[2021-06-04 16:38:31] nfs: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] ENTER: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] LET: directory="/srv/public/netinst/current"
+[2021-06-04 16:38:31] nfs: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] ENTER: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] LET: timeout=""
+[2021-06-04 16:38:31] nfs: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] ENTER: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] LET: options=""
+[2021-06-04 16:38:31] nfs: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:31] nfs: [0] nfs started (server=192.168.15.1;directory=/srv/public/netinst/current)
+[2021-06-04 16:38:31] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:31] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:31] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:31] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:31] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:31] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:31] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:31] nfs: [0] ENTER: connection_loop
+[2021-06-04 16:38:31] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:31] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:31] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:31] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:31] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:31] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:31] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:32] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:32] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:32] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:32] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:32] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:32] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:32] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:33] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:33] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:33] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:33] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:33] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:33] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:33] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:34] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:34] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:34] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:34] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:34] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:34] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:34] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:35] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:35] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:35] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:35] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:35] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:35] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:35] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:36] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:36] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:36] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:36] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:36] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:36] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:36] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:37] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:37] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:37] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:37] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:37] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:37] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:37] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:38] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:38] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:38] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:38] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:38] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:38] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:38] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:39] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:39] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:39] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:39] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:39] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:39] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:39] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:40] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:40] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:40] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:40] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:40] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:40] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:40] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:41] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:41] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:41] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:41] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:41] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:41] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:41] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:42] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:42] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:42] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:42] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:42] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:42] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:42] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:43] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:43] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:43] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:43] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:43] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:43] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:43] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:44] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:44] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:44] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:45] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:45] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:45] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:45] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:46] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:46] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:46] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:46] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:46] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:46] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:46] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:47] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:47] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:47] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:47] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:47] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:47] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+mount.nfs: Network is unreachable
+[2021-06-04 16:38:47] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:48] nfs: [0] ENTER: is_server_online
+[2021-06-04 16:38:48] nfs: [0] RUN: mkdir -p -- /root /image
+[2021-06-04 16:38:48] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/current /root -o ro,intr,soft,nolock
+mount.nfs: mount spec 192.168.15.1:/srv/public/netinst/current or point /root is not a directory
+[2021-06-04 16:38:48] nfs: can't mount directory from the NFS-server
+[2021-06-04 16:38:48] nfs: assuming ISO-image, NFS-path: '192.168.15.1:/srv/public/netinst'
+[2021-06-04 16:38:48] nfs: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst /root -o ro,intr,soft,nolock
+[2021-06-04 16:38:48] nfs: 192.168.15.1:/srv/public/netinst has mounted successfully
+[2021-06-04 16:38:48] nfs: [0] ENTER: lomount
+[2021-06-04 16:38:48] nfs: [0] RUN: losetup -Lrf --show -- /root/current
+[2021-06-04 16:38:48] nfs: [0] losetup('/root/current') result: '/dev/loop0'
+[2021-06-04 16:38:48] nfs: [0] RUN: mount -t iso9660 -o ro -- /dev/loop0 /image
+[2021-06-04 16:38:48] nfs: [0] /dev/loop0 has mounted to '/image' as ISO-9660
+[2021-06-04 16:38:48] nfs: [0] LEAVE: lomount
+[2021-06-04 16:38:48] nfs: [0] ENTER: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ARGS: METHOD='nfs'
+[2021-06-04 16:38:48] nfs: [0] LEAVE: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ENTER: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ARGS: HOST='192.168.15.1'
+[2021-06-04 16:38:48] nfs: [0] LEAVE: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ENTER: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ARGS: PREFIX='/srv/public/netinst/current'
+[2021-06-04 16:38:48] nfs: [0] LEAVE: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ENTER: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ARGS: PIGGYBACK='1'
+[2021-06-04 16:38:48] nfs: [0] LEAVE: stage2_setenv
+[2021-06-04 16:38:48] nfs: [0] ENTER: bypass_results
+[2021-06-04 16:38:48] nfs: [0] RUN: rmdir -- /dev/bootchain/dst/step1
+[2021-06-04 16:38:48] nfs: [0] RUN: ln -snf -- /image /dev/bootchain/dst/step1
+[2021-06-04 16:38:48] nfs: [0] LEAVE: bypass_results
+[2021-06-04 16:38:48] nfs: [0] LEAVE: is_server_online
+[2021-06-04 16:38:48] nfs: [0] LEAVE: connection_loop
+[2021-06-04 16:38:48] nfs: [0] nfs finished
+[2021-06-04 16:38:48] bootchain-loop: RUN: touch /.initrd/bootchain/passed/nfs
+[2021-06-04 16:38:48] bootchain-loop: LET: callnum_nfs="1"
+[2021-06-04 16:38:48] bootchain-loop: remaining steps: download,checksum,squashfs,liveboot,rootfs
+[2021-06-04 16:38:48] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:48] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step2 /dev/bootchain/dst/step2
+[2021-06-04 16:38:48] bootchain-loop: [0] Handler: /lib/bootchain/download
+[2021-06-04 16:38:48] debug: debug for download [0] started
+[2021-06-04 16:38:48] debug: PREV DIR: /image
+[2021-06-04 16:38:48] debug: Data DIR: /dev/bootchain/src/step2
+[2021-06-04 16:38:48] debug: DEST DIR: /dev/bootchain/dst/step2
+##############################
+Previous step results (/image):
+2021-06-04-13-08-52-00
+EFI/
+boot/
+docs/
+license.all.html
+license.ru.html
+rescue
+##############################
+[2021-06-04 16:38:48] debug: debug for download [0] finished
+[2021-06-04 16:38:48] bootchain-loop: RUN: /lib/bootchain/download
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: to="RD"
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: method="url"
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: url="file:///rescue"
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: server=""
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: directory=""
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: user=""
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: pass=""
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: imgsize=""
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] ENTER: get_bootarg
+[2021-06-04 16:38:48] download: [0] LET: timeout=""
+[2021-06-04 16:38:48] download: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:48] download: [0] download started (to=RD;method=url;url=file:///rescue)
+[2021-06-04 16:38:48] download: [0] ENTER: get_free_ramdisk
+[2021-06-04 16:38:48] download: [0] LET: to="/dev/ram0"
+[2021-06-04 16:38:48] download: [0] LEAVE: get_free_ramdisk
+[2021-06-04 16:38:48] download: [0] ENTER: mark_used_ramdisk
+[2021-06-04 16:38:48] download: [0] RUN: mkdir -p -- /.initrd/ramdisks
+[2021-06-04 16:38:48] download: [0] RUN: touch -- /.initrd/ramdisks/0
+[2021-06-04 16:38:48] download: [0] LEAVE: mark_used_ramdisk
+[2021-06-04 16:38:48] download: [0] ENTER: get_file_size
+[2021-06-04 16:38:48] download: [0] retrieving file size: '/image/rescue'
+[2021-06-04 16:38:48] download: [0] RUN: stat -L -c%s -- /image/rescue
+[2021-06-04 16:38:48] download: [0] LEAVE: get_file_size
+[2021-06-04 16:38:48] download: [0] ENTER: check_avail_space
+[2021-06-04 16:38:48] download: available: 520777 KiB, required: 520777 KiB
+[2021-06-04 16:38:48] download: [0] LEAVE: check_avail_space
+[2021-06-04 16:38:48] download: [0] ENTER: download_image
+[2021-06-04 16:38:48] download: downloading image: '/image/rescue'
+[2021-06-04 16:38:49] download: [0] RUN: sync
+[2021-06-04 16:38:49] download: [0] LEAVE: download_image
+[2021-06-04 16:38:49] download: [0] ENTER: lomount
+[2021-06-04 16:38:49] download: [0] RUN: losetup -Lrf --show -- /dev/ram0
+[2021-06-04 16:38:49] download: [0] losetup('/dev/ram0') result: '/dev/loop1'
+[2021-06-04 16:38:49] download: [0] LET: devname="/dev/loop1"
+[2021-06-04 16:38:49] download: [0] LEAVE: lomount
+[2021-06-04 16:38:49] download: [0] DEVNAME: /dev/loop1
+[2021-06-04 16:38:49] download: [0] FILESIZE: 533274624
+[2021-06-04 16:38:49] download: [0] RUN: cp -a -- /dev/loop1 /dev/bootchain/dst/step2/dev
+[2021-06-04 16:38:49] download: [0] ENTER: stage2_getenv
+[2021-06-04 16:38:49] download: [0] KEY: 'METHOD'
+[2021-06-04 16:38:49] download: [0] stage2_getenv('METHOD') result: 'nfs'
+[2021-06-04 16:38:49] download: [0] LEAVE: stage2_getenv
+[2021-06-04 16:38:49] download: [0] download finished
+[2021-06-04 16:38:49] bootchain-loop: RUN: touch /.initrd/bootchain/passed/download
+[2021-06-04 16:38:49] bootchain-loop: LET: callnum_download="1"
+[2021-06-04 16:38:49] bootchain-loop: remaining steps: checksum,squashfs,liveboot,rootfs
+[2021-06-04 16:38:49] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:49] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step3 /dev/bootchain/dst/step3
+[2021-06-04 16:38:49] bootchain-loop: [0] Handler: /lib/bootchain/checksum
+[2021-06-04 16:38:49] debug: debug for checksum [0] started
+[2021-06-04 16:38:49] debug: PREV DIR: /dev/bootchain/dst/step2
+[2021-06-04 16:38:49] debug: Data DIR: /dev/bootchain/src/step3
+[2021-06-04 16:38:49] debug: DEST DIR: /dev/bootchain/dst/step3
+##############################
+Previous step results (/dev/bootchain/dst/step2):
+dev (7:1 -> /dev/loop1)
+DEVNAME (7:1 -> /dev/loop1)
+FILESIZE (533274624)
+##############################
+[2021-06-04 16:38:49] debug: debug for checksum [0] finished
+[2021-06-04 16:38:49] bootchain-loop: RUN: /lib/bootchain/checksum
+[2021-06-04 16:38:49] checksum: [0] ENTER: get_bootarg
+[2021-06-04 16:38:49] checksum: [0] LET: CHECKSUM="738e8e7deec05443b369a9d02e2dc897630d693a6888ee9997f6d6bd09ecf552"
+[2021-06-04 16:38:49] checksum: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:49] checksum: [0] checksum started (738e8e7deec05443b369a9d02e2dc897630d693a6888ee9997f6d6bd09ecf552)
+[2021-06-04 16:38:49] checksum: [0] ENTER: check_prevstep_results
+[2021-06-04 16:38:49] checksum: [0] LEAVE: check_prevstep_results
+[2021-06-04 16:38:49] checksum: [0] hash summa: 738e8e7deec05443b369a9d02e2dc897630d693a6888ee9997f6d6bd09ecf552
+[2021-06-04 16:38:49] checksum: [0] hash data size: 533274624
+[2021-06-04 16:38:49] checksum: [0] hash check program: sha256sum
+[2021-06-04 16:38:49] checksum: calculating image checksum for '/dev/loop1'...
+[2021-06-04 16:38:53] checksum: [0] calculated hash: 738e8e7deec05443b369a9d02e2dc897630d693a6888ee9997f6d6bd09ecf552
+[2021-06-04 16:38:53] checksum: checksum verified successfully
+[2021-06-04 16:38:53] checksum: [0] ENTER: bypass_results
+[2021-06-04 16:38:53] checksum: [0] RUN: rmdir -- /dev/bootchain/dst/step3
+[2021-06-04 16:38:53] checksum: [0] RUN: mv -f -- /dev/bootchain/dst/step2 /dev/bootchain/dst/step3
+[2021-06-04 16:38:53] checksum: [0] LEAVE: bypass_results
+[2021-06-04 16:38:53] checksum: [0] checksum finished
+[2021-06-04 16:38:53] bootchain-loop: RUN: touch /.initrd/bootchain/passed/checksum
+[2021-06-04 16:38:53] bootchain-loop: LET: callnum_checksum="1"
+[2021-06-04 16:38:53] bootchain-loop: remaining steps: squashfs,liveboot,rootfs
+[2021-06-04 16:38:53] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:53] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step4 /dev/bootchain/dst/step4
+[2021-06-04 16:38:53] bootchain-loop: [0] Handler: /lib/bootchain/squashfs
+[2021-06-04 16:38:53] debug: debug for squashfs [0] started
+[2021-06-04 16:38:53] debug: PREV DIR: /dev/bootchain/dst/step3
+[2021-06-04 16:38:53] debug: Data DIR: /dev/bootchain/src/step4
+[2021-06-04 16:38:53] debug: DEST DIR: /dev/bootchain/dst/step4
+##############################
+Previous step results (/dev/bootchain/dst/step3):
+dev (7:1 -> /dev/loop1)
+DEVNAME (7:1 -> /dev/loop1)
+FILESIZE (533274624)
+##############################
+[2021-06-04 16:38:53] debug: debug for squashfs [0] finished
+[2021-06-04 16:38:53] bootchain-loop: RUN: /lib/bootchain/squashfs
+[2021-06-04 16:38:53] squashfs: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] squashfs: [0] LET: SQUASHFS="-"
+[2021-06-04 16:38:53] squashfs: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] squashfs: [0] squashfs started (-)
+[2021-06-04 16:38:53] squashfs: [0] RUN: mount -t squashfs -r -- /dev/loop1 /root
+[2021-06-04 16:38:53] squashfs: [0] ENTER: bypass_results
+[2021-06-04 16:38:53] squashfs: [0] RUN: rmdir -- /dev/bootchain/dst/step4
+[2021-06-04 16:38:53] squashfs: [0] RUN: ln -snf -- /root /dev/bootchain/dst/step4
+[2021-06-04 16:38:53] squashfs: [0] LEAVE: bypass_results
+[2021-06-04 16:38:53] squashfs: [0] squashfs finished
+[2021-06-04 16:38:53] bootchain-loop: RUN: touch /.initrd/bootchain/passed/squashfs
+[2021-06-04 16:38:53] bootchain-loop: LET: callnum_squashfs="1"
+[2021-06-04 16:38:53] bootchain-loop: remaining steps: liveboot,rootfs
+[2021-06-04 16:38:53] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:53] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step5 /dev/bootchain/dst/step5
+[2021-06-04 16:38:53] bootchain-loop: [0] Handler: /lib/bootchain/liveboot
+[2021-06-04 16:38:53] debug: debug for liveboot [0] started
+[2021-06-04 16:38:53] debug: PREV DIR: /root
+[2021-06-04 16:38:53] debug: Data DIR: /dev/bootchain/src/step5
+[2021-06-04 16:38:53] debug: DEST DIR: /dev/bootchain/dst/step5
+##############################
+Previous step results (/root):
+bin/
+boot/
+dev/
+etc/
+home/
+image/
+lib/
+lib64/
+libx32/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+tmp/
+##############################
+[2021-06-04 16:38:53] debug: debug for liveboot [0] finished
+[2021-06-04 16:38:53] bootchain-loop: RUN: /lib/bootchain/liveboot
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: stagename="rescue"
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: method="nfs"
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: directory=""
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: overlayroot=""
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: profile=""
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: overlays=""
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: flags="live_ro,rescue,live_rw"
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] ENTER: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] LET: timeout=""
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: get_bootarg
+[2021-06-04 16:38:53] liveboot: [0] liveboot started (stagename=rescue;method=nfs;flags=live_ro,rescue,live_rw)
+[2021-06-04 16:38:53] liveboot: [0] RUN: ln -snf /proc/mounts /etc/mtab
+[2021-06-04 16:38:53] liveboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] HOOKS: 'liveboot-init.d'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'liveboot-init.d/100-overlayroot'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'liveboot-init.d/400-liverw'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'liveboot-init.d/700-cifs'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'liveboot-init.d/700-nfs'
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:53] liveboot: running rescue
+[2021-06-04 16:38:53] liveboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] HOOKS: 'liveboot-pre.d'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'liveboot-pre.d/400-liverw'
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] ENTER: do_overlay
+[2021-06-04 16:38:53] liveboot: remounting / with overlayfs
+[2021-06-04 16:38:53] liveboot: [0] RUN: mkdir -p -- /root.rw /root.ro
+[2021-06-04 16:38:53] liveboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] HOOKS: 'rw-overlay.d'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'rw-overlay.d/100-overlayroot'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'rw-overlay.d/400-liverw'
+[2021-06-04 16:38:53] liveboot: [0] ENTER: liverw_disk_slice
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: liverw_disk_slice
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount -t tmpfs -o mode=755 -- none /root.rw
+[2021-06-04 16:38:53] liveboot: [0] RUN: mkdir -p -- /root.rw/rw /root.rw/wk
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount --move -- /root /root.ro
+[2021-06-04 16:38:53] liveboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] HOOKS: 'livecd-slice.d'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'livecd-slice.d/300-localdev'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'livecd-slice.d/700-cifs'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'livecd-slice.d/700-nfs'
+[2021-06-04 16:38:53] liveboot: [0] ENTER: nfs_slice
+[2021-06-04 16:38:53] liveboot: [0] ENTER: stage2_getenv
+[2021-06-04 16:38:53] liveboot: [0] KEY: 'HOST'
+[2021-06-04 16:38:53] liveboot: [0] stage2_getenv('HOST') result: '192.168.15.1'
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: stage2_getenv
+[2021-06-04 16:38:53] liveboot: [0] ENTER: stage2_getenv
+[2021-06-04 16:38:53] liveboot: [0] KEY: 'PREFIX'
+[2021-06-04 16:38:53] liveboot: [0] stage2_getenv('PREFIX') result: '/srv/public/netinst/current'
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: stage2_getenv
+[2021-06-04 16:38:53] liveboot: mounting NFS overlays from 192.168.15.1:/srv/public/netinst/overlays-live
+[2021-06-04 16:38:53] liveboot: [0] RUN: mkdir -p -- /root.rw/rw/tmp/images
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount.nfs 192.168.15.1:/srv/public/netinst/overlays-live /root.rw/rw/tmp/images -o ro,intr,soft,nolock
+[2021-06-04 16:38:53] liveboot: [0] 192.168.15.1:/srv/public/netinst/overlays-live has mounted to /root.rw/rw/tmp/images
+[2021-06-04 16:38:53] liveboot: [0] ENTER: mount_overlays
+[2021-06-04 16:38:53] liveboot: [0] RUN: find /root.rw/rw/tmp/images/default -maxdepth 1 -type f -name *.iso -o -name *.squashfs
+[2021-06-04 16:38:53] liveboot: [0] RUN: mkdir -p -- /root.rw/rw/tmp/overlays/root.squashfs
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount -o ro,loop -- /root.rw/rw/tmp/images/default/root.squashfs /root.rw/rw/tmp/overlays/root.squashfs
+[2021-06-04 16:38:53] liveboot: overlays found: root.squashfs
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: mount_overlays
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: nfs_slice
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount -t overlay -o lowerdir=/root.rw/rw/tmp/overlays/root.squashfs:/root.ro,upperdir=/root.rw/rw,workdir=/root.rw/wk -- overlay /root
+[2021-06-04 16:38:53] liveboot: [0] RUN: mkdir -p -- /root/.ro /root/.rw
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount --move -- /root.ro /root/.ro
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount --move -- /root.rw /root/.rw
+[2021-06-04 16:38:53] liveboot: [0] RUN: rmdir -- /root.rw /root.ro
+[2021-06-04 16:38:53] liveboot: rootfs overlayed with overlayfs
+[2021-06-04 16:38:53] liveboot: [0] RUN: mkdir -p -- /root/image
+[2021-06-04 16:38:53] liveboot: [0] RUN: mount --move -- /image /root/image
+[2021-06-04 16:38:53] liveboot: [0] ENTER: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] HOOKS: 'liveboot-post.d'
+[2021-06-04 16:38:53] liveboot: [0] USING: 'liveboot-post.d/950-altboot'
+[2021-06-04 16:38:53] liveboot: [0] ENTER: altboot_cleanup
+[2021-06-04 16:38:53] liveboot: Spawning init...
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: altboot_cleanup
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: use_hooks
+[2021-06-04 16:38:53] liveboot: [0] RUN: cp -Lf -- /etc/resolv.conf /root/etc/
+[2021-06-04 16:38:53] liveboot: [0] ENTER: bypass_results
+[2021-06-04 16:38:53] liveboot: [0] RUN: rmdir -- /dev/bootchain/dst/step5
+[2021-06-04 16:38:53] liveboot: [0] RUN: ln -snf -- /root /dev/bootchain/dst/step5
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: bypass_results
+[2021-06-04 16:38:53] liveboot: [0] LEAVE: do_overlay
+[2021-06-04 16:38:53] liveboot: [0] liveboot finished
+[2021-06-04 16:38:53] bootchain-loop: RUN: touch /.initrd/bootchain/passed/liveboot
+[2021-06-04 16:38:53] bootchain-loop: LET: callnum_liveboot="1"
+[2021-06-04 16:38:53] bootchain-loop: remaining steps: rootfs
+[2021-06-04 16:38:53] bootchain-loop: LET: callnum="0"
+[2021-06-04 16:38:53] bootchain-loop: RUN: mkdir -p -- /dev/bootchain/src/step6 /dev/bootchain/dst/step6
+[2021-06-04 16:38:53] bootchain-loop: [0] Handler: /lib/bootchain/rootfs
+[2021-06-04 16:38:53] debug: debug for rootfs [0] started
+[2021-06-04 16:38:53] debug: PREV DIR: /root
+[2021-06-04 16:38:53] debug: Data DIR: /dev/bootchain/src/step6
+[2021-06-04 16:38:53] debug: DEST DIR: /dev/bootchain/dst/step6
+##############################
+Previous step results (/root):
+bin/
+boot/
+dev/
+etc/
+home/
+image/
+lib/
+lib64/
+libx32/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+test1/
+
+Mount points and devices:
+/dev/loop0 on /root/image type iso9660 (ro,relatime,nojoliet,check=s,map=n,blocksize=2048)
+/dev/loop1 on /root/.ro type squashfs (ro,relatime)
+none on /root/.rw type tmpfs (rw,relatime,mode=755)
+192.168.15.1:/srv/public/netinst/overlays-live on /root/.rw/rw/tmp/images type nfs4 (ro,relatime,vers=4.2,rsize=262144,wsize=262144,namlen=255,soft,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.15.50,local_lock=none,addr=192.168.15.1)
+/root/.rw/rw/tmp/images/default/root.squashfs on /root/.rw/rw/tmp/overlays/root.squashfs type squashfs (ro,relatime)
+##############################
+[2021-06-04 16:38:53] debug: debug for rootfs [0] finished
+[2021-06-04 16:38:53] bootchain-loop: RUN: /lib/bootchain/rootfs
+[2021-06-04 16:38:53] bootchain-loop: RUN: touch /.initrd/bootchain/passed/rootfs
+[2021-06-04 16:38:53] bootchain-loop: [0] Handler: /lib/bootchain/debug
+[2021-06-04 16:38:53] debug: debug for STAGE2 [0] started
+[2021-06-04 16:38:53] debug: PREV DIR: /root
+[2021-06-04 16:38:53] debug: Data DIR: 
+[2021-06-04 16:38:53] debug: DEST DIR: 
+##############################
+Previous step results (/root):
+bin/
+boot/
+dev/
+etc/
+home/
+image/
+lib/
+lib64/
+libx32/
+media/
+mnt/
+opt/
+proc/
+root/
+run/
+sbin/
+selinux/
+srv/
+sys/
+test1/
+
+Mount points and devices:
+/dev/loop0 on /root/image type iso9660 (ro,relatime,nojoliet,check=s,map=n,blocksize=2048)
+/dev/loop1 on /root/.ro type squashfs (ro,relatime)
+none on /root/.rw type tmpfs (rw,relatime,mode=755)
+192.168.15.1:/srv/public/netinst/overlays-live on /root/.rw/rw/tmp/images type nfs4 (ro,relatime,vers=4.2,rsize=262144,wsize=262144,namlen=255,soft,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.15.50,local_lock=none,addr=192.168.15.1)
+/root/.rw/rw/tmp/images/default/root.squashfs on /root/.rw/rw/tmp/overlays/root.squashfs type squashfs (ro,relatime)
+##############################
+[2021-06-04 16:38:53] debug: debug for STAGE2 [0] finished
+[2021-06-04 16:38:53] bootchain-loop: last step finished with exit code 2
+[2021-06-04 16:38:53] bootchain-loop: RUN: cp -Lf -- /var/log/bootchained.log /root/var/log/

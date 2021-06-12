@@ -1,0 +1,27 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+devname=
+mp="$destdir"
+
+[ -z "$ALTBOOT_OLDROOT" ] || [ -z "$OEM_CDROOT" ] ||
+	launch_step_once
+debug "$PROG started"
+
+[ -n "$prevdir" ] && [[ -s "$prevdir/DEVNAME" || -b "$prevdir/dev" ]] ||
+	fatal "no previous step results to use with $PROG"
+[ -s "$prevdir/DEVNAME" ] && read -r devname <"$prevdir/DEVNAME" ||
+	devname="$prevdir/dev"
+[ -b "$devname" ] ||
+	fatal "block special device not found: $devname"
+
+[ -z "$ALTBOOT_OLDROOT" ] || [ -z "$OEM_CDROOT" ] ||
+	mp="$OEM_CDROOT"
+run mkdir -p -- "$mp"
+run mount -t iso9660 -o ro -- "$devname" "$mp" ||
+	fatal "can't mount target drive: $devname"
+[ -z "$ALTBOOT_OLDROOT" ] || [ -z "$OEM_CDROOT" ] ||
+	bypass_results "$mp"
+
+debug "$PROG finished"

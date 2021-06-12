@@ -1,0 +1,27 @@
+#!/bin/bash -efu
+
+. interactive-sh-functions
+
+delay="${1-}"
+
+IM_is_active ||
+	fatal "interactive mode required"
+exec </dev/null >/dev/null 2>&1
+
+if [ -n "$delay" ]; then
+	while [ ! -f "${_IM_activated}" ]; do
+		[ "$delay" -gt 0 ] ||
+			break
+		delay=$(( $delay - 1 ))
+		sleep 1
+	done
+	sleep 1
+fi
+
+if [ ! -f "${_IM_activated}" ] && IM_is_active; then
+	:> "${_IM_activated}"
+	IM_hide_bootsplash
+	[ -n "$NOTTYS" ] ||
+		chvt ${_IM_VT_number}
+	rootdelay_pause
+fi

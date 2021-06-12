@@ -1,0 +1,416 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+check_parameter ALTBOOT_DOWNLOAD
+
+srcreg=
+dstreg=
+devname=
+filesize=
+
+b_a()
+{
+	get_bootarg DOWNLOAD $1
+}
+
+b_a to
+b_a method
+b_a url
+b_a server
+b_a directory
+b_a user
+b_a pass
+b_a imgsize
+b_a timeout
+
+
+url_input_form()
+{
+	enter "url_input_form"
+
+	local title="[ Enter the URL ]"
+
+	local text="Please enter the URL or full path to the"
+	text="$text file containing the $OEM_DISTRIBUTION."
+
+	while :; do
+		IM_form "$title" "$text" 2		\
+			url 200 "URL or filename"	\
+			||
+			continue
+		case "$url" in
+		'')
+			IM_errmsg "Valid URL/filename required!"
+			continue
+			;;
+		http://*|ftp://*|file:///*|/*)
+			[ -n "${url//[^[:space:]]/}" ] ||
+				break
+			;;
+		esac
+		IM_errmsg "Invalid URL/filename: '$url'!"
+	done
+
+	server=
+	directory=
+	user=
+	pass=
+
+	leave "url_input_form"
+}
+
+http_input_form()
+{
+	enter "http_input_form"
+
+	local title="[ HTTP-server connection data ]"
+
+	local text="Please enter the name or IP address of the"
+	text="$text HTTP-server, and the directory containing"
+	text="$text the $OEM_DISTRIBUTION."
+
+	while :; do
+		IM_form "$title" "$text" 2		\
+			server     64 "HTTP-server"	\
+			directory 128 "Directory"	\
+			||
+			continue
+		if [ -z "$server" ]; then
+			IM_errmsg "Valid HTTP-server required!"
+		elif [ -z "$directory" ]; then
+			IM_errmsg "Valid Directory required!"
+		elif [ -n "${server//[^[:space:]]/}" ]; then
+			IM_errmsg "Invalid HTTP-server: '$server'!"
+		elif [ -n "${directory//[^[:space:]]/}" ] ||
+			[ -n "$directory" -a "${directory:0:1}" != "/" ]
+		then
+			IM_errmsg "Invalid Directory: '$directory'!"
+		else
+			user=
+			pass=
+			break
+		fi
+	done
+
+	url="http://${server}${directory}"
+
+	leave "http_input_form"
+}
+
+ftp_input_form()
+{
+	enter "ftp_input_form"
+
+	local title="[ FTP-server connection data ]"
+
+	local text="Please enter the name or IP address of the"
+	text="$text FTP-server, and the directory containing"
+	text="$text the $OEM_DISTRIBUTION, and the Login/Password"
+	text="$text if necessary (leave Login blank for anonymous)."
+
+	while :; do
+		IM_form "$title" "$text" 4		\
+			server     64 "FTP-server"	\
+			directory 128 "Directory"	\
+			user       32 "Login"		\
+			pass       32 "Password"	\
+			||
+			continue
+		if [ -z "$server" ]; then
+			IM_errmsg "Valid FTP-server required!"
+		elif [ -z "$directory" ]; then
+			IM_errmsg "Valid Directory required!"
+		elif [ -n "${server//[^[:space:]]/}" ]; then
+			IM_errmsg "Invalid FTP-server: '$server'!"
+		elif [ -n "${directory//[^[:space:]]/}" ] ||
+			[ -n "$directory" -a "${directory:0:1}" != "/" ]
+		then
+			IM_errmsg "Invalid Directory: '$directory'!"
+		else
+			[ -n "$pass" ] ||
+				user=
+			[ -n "$user" ] ||
+				pass=
+			break
+		fi
+	done
+
+	url="ftp://${server}${directory}"
+
+	leave "ftp_input_form"
+}
+
+download_input_form()
+{
+	enter "download_input_form"
+
+	[ "$method" = "http" ] || [ "$method" = "ftp" ] ||
+		method="url"
+	${method}_input_form
+
+	leave "download_input_form"
+}
+
+get_file_size()
+{
+	local cmd
+
+	filesize="$imgsize"
+	[ -z "$filesize" ] ||
+		return 0
+	enter "get_file_size"
+
+	if [ -n "$srcreg" ]; then
+		if [ ! -e "$url" ]; then
+			message "file not found: '$url'"
+			leave "get_file_size"
+			return 1
+		elif [ ! -r "$url" ]; then
+			message "file is not readable: '$url'"
+			leave "get_file_size"
+			return 1
+		fi
+
+		message "retrieving file size: '$url'"
+		filesize="$(run stat -L -c%s -- "$url")"
+	else
+		local regex="^Content\-Length:[[:space:]]*"
+		local i tmpf="$(mktemp -t)"
+
+		IM_ponder_start \
+			"[ Connecting... ]" \
+			"Requesting image from the server: '$url'..."
+		message "retrieving image file size: '$url'"
+
+		i=0
+		while [ "$i" -lt "$timeout" ]; do
+			if run curl -sI ${CURLOPTS-} -- "$url" >"$tmpf" &&
+				head -n1 -- "$tmpf" |grep -qs ' 200 OK'
+			then
+				filesize="$(grep -sE "$regex" "$tmpf" |
+						sed 's/[^[:digit:]]//g')"
+				[ -z "$filesize" ] || break
+			fi
+			i=$((3 + $i))
+			sleep 3
+		done
+
+		rm -f -- "$tmpf"
+		IM_ponder_stop
+	fi
+
+	if [ -z "$filesize" ]; then
+		message "can't retrieve image/file size by specified URL"
+		leave "get_file_size"
+		return 1
+	fi
+
+	leave "get_file_size"
+}
+
+check_avail_space()
+{
+	enter "check_avail_space"
+
+	local text avail szkb="$(( $filesize / 1024 + 1 ))"
+
+	if [ -n "$dstreg" ]; then
+		avail="$(grep -sE ^MemAvailable: /proc/meminfo |
+				sed 's/[^[:digit:]]//g')"
+		avail="$(( ${avail:-0} / 2 ))"
+	else
+		local number="$(mountpoint -x -- "$to")"
+		local sysfs="/sys/dev/block/$number/size"
+
+		[ -e "$sysfs" ] && read -r avail <"$sysfs" || avail=0
+		avail="$(( ${avail:-0} * 2 ))"
+	fi
+
+	if [ "$avail" -lt "$szkb" ]; then
+		message "available: $avail KiB, required: $szkb KiB"
+		text="enough memory for download specified image"
+
+		if [ -n "$NOASK" ]; then
+			leave "check_avail_space"
+			IM_die "not $text, dialogs are disabled"
+		fi
+
+		message "not $text, go to the next ring"
+		IM_errmsg "Not $text!"
+		download_input_form
+		filesize=
+
+		return 197
+	fi
+
+	leave "check_avail_space"
+}
+
+download_image()
+{
+	enter "download_image"
+
+	local text left right opts="${CURLOPTS-}"
+
+	[ -n "$dstreg" ] && right=">\"$to\"" ||
+		right="|dd \"of=$to\" bs=32k 2>/dev/null"
+	text="Downloading the $OEM_DISTRIBUTION into $target..."
+	message "downloading image: '$url'..."
+
+	if [ -n "$srcreg" ]; then
+		left="pv -n -i 1 -- \"$url\""
+	else
+		opts="$opts --silent --no-buffer --connect-timeout 5"
+		opts="$opts --max-redirs 5 --max-filesize \"$filesize\""
+		[ "$method" != "ftp" ] || [ -z "$user" ] || [ -z "$pass" ] ||
+			opts="${opts:+$opts }-u \"$user:$pass\""
+		left="curl $opts -- \"$url\" |pv -n -i 1 -s \"$filesize\""
+	fi
+
+	debug "RUN: $left $right"
+	eval "($left $right)" 2>&1 |
+		IM_gauge "[ Downloading image... ]" "$text" ||
+			printf '%s\n' "$?" >"$datadir/ERROR"
+
+	leave "download_image"
+}
+
+
+# Entry point
+debug "$PROG started ($(get_parameter ALTBOOT_DOWNLOAD))"
+IM_on
+
+[ -z "$prevdir" ] ||
+	prevdir="$(readlink-e "$prevdir")"
+[ -n "$to" ] || [ -z "$prevdir" ] || [ ! -s "$prevdir/DEVNAME" ] ||
+	read -r to <"$prevdir/DEVNAME" ||:
+
+case "$to" in
+pipe[0-9]*)
+	target="$(resolve_target "$to")/DEVNAME"
+	[ -s "$target" ] && read -r to <"$target" && [ -n "$to" ] ||
+		IM_die "invalid pipe# specified, can't resolve the device name"
+	;;
+RD)
+	get_free_ramdisk to ||
+		IM_die "no free RAM-disk found"
+	;;
+/dev/?*)
+	;;
+*)
+	to="$datadir/image"
+	dstreg=1
+	;;
+esac
+
+target="the RAM"
+timeout="${timeout:-20}"
+
+if [ -z "$dstreg" ]; then
+	[ -b "$to" ] ||
+		IM_die "specified target block device not found: $to"
+	case "$to" in
+	/dev/ram[0-9]*)
+		mark_used_ramdisk "$to"
+		target="RAM-disk"
+		;;
+	*)
+		target="device $to"
+		;;
+	esac
+fi
+
+if [ -n "$server" ] && [ -n "$directory" ]; then
+	if [ "$method" = "http" ] || [ "$method" = "ftp" ]; then
+		url="${method}://${server}${directory}"
+	else
+		server=
+		directory=
+	fi
+fi
+if [ "$method" != "ftp" ]; then
+	user=""; pass=""
+elif [ -z "$user" ]; then
+	pass=
+fi
+
+if [ -z "$url" ]; then
+	[ -z "$NOASK" ] ||
+		IM_die "URL for boot from not specified, dialogs are disabled"
+	download_input_form
+fi
+
+while :; do
+	saved_url="$url"
+
+	if [ "${url:0:8}" = "file:///" ]; then
+		url="${url#file://}"
+		srcreg=1
+	elif [ "${url:0:1}" = "/" ]; then
+		srcreg=1
+	else
+		srcreg=
+	fi
+
+	if [ -n "$srcreg" ]; then
+		if [ -n "$prevdir" ] && mountpoint -q -- "$prevdir"; then
+			url="${prevdir}${url}"
+		else
+			IM_die "no previous step results to download image"
+		fi
+	fi
+
+	get_file_size && check_avail_space ||
+		printf '%s\n' "$?" >"$datadir/ERROR"
+	[ -z "$filesize" ] ||
+		download_image
+	url="$saved_url"
+	unset saved_url
+
+	[ -f "$datadir/ERROR" ] ||
+		break
+	read -r text <"$datadir/ERROR" ||
+		text=1
+	run rm -f -- "$datadir/ERROR"
+	debug "iteration failed (rc=$text)"
+
+	if [ "$text" != 197 ]; then
+		text="connection error or bad URL/filename: '$url'"
+		[ -z "$NOASK" ] ||
+			IM_die "$text, dialogs are disabled"
+		IM_errmsg "Connection error or specified URL unavailable now!"
+		message "$text, go to the next ring"
+		download_input_form
+	fi
+
+	unset text
+done
+
+lomount devname "$to"
+debug "DEVNAME: $devname"
+debug "FILESIZE: $filesize"
+printf '%s\n' "$filesize" >"$destdir/FILESIZE"
+printf '%s\n' "$devname" >"$destdir/DEVNAME"
+run cp -a -- "$devname" "$destdir/dev"
+
+if [ -n "$ALTBOOT_STAGE2COMPAT" ]; then
+	if [ -z "$(stage2_getenv METHOD)" ]; then
+		stage2_setenv METHOD "$method"
+
+		if [ "$method" = "url" ]; then
+			stage2_setenv URL "$url"
+		else
+			stage2_setenv HOST "$server"
+			stage2_setenv PREFIX "$directory"
+
+			if [ -n "$user" ]; then
+				stage2_setenv LOGIN "$user"
+				stage2_setenv PASSWORD "$pass"
+			fi
+		fi
+	fi
+fi
+
+IM_off
+debug "$PROG finished"

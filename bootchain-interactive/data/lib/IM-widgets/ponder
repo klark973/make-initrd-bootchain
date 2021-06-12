@@ -1,0 +1,66 @@
+#!/bin/bash -efu
+
+# Internal
+_IM_ponder_pid=
+_IM_ponder_finished="${_IM_flag}/PONDER-FINISHED"
+
+_IM_ponder_bg()
+{
+	local dlgcmd="IM_gauge \"$1\" \"$2\""
+	local delay="$3" step="$4" percent=0 forward=1
+
+	while [ ! -f "${_IM_ponder_finished}" ]; do
+		eval "echo $percent |$dlgcmd"
+
+		if [ $forward -ne 0 ]; then
+			if [ $percent -lt 100 ]; then
+				percent=$(( $percent + $step ))
+			else
+				percent=$(( $percent - $step ))
+				forward=0
+			fi
+		else
+			if [ $percent -gt 0 ]; then
+				percent=$(( $percent - $step ))
+			else
+				percent=$(( $percent + $step ))
+				forward=1
+			fi
+		fi
+
+		[ $percent -le 100 ] ||
+			percent=100
+		[ $percent -ge 0 ] ||
+			percent=0
+		sleep "$delay"
+	done
+
+	eval "echo 100 |$dlgcmd"
+}
+
+IM_ponder_start()
+{
+	IM_start_output gauge
+
+	local title="$1" text="${2-}"
+	local delay="${3:-0.5}"
+	local step="${4:-10}"
+
+	[ -z "${_IM_ponder_pid}" ] ||
+		return 0
+	rm -f -- "${_IM_ponder_finished}"
+	_IM_ponder_bg "$title" "$text" "$delay" "$step" &
+	_IM_ponder_pid=$!
+}
+
+IM_ponder_stop()
+{
+	[ -n "${_IM_ponder_pid}" ] ||
+		return 0
+	:> "${_IM_ponder_finished}"
+	wait "${_IM_ponder_pid}" 2>/dev/null ||:
+	rm -f -- "${_IM_ponder_finished}"
+	[ -z "$NOTTYS" ] ||
+		reset
+	_IM_ponder_pid=
+}

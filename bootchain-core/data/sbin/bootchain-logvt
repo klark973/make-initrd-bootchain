@@ -1,0 +1,36 @@
+#!/bin/bash -efu
+
+. bootchain-sh-functions
+
+pid=
+pidfile=/var/run/bootchained.pid
+
+
+exit_handler()
+{
+	local rc=$?
+
+	trap - EXIT
+
+	if [ -n "$pid" ]; then
+		kill -TERM "$pid" ||
+			kill -KILL "$pid" ||:
+		wait "$pid" ||:
+	fi >/dev/null 2>&1
+
+	clear
+	exit $rc
+}
+
+
+# Entry point
+[ -z "${NOTTYS-}" ] && [ -n "$BC_LOG_VT" ] ||
+	exit 1
+set_cleanup_handler exit_handler
+exec </dev/null >"/dev/tty$BC_LOG_VT" 2>&1
+printf "bootchain logger started on tty%s\n\n" "$BC_LOG_VT"
+tail -f -- "$BC_LOGFILE" & pid="$!"
+
+while [ -f "$pidfile" ]; do
+	sleep 1
+done
