@@ -45,8 +45,17 @@ scan_devices()
 		x="$(_udevd_field "ID_FS_$key")"
 		[ -n "$x" ] ||
 			x="$(_blkid_field "$key")"
-		[ "$x" = "$value" ] ||
+		if [ "$key" != LABEL ]; then
+			[ "$x" = "$value" ] ||
+				return 1
+		else
+			# shellcheck disable=SC2254
+			case "$x" in
+			$value) return 0
+				;;
+			esac
 			return 1
+		fi
 	}
 
 	_check_cdrom()

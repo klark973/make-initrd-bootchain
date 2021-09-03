@@ -18,12 +18,23 @@ b_a()
 b_a method
 b_a disk
 b_a part
+b_a fuid
 b_a uuid
 b_a label
 b_a directory
 b_a timeout
 b_a options
 
+
+reset_devspec()
+{
+	devspec=
+	label=
+	uuid=
+	disk=
+	part=
+	fuid=
+}
 
 is_target_found()
 {
@@ -72,6 +83,14 @@ is_target_found()
 			return 1
 		fi
 
+		if [ -n "$fuid" ] && [ ! -f "$mp/$fuid" ]; then
+			message "however specified FUID-file not found: '$fuid'"
+			run umount -fl -- "$mp" ||:
+			leave "is_target_found"
+			target=
+			return 1
+		fi
+
 		if [ -n "$ALTBOOT_OLDROOT" ]; then
 			stage2_setenv DEVICE "${target#/dev/}"
 			stage2_setenv METHOD "cdrom"
@@ -98,6 +117,14 @@ is_target_found()
 	message "$target has mounted successfully"
 
 	if [ -z "$directory" ]; then
+		if [ -n "$fuid" ] && [ ! -f "$mp/$fuid" ]; then
+			message "however specified FUID-file not found: '$fuid'"
+			run umount -fl -- "$mp" ||:
+			leave "is_target_found"
+			target=
+			return 1
+		fi
+
 		if [ -n "$ALTBOOT_OLDROOT" ]; then
 			stage2_setenv DEVICE "${target#/dev/}"
 			stage2_setenv METHOD "disk"
@@ -113,7 +140,7 @@ is_target_found()
 
 	if [ ! -s "${mp}${directory}" ]; then
 		message "however specified ISO-image not found: '$directory'"
-		run umount -fl -- "$mp"
+		run umount -fl -- "$mp" ||:
 		leave "is_target_found"
 		target=
 		return 1
@@ -133,9 +160,14 @@ is_target_found()
 		rc=1
 	fi
 
+	if [ "$rc" = 0 ] && [ -n "$fuid" ] && [ ! -f "$mp/$fuid" ]; then
+		message "however specified FUID-file not found: '$fuid'"
+		rc=1
+	fi
+
 	if [ "$rc" != 0 ]; then
 		message "$target will be unmounted"
-		run umount -fl -- "$image"
+		run umount -fl -- "$image" ||:
 		leave "is_target_found"
 		target=
 		return 1
@@ -160,6 +192,7 @@ boot_device_choice()
 
 	# Rewind one step back when user has cancel choice
 	device_choice || altboot_restart
+	reset_devspec
 
 	if [ -z "$target" ]; then
 		leave "boot_device_choice"
@@ -197,22 +230,24 @@ boot_device_choice()
 		then
 			IM_errmsg "Invalid path: '$directory'!"
 			continue
-		elif is_target_found; then
-			debug "TARGET: '$target'"
-			break
-		elif [ -n "$directory" ]; then
-			IM_errmsg "Can't mount ISO-image: '$directory'!"
-			rc=1
-			break
 		else
-			IM_errmsg "Can't mount boot device: $target!"
-			rc=1
-			break
+			directory="${directory//\"/\\\"}"
+			options="${options//\"/\\\"}"
+
+			if is_target_found; then
+				debug "TARGET: '$target'"
+				break
+			elif [ -n "$directory" ]; then
+				IM_errmsg "Can't mount ISO-image: '$directory'!"
+				rc=1
+				break
+			else
+				IM_errmsg "Can't mount boot device: $target!"
+				rc=1
+				break
+			fi
 		fi
 	done
-
-	directory="${directory//\"/\\\"}"
-	options="${options//\"/\\\"}"
 
 	leave "boot_device_choice"
 	return $rc
@@ -292,8 +327,9 @@ timeout="${timeout:-20}"
 label="${label//\\040/ }"
 IM_start_output choice form errmsg ponder
 
-# With method=auto and without devspec choose device manualy
-if [ -z "${NOASKUSER}${devspec}" ] && [ -f "$altboot_auto" ]; then
+# With method=auto choose device manualy
+if [ -z "$NOASKUSER" ] && [ -f "$altboot_auto" ]; then
+	reset_devspec
 	scan_devices
 
 	if boot_device_choice; then

@@ -42,8 +42,8 @@ get_bootarg()
 
 	while [ -n "${__value}" ]; do
 		__part="${__value%%;*}"
-		__value="${__value#$__part}"
-		__value="${__value#;}"
+		__key=$(( ${#__part} + 1 ))
+		__value="${__value:$__key}"
 		__key="${__part%%=*}"
 
 		if [ "${__key}" = "${__varname}" ]; then

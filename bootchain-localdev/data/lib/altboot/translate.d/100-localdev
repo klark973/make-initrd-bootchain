@@ -12,6 +12,8 @@ cdrom|disk)
 		VALUE="$VALUE;disk=$disk"
 	[ -z "$partition" ] ||
 		VALUE="$VALUE;part=$partition"
+	[ -z "$fuid" ] ||
+		VALUE="$VALUE;fuid=$fuid"
 	[ -z "$uuid" ] ||
 		VALUE="$VALUE;uuid=$uuid"
 	[ -z "$label" ] ||

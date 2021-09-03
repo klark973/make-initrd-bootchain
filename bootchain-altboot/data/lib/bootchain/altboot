@@ -66,8 +66,8 @@ altboot_config()
 		PART="${LINE%%,*}"
 		KEY="${PART%%:*}"
 		VALUE="${PART#$KEY:}"
-		LINE="${LINE#$PART}"
-		LINE="${LINE#,}"
+		PART=$(( ${#PART} + 1 ))
+		LINE="${LINE:$PART}"
 
 		for PART in $VARS; do
 			if [ "$PART" = "$KEY" ]; then
