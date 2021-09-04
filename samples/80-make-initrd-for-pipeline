@@ -59,9 +59,6 @@ OEM_BAD_STORAGE=alt-slow-storage
 
 # Local storage device LABEL with the OEM drivers update
 OEM_SETUP_STORAGE=alt-drivers-update
-
-# HTTP and FTP base directory
-OEM_URL_NETINST=/pub/distributions/ALTLinux/p9/
 EOF
 
 dialog --create-rc /etc/dialogrc.tmp
