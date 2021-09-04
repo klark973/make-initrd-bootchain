@@ -225,6 +225,15 @@ connection_loop()
 # Entry point
 debug "$PROG started ($(get_parameter ALTBOOT_CIFS))"
 
+if [ -f "$altboot_auto" ]; then
+	directory=
+	server=
+	options=
+	domain=
+	user=
+	pass=
+fi
+
 timeout="${timeout:-20}"
 is_server_online || connection_loop
 
