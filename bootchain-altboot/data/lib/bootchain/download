@@ -8,6 +8,8 @@ srcreg=
 dstreg=
 devname=
 filesize=
+free_rd=
+entered=
 
 b_a()
 {
@@ -26,7 +28,15 @@ b_a timeout
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_URL_NETINST="${OEM_URL_NETINST:-/pub/netinst/current}"
+OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
 
+
+back_to_main_menu()
+{
+	[ -z "$free_rd" ] ||
+		mark_free_ramdisk "$free_rd"
+	altboot_restart
+}
 
 url_input_form()
 {
@@ -41,7 +51,7 @@ url_input_form()
 		IM_form "$title" "$text" 2		\
 			url 200 "URL or filename"	\
 			||
-			altboot_restart
+			back_to_main_menu
 		case "$url" in
 		'')
 			IM_errmsg "Valid URL/filename required!"
@@ -79,7 +89,7 @@ http_input_form()
 			server     64 "HTTP-server"	\
 			directory 128 "Directory"	\
 			||
-			altboot_restart
+			back_to_main_menu
 		if [ -z "$server" ]; then
 			IM_errmsg "Valid HTTP-server required!"
 		elif [ -z "$directory" ]; then
@@ -122,7 +132,7 @@ ftp_input_form()
 			user       32 "Login"		\
 			pass       32 "Password"	\
 			||
-			altboot_restart
+			back_to_main_menu
 		if [ -z "$server" ]; then
 			IM_errmsg "Valid FTP-server required!"
 		elif [ -z "$directory" ]; then
@@ -156,6 +166,7 @@ download_input_form()
 	[ "$method" = http ] || [ "$method" = ftp ] ||
 		method=url
 	${method}_input_form
+	entered=1
 
 	leave "download_input_form"
 }
@@ -353,6 +364,7 @@ if [ -z "$dstreg" ]; then
 	/dev/ram[0-9]*)
 		mark_used_ramdisk "$to"
 		target="the RAM-disk"
+		free_rd="$to"
 		;;
 	*)
 		target="device $to"
@@ -360,11 +372,26 @@ if [ -z "$dstreg" ]; then
 	esac
 fi
 
-if [ -n "$server" ] && [ -n "$directory" ]; then
-	if [ "$method" = http ] || [ "$method" = ftp ]; then
-		url="$method://${server}${directory}"
+if [ -f "$altboot_auto" ]; then
+	if [ "$method" != url ]; then
+		directory=
+		url=
 	fi
+	server=
+	user=
+	pass=
 fi
+
+if [ "$method" = http ] || [ "$method" = ftp ]; then
+	directory="${directory:-$OEM_URL_NETINST}"
+	server="${server:-$OEM_SRV_NETINST}"
+	[ -n "$server" ] ||
+		wait_gateway
+	url=
+	[ -z "$server" ] || [ -z "$directory" ] ||
+		url="$method://${server}${directory}"
+fi
+
 if [ "$method" != ftp ]; then
 	user=""; pass=""
 elif [ -z "$user" ]; then
@@ -374,12 +401,6 @@ fi
 if [ -z "$url" ]; then
 	[ -z "$NOASKUSER" ] ||
 		fatal "URL for boot from not specified, dialogs are disabled"
-	[ -n "$server" ] ||
-		wait_gateway
-	[ -n "$directory" ] ||
-		directory="$OEM_URL_NETINST"
-	[ -z "$server" ] || [[ "$method" != http && "$method" != ftp ]] ||
-		url="$method://${server}${directory}"
 	download_input_form
 fi
 
@@ -387,7 +408,7 @@ while :; do
 	saved_url="$url"
 
 	if [ "${url:0:8}" = "file:///" ]; then
-		url="${url#file://}"
+		url="${url:7}"
 		srcreg=1
 	elif [ "${url:0:1}" = "/" ]; then
 		srcreg=1
@@ -421,7 +442,8 @@ while :; do
 		text="connection error or bad URL/filename: '$url'"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$text, dialogs are disabled"
-		IM_errmsg "Connection error or specified URL unavailable now!"
+		[ -z "$entered" ] ||
+			IM_errmsg "Connection error or specified URL unavailable now!"
 		message "$text, go to the next ring"
 		download_input_form
 	fi
