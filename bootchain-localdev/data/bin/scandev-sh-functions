@@ -24,6 +24,7 @@ scan_devices()
 	local udevdata="/run/udev/data"
 	local major minor nblocks devname
 	local x f excludes="0 1 2 7 35 37"
+	local ntargets=0 saved=
 
 	_udevd_field()
 	{
@@ -86,6 +87,7 @@ scan_devices()
 	[ -d "$udevdata" ] ||
 		udevdata=
 	devices=
+	target=
 
 	if [ ! -r /proc/partitions ]; then
 		message "could not read partitions information"
@@ -110,32 +112,35 @@ scan_devices()
 		done
 		[ "$f" = 0 ] ||
 			continue
+		saved="$target"
 
 		if [ "$method" = cdrom ]; then
 			_check_cdrom ||
 				continue
+			target="/dev/$devname"
 		else
 			_check_volume ||
 				continue
+			target=
 		fi
 
 		debug "probing device: /dev/$devname ($major:$minor)"
 		devices="${devices:+$devices }$major:$minor:$devname"
 
-		[ -z "$target" ] ||
-			continue
-
 		if [ -n "$uuid" ]; then
-			_check_field UUID "$uuid" ||
+			if _check_field UUID "$uuid"; then
+				target="/dev/$devname"
+			else
+				target="$saved"
 				continue
-			target="/dev/$devname"
+			fi
 		fi
 
 		if [ -n "$label" ]; then
 			if _check_field LABEL "$label"; then
 				target="/dev/$devname"
 			else
-				target=
+				target="$saved"
 				continue
 			fi
 		fi
@@ -144,7 +149,7 @@ scan_devices()
 			if [ "$part" = "$devname" ]; then
 				target="/dev/$devname"
 			else
-				target=
+				target="$saved"
 				continue
 			fi
 		fi
@@ -152,13 +157,18 @@ scan_devices()
 		if [ "$disk" = "$devname" ]; then
 			target="/dev/$devname"
 		elif [ -n "$disk" ] && [ -z "$part" ]; then
-			target=
+			target="$saved"
+			continue
 		fi
 
-		[ -z "$target" ] ||
+		if [ -n "$target" ]; then
 			message "specified target found: $target ($major:$minor)"
+			ntargets=$((1 + $ntargets))
+		fi
 	done < /proc/partitions
 
+	[ "$ntargets" = 1 ] ||
+		target=
 	leave "scan_devices"
 }
 
