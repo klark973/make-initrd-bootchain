@@ -137,6 +137,14 @@ get_free_ramdisk()
 	local i=0 varname="$1"
 	local rddir=/.initrd/ramdisks
 
+	# Hack for RT kernels
+	if [ ! -b /dev/ram0 ]; then
+		for i in 7 6 5 4 3 2 1 0; do
+			[ -b /dev/ram$i ] ||
+				mknod -m660 /dev/ram$i b 1 $i ||:
+		done
+	fi
+
 	while [ -b "/dev/ram$i" ]; do
 		if [ ! -f "$rddir/$i" ]; then
 			assign "$varname" "/dev/ram$i"
