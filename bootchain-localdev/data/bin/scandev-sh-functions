@@ -71,7 +71,7 @@ scan_devices()
 	_check_volume()
 	{
 		x="$(_udevd_field ID_FS_USAGE)"
-		[ -z "$x" ] || [ "$x" = "filesystem" ] ||
+		[ -z "$x" ] || [ "$x" = filesystem ] ||
 			return 1
 		x="$(_udevd_field ID_FS_TYPE)"
 		[ -n "$x" ] ||
@@ -83,9 +83,10 @@ scan_devices()
 		esac
 	}
 
-	devices=
 	[ -d "$udevdata" ] ||
 		udevdata=
+	devices=
+
 	if [ ! -r /proc/partitions ]; then
 		message "could not read partitions information"
 		message "may be /proc filesystem not mounted?"
@@ -94,11 +95,11 @@ scan_devices()
 	fi
 
 	while read -r major minor nblocks devname; do
-		[ -n "$major" ] && [ "$major" != "major" ] ||
+		[ -n "$major" ] && [ "$major" != major ] ||
 			continue
 		[ -b "/dev/$devname" ] ||
 			continue
-		[ $nblocks -gt 1 ] ||
+		[ "$nblocks" -gt 1 ] ||
 			continue
 		f=0
 		for x in $excludes; do
@@ -109,7 +110,8 @@ scan_devices()
 		done
 		[ "$f" = 0 ] ||
 			continue
-		if [ "$method" = "cdrom" ]; then
+
+		if [ "$method" = cdrom ]; then
 			_check_cdrom ||
 				continue
 		else
@@ -122,11 +124,13 @@ scan_devices()
 
 		[ -z "$target" ] ||
 			continue
+
 		if [ -n "$uuid" ]; then
 			_check_field UUID "$uuid" ||
 				continue
 			target="/dev/$devname"
 		fi
+
 		if [ -n "$label" ]; then
 			if _check_field LABEL "$label"; then
 				target="/dev/$devname"
@@ -135,6 +139,7 @@ scan_devices()
 				continue
 			fi
 		fi
+
 		if [ -n "$part" ]; then
 			if [ "$part" = "$devname" ]; then
 				target="/dev/$devname"
@@ -143,6 +148,7 @@ scan_devices()
 				continue
 			fi
 		fi
+
 		if [ "$disk" = "$devname" ]; then
 			target="/dev/$devname"
 		elif [ -n "$disk" ] && [ -z "$part" ]; then
@@ -273,7 +279,7 @@ device_choice()
 
 		_get_field fstype TYPE
 		[ -n "$fstype" ] ||
-			fstype="unknown"
+			fstype=unknown
 		_get_field bs LABEL
 
 		[ -z "$bs" ] ||
