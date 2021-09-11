@@ -454,6 +454,8 @@ while :; do
 done
 
 lomount devname "$to"
+[ -z "$dstreg" ] ||
+	:>"$mntdir"/DIRTY
 debug "DEVNAME: $devname"
 debug "FILESIZE: $filesize"
 printf '%s\n' "$filesize" >"$destdir/FILESIZE"

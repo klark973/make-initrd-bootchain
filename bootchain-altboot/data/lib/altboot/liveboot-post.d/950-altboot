@@ -15,11 +15,13 @@ altboot_cleanup()
 		done
 	fi
 
-	[ ! -s "$altboot_envfile" ] ||
-		cat "$altboot_envfile" >> /.initrd/kernenv
-	message "Spawning init..."
-
 	leave "altboot_cleanup"
 }
 
-[ -z "$ALTBOOT_OLDROOT" ] || altboot_cleanup
+if [ -n "$ALTBOOT_OLDROOT" ]; then
+	[ -f "$mntdir"/DIRTY ] ||
+		altboot_cleanup
+	[ ! -s "$altboot_envfile" ] ||
+		cat "$altboot_envfile" >> /.initrd/kernenv
+	message "Spawning init..."
+fi

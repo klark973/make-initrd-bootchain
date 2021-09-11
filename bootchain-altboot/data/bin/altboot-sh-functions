@@ -211,6 +211,8 @@ altboot_restart()
 
 	local step
 
+	[ ! -f "$mntdir"/DIRTY ] ||
+		message "warning: possible double mounting or memory leaks detected"
 	run rm -f -- "$altboot_envfile"
 	{ printf '%s\n' "AUTOMATIC=0"
 	  printf '%s\n' "UPDATEMODULES="
