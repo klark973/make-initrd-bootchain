@@ -33,6 +33,15 @@ Source0: %name-%version.tar
 %description
 Meta-package with full set of the %child modules for %parent
 
+%package doc
+Summary: %parent-%child documentation
+Group: Documentation
+BuildArch: noarch
+AutoReq: noshell, noshebang
+
+%description doc
+Documentation, testing and development files for %parent-%child
+
 %package core
 Summary: %child-core module for %parent
 Group: System/Base
@@ -141,8 +150,10 @@ liverw sub-module for %name
 %setup -q
 
 %install
-mkdir -p -m 755 %buildroot%_datadir/%parent/features
-cp -av %child-* %buildroot%_datadir/%parent/features/
+./mix-altboot.sh
+mkdir -p -- "%buildroot%_datadir/%parent"/features "%buildroot%_docdir"
+cp -aRf -- %child-* "%buildroot%_datadir/%parent"/features/
+mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%name"
 
 %ifnarch %e2k
 %check
@@ -150,6 +161,9 @@ cp -av %child-* %buildroot%_datadir/%parent/features/
 %endif
 
 %files
+
+%files doc
+%_docdir/%name
 
 %files core
 %_datadir/%parent/features/%child-core

@@ -24,7 +24,7 @@ BASHDIRS="
 	translate
 "
 PACKAGE=bootchain
-COMMON="$(head -n1 .gitignore)"
+COMMON="$PACKAGE-doc/altboot-mixed"
 
 
 bash_hooks()

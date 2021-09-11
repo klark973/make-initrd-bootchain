@@ -19,17 +19,28 @@ sclist="
 	SC2154
 "
 
+skip_check="
+	bootchain-doc/samples/80-make-initrd-for-pipeline
+"
+
 do_check()
 {
-	local fname ftype
+	local fname ftype nc
 
 	# shellcheck disable=SC2035
 	( set +f; find *.sh bootchain-* -type f ) |
+		grep -v bootchain-doc/altboot-mixed/ |
 	while read -r fname; do
 		ftype="$(file -b -- "$fname")"
-		[ -n "${ftype##*shell script*}" ] ||
-			shellcheck --norc -s bash -P "$bindirs" "$@" -x "$fname" ||
-				:> ERROR
+		[ -z "${ftype##*shell script*}" ] ||
+			continue
+		for nc in $skip_check _; do
+			[ "x$nc" != x_ ] ||
+				continue
+			[ "x$nc" != "x$fname" ] ||
+				continue 2
+		done
+		shellcheck --norc -s bash -P "$bindirs" "$@" -x "$fname" || :> ERROR
 	done
 
 	if [ -f ERROR ]; then
