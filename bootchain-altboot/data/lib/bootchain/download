@@ -435,6 +435,8 @@ while :; do
 		break
 	read -r rc <"$datadir/ERROR" ||
 		rc=1
+	[ -z "$dstreg" ] ||
+		rm -f -- "$to"
 	rm -f -- "$datadir/ERROR"
 	debug "iteration failed (rc=$rc)"
 
