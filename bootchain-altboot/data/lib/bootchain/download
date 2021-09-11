@@ -26,6 +26,9 @@ b_a pass
 b_a imgsize
 b_a timeout
 
+# Used with FTP/HTTP methods in propagator compatibility mode
+BOOTIMG="/run/boot-image.iso"
+
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_URL_NETINST="${OEM_URL_NETINST:-/pub/netinst/current}"
 OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
@@ -358,6 +361,9 @@ RD)
 	;;
 esac
 
+[ -z "$dstreg" ] || [ -z "$ALTBOOT_OLDROOT" ] ||
+[ "$method" = url ] || [ -f "$mntdir"/DIRTY ] ||
+	to="$BOOTIMG"
 target="the RAM"
 timeout="${timeout:-20}"
 
@@ -457,8 +463,10 @@ while :; do
 	unset rc
 done
 
-lomount devname "$to"
 [ -z "$dstreg" ] ||
+	run chmod -- 0600 "$to"
+lomount devname "$to"
+[ -z "$dstreg" ] || [ "$to" = "$BOOTIMG" ] ||
 	:>"$mntdir"/DIRTY
 debug "DEVNAME: $devname"
 debug "FILESIZE: $filesize"
