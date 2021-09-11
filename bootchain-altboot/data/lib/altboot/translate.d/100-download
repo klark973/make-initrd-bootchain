@@ -2,13 +2,17 @@
 
 case "$method" in
 ftp|http|url)
-	VALUE="to=RD;method=$method"
+	VALUE="method=$method"
 	if [ "$method" = "url" ]; then
-		VALUE="$VALUE;url=$url"
-	elif [ -n "$server" ] || [ -n "$directory" ]; then
-		VALUE="$VALUE;server=$server;directory=$directory"
-		[ -z "$user" ] || [ "$method" != "ftp" ] ||
-			VALUE="$VALUE;user=$user;pass=$pass"
+		VALUE="$VALUE;to=RD;url=$url"
+	else
+		grep -qws ramdisk_size /proc/cmdline &&
+			VALUE="$VALUE;to=RD" || VALUE="$VALUE;to=TMPFS"
+		if [ -n "$server" ] || [ -n "$directory" ]; then
+			VALUE="$VALUE;server=$server;directory=$directory"
+			[ -z "$user" ] || [ "$method" != "ftp" ] ||
+				VALUE="$VALUE;user=$user;pass=$pass"
+		fi
 	fi
 	[ -z "$imgsize" ] ||
 		VALUE="$VALUE;imgsize=$imgsize"
