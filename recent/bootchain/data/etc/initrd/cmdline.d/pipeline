@@ -1,5 +1,0 @@
-register_parameter string PIPELINE
-register_array string GETIMAGE
-register_array string MOUNTFS
-register_array string OVERLAYFS
-register_array string WAITDEV

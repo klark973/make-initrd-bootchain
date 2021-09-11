@@ -1,9 +1,0 @@
-#!/bin/bash -efu
-
-. altboot-sh-functions
-
-IM_on
-
-: # TODO: OEM Drivers Update functionality...
-
-IM_off
