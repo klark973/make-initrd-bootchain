@@ -1,6 +1,0 @@
-#!ipxe
-
-kernel http://192.168.15.1/boot/vmlinuz
-initrd http://192.168.15.1/boot/initrd.img
-imgargs vmlinuz initrd=initrd.img fastboot live root=bootchain bootchain=fg,altboot bc_debug live_rw automatic=method:nfs,network:dhcp,server:192.168.15.1,directory:/srv/public/netinst/current ip=dhcp stagename=rescue ramdisk_size=520777 splash=0 showopts max_loop=16 forensic hash=738e8e7deec05443b369a9d02e2dc897630d693a6888ee9997f6d6bd09ecf552
-boot
