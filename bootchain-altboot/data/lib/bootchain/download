@@ -343,8 +343,12 @@ step[0-9]*)
 		fatal "invalid step# specified, can't resolve the device name"
 	;;
 RD)
-	get_free_ramdisk to ||
-		fatal "no free RAM-disk found"
+	if ! get_free_ramdisk to; then
+		[ ! -b /dev/ram0 ] ||
+			fatal "no free RAM-disk found"
+		to="$datadir/image"
+		dstreg=1
+	fi
 	;;
 /dev/?*)
 	;;
