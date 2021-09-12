@@ -10,7 +10,7 @@ if [ -n "${LOWMEM-}" ]; then
 	ALTBOOT_SQUASHFS0="/$STAGENAME"
 else
 	ALTBOOT="$ALTBOOT,download"
-	ALTBOOT_DOWNLOAD0="to=RD;method=url;url=file:///$STAGENAME"
+	ALTBOOT_DOWNLOAD0="method=url;to=RD;url=file:///$STAGENAME"
 
 	if [ -n "${HASH-}" ]; then
 		ALTBOOT="$ALTBOOT,checksum"
