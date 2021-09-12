@@ -2,7 +2,7 @@
 %define child  bootchain
 
 Name: %parent-%child
-Version: 0.1.3
+Version: 0.1.4
 Release: alt1
 
 Summary: %child modules set for %name
@@ -193,6 +193,11 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 %_datadir/%parent/features/%child-liverw
 
 %changelog
+* Sun Sep 12 2021 Leonid Krivoshein <klark@altlinux.org> 0.1.4-alt1
+- major fixes and improvements around using RAM-disks and tmpfs.
+- package documentation reorganized and separated.
+- old feature code and logs complete removed.
+
 * Mon Sep 06 2021 Leonid Krivoshein <klark@altlinux.org> 0.1.3-alt1
 - localdev: no more choice dialog, if found single device.
 - altboot/get_free_ramdisk(): added hack for RT kernels.
