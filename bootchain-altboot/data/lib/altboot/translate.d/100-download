@@ -2,23 +2,29 @@
 
 case "$method" in
 ftp|http|url)
-	VALUE="method=$method"
-	if [ "$method" = "url" ]; then
-		VALUE="$VALUE;to=RD;url=$url"
+	ALTBOOT=download
+	if grep -qws ramdisk_size /proc/cmdline; then
+		VALUE="method=$method;to=RD;fuid=$STAGENAME"
 	else
-		grep -qws ramdisk_size /proc/cmdline &&
-			VALUE="$VALUE;to=RD" || VALUE="$VALUE;to=TMPFS"
-		if [ -n "$server" ] || [ -n "$directory" ]; then
-			VALUE="$VALUE;server=$server;directory=$directory"
-			[ -z "$user" ] || [ "$method" != "ftp" ] ||
-				VALUE="$VALUE;user=$user;pass=$pass"
+		if [ -n "${HASH-}" ]; then
+			ALTBOOT="$ALTBOOT,checksum"
+			ALTBOOT_CHECKSUM0="$HASH"
+			HASH=
 		fi
+		VALUE="method=$method;to=TMPFS"
+		ALTBOOT="$ALTBOOT,iso9660"
+	fi
+	if [ "$method" = url ]; then
+		VALUE="$VALUE;url=$url"
+	elif [ -n "$server" ] || [ -n "$directory" ]; then
+		VALUE="$VALUE;server=$server;directory=$directory"
+		[ -z "$user" ] || [ "$method" = http ] ||
+			VALUE="$VALUE;user=$user;pass=$pass"
 	fi
 	[ -z "$imgsize" ] ||
 		VALUE="$VALUE;imgsize=$imgsize"
 	[ -z "$timeout" ] ||
 		VALUE="$VALUE;timeout=$timeout"
-	ALTBOOT="download,iso9660"
 	ALTBOOT_DOWNLOAD0="$VALUE"
 	overlays=
 	LOWMEM=1

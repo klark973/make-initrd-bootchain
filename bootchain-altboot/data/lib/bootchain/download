@@ -21,13 +21,14 @@ b_a method
 b_a url
 b_a server
 b_a directory
+b_a fuid
 b_a user
 b_a pass
 b_a imgsize
 b_a timeout
 
-# Used with FTP/HTTP methods in propagator compatibility mode
-BOOTIMG="/run/boot-image.iso"
+# BOOTIMG used with FTP/HTTP methods in propagator compatibility mode only
+[ -z "$fuid" ] && BOOTIMG="/run/boot-image.iso" || BOOTIMG="/run/rootfs.squash"
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_URL_NETINST="${OEM_URL_NETINST:-/pub/netinst/current}"
@@ -322,11 +323,15 @@ download_image()
 {
 	enter "download_image"
 
-	local text="Downloading the $OEM_DISTRIBUTION into $target..."
+	local text distro="$OEM_DISTRIBUTION"
 
+	[ -n "$fuid" ] || [ -z "$directory" ] ||
+		disro="${directory##*/}"
+	text="Downloading the $distro into $target..."
 	message "downloading image: '$url'"
 	(read_image |save_image) 2>&1 |
 		IM_gauge "[ Downloading image... ]" "$text"
+	[ -z "$NOTTYS" ] || reset
 
 	leave "download_image"
 }
@@ -340,14 +345,14 @@ IM_start_output form errmsg gauge ponder
 	read -r to <"$prevdir/DEVNAME" ||:
 
 case "$to" in
-step[0-9]*)
+step[0-9]*|pipe[0-9]*)
 	target="$(resolve_target "$to")/DEVNAME"
 	[ -s "$target" ] && read -r to <"$target" && [ -n "$to" ] ||
 		fatal "invalid step# specified, can't resolve the device name"
 	;;
 RD)
 	if ! get_free_ramdisk to; then
-		[ ! -b /dev/ram0 ] ||
+		[ ! -b /dev/ram0 ] || [ ! -r /sys/block/ram0/size ] ||
 			fatal "no free RAM-disk found"
 		to="$datadir/image"
 		dstreg=1
@@ -383,13 +388,13 @@ if [ -z "$dstreg" ]; then
 fi
 
 if [ -f "$altboot_auto" ]; then
-	if [ "$method" != url ]; then
-		directory=
+	[ "$method" = url ] ||
 		url=
-	fi
+	directory=
 	server=
 	user=
 	pass=
+	imgsize=
 fi
 
 if [ "$method" = http ] || [ "$method" = ftp ]; then
@@ -423,6 +428,8 @@ while :; do
 	elif [ "${url:0:1}" = "/" ]; then
 		srcreg=1
 	else
+		[ -z "$fuid" ] ||
+			url="$url/$fuid"
 		srcreg=
 	fi
 
@@ -477,10 +484,11 @@ run cp -a -- "$devname" "$destdir/dev"
 if [ -z "$ALTBOOT_OLDROOT" ]; then
 	IM_update_bootsplash "found_media"
 elif [ -z "$(stage2_getenv METHOD)" ]; then
-	stage2_setenv METHOD "$method"
-	if [ "$method" = url ]; then
+	if [ "$method" = url ] || [ -z "$fuid" ]; then
+		stage2_setenv METHOD "url"
 		stage2_setenv URL "$url"
 	else
+		stage2_setenv METHOD "$method"
 		stage2_setenv HOST "$server"
 		stage2_setenv PREFIX "$directory"
 		if [ "$method" = ftp ] && [ -n "$user" ]; then

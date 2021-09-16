@@ -125,8 +125,10 @@ altboot_config()
 
 	  for KEY in $VARS; do
 		eval "VALUE=\"\${ALTBOOT_${KEY}0}\""
-		printf 'ALTBOOT_%s0="%s"\n' "$KEY" "$VALUE"
-		printf 'ALTBOOT_%s=%s\n' "$KEY" "${VALUE:+1}"
+		if [ -n "$VALUE" ]; then
+			printf 'ALTBOOT_%s0="%s"\n' "$KEY" "$VALUE"
+			printf 'ALTBOOT_%s=%s\n' "$KEY" "${VALUE:+1}"
+		fi
 	  done
 
 	} >"$altboot_parsed"
