@@ -21,6 +21,8 @@ nfs_slice()
 				sed '2!d;s/  */ /g' |
 				cut -f5 -d' ' |
 				cut -f1 -d:)"
+		server="${server:-OEM_SRV_NETINST}"
+
 		if [ -z "$server" ]; then
 			message "NFS server not found"
 			leave "nfs_slice"

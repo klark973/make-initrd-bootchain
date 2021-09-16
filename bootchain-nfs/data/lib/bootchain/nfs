@@ -16,6 +16,7 @@ b_a options
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_NFS_NETINST="${OEM_NFS_NETINST:-/srv/public/netinst}"
+OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
 
 
 nfs_input_form()
@@ -148,13 +149,15 @@ start_connection()
 connection_loop()
 {
 	enter "connection_loop"
+
 	IM_start_output form errmsg ponder
-	[ -n "$server" ] || wait_gateway
+	[ -n "$server" ] ||
+		wait_gateway
+	directory="${directory:-$OEM_NFS_NETINST/current}"
 
 	if [ -z "$server" ] || [ -z "$directory" ]; then
 		[ -z "$NOASKUSER" ] ||
 			fatal "server/directory not specified, dialogs are disabled"
-		directory="${directory:-$OEM_NFS_NETINST/current}"
 		nfs_input_form
 	fi
 
@@ -198,6 +201,7 @@ if [ -f "$altboot_auto" ]; then
 fi
 
 timeout="${timeout:-20}"
+server="${server:-OEM_SRV_NETINST}"
 is_server_online || connection_loop
 
 debug "$PROG finished"

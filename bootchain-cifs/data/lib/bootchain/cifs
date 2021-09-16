@@ -19,6 +19,7 @@ b_a options
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_CIFS_NETINST="${OEM_CIFS_NETINST:-/netinst}"
+OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
 
 
 samba_input_form()
@@ -138,7 +139,7 @@ is_server_online()
 		stage2_setenv PREFIX "$directory"
 		stage2_setenv SMBOPTS "$opts"
 		[ -z "$domain" ] ||
-			stage2_setenv DOMAIN "$domain"
+			stage2_setenv SMBDOMAIN "$domain"
 		if [ -n "$user" ]; then
 			stage2_setenv LOGIN "$user"
 			stage2_setenv PASSWORD "$pass"
@@ -182,13 +183,15 @@ find_samba_server()
 connection_loop()
 {
 	enter "connection_loop"
+
 	IM_start_output form errmsg ponder
-	[ -n "$server" ] || find_samba_server
+	[ -n "$server" ] ||
+		find_samba_server
+	directory="${directory:-$OEM_CIFS_NETINST/current}"
 
 	if [ -z "$server" ] || [ -z "$directory" ]; then
 		[ -z "$NOASKUSER" ] ||
 			fatal "server/directory not specified, dialogs are disabled"
-		directory="${directory:-$OEM_CIFS_NETINST/current}"
 		samba_input_form
 	fi
 
@@ -235,6 +238,7 @@ if [ -f "$altboot_auto" ]; then
 fi
 
 timeout="${timeout:-20}"
+server="${server:-OEM_SRV_NETINST}"
 is_server_online || connection_loop
 
 debug "$PROG finished"

@@ -2,3 +2,4 @@
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_CIFS_NETINST="${OEM_CIFS_NETINST:-/netinst}"
+OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
