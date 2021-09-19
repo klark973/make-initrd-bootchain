@@ -2,7 +2,7 @@
 %define child  bootchain
 
 Name: %parent-%child
-Version: 0.1.4
+Version: 0.1.5
 Release: alt1
 
 Summary: %child modules set for %name
@@ -207,6 +207,10 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 %_docdir/%name
 
 %changelog
+* Sun Sep 19 2021 Leonid Krivoshein <klark@altlinux.org> 0.1.5-alt1
+- introduce bootchain-waitnet sub-module and function bc_reboot().
+- major fixes and improvements around networking boot methods.
+
 * Sun Sep 12 2021 Leonid Krivoshein <klark@altlinux.org> 0.1.4-alt1
 - major fixes and improvements around using RAM-disks and tmpfs.
 - package documentation reorganized and separated.
