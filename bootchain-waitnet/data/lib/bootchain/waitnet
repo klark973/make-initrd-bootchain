@@ -3,17 +3,6 @@
 . altboot-sh-functions
 . altboot-net-functions
 
-rbmsg="Press ENTER to reboot the computer..."
-
-
-reboot()
-{
-	echo s >/proc/sysrq-trigger
-	echo u >/proc/sysrq-trigger
-	echo b >/proc/sysrq-trigger
-	fatal "bootchain aborted"
-}
-
 
 # Entry point
 debug "$PROG started"
@@ -26,10 +15,10 @@ if [ ! -s /bin/network-sh-functions ]; then
 	if [ -z "$NOASKUSER" ]; then
 		msg="This disk builded without networking support."
 		msg="$msg Booting via FTP/HTTP methods is inpossible."
-		IM_errmsg "$msg $rbmsg"
+		IM_errmsg "$msg $BC_RBMSG"
 	fi
 
-	reboot
+	bc_reboot
 fi
 
 # No network settings
@@ -43,10 +32,10 @@ then
 	if [ -z "$NOASKUSER" ]; then
 		msg="Network settings not defined in /proc/cmdline."
 		msg="$msg Try with option 'ip=dhcp4' after reboot."
-		IM_errmsg "$msg $rbmsg"
+		IM_errmsg "$msg $BC_RBMSG"
 	fi
 
-	reboot
+	bc_reboot
 fi
 
 # Wait network only once
@@ -82,10 +71,10 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 		if [ -z "$NOASKUSER" ]; then
 			msg="Can't bridge up network interface. Try with other"
 			msg="$msg network settings, wired connection and/or cable."
-			IM_errmsg "$msg $rbmsg"
+			IM_errmsg "$msg $BC_RBMSG"
 		fi
 
-		reboot
+		bc_reboot
 	fi
 fi
 

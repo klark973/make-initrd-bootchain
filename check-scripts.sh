@@ -6,6 +6,7 @@ bindirs="$bindirs:bootchain-core/data/bin"
 bindirs="$bindirs:bootchain-altboot/data/bin"
 bindirs="$bindirs:bootchain-interactive/data/bin"
 bindirs="$bindirs:bootchain-localdev/data/bin"
+bindirs="$bindirs:bootchain-waitnet/data/bin"
 
 sclist="
 	SC1003

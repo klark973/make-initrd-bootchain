@@ -26,6 +26,7 @@ fi
 
 [ -n "$BC_DEBUG" ] && BC_FGVT_ACTIVATE=1 ||
 	BC_FGVT_ACTIVATE="${BC_FGVT_ACTIVATE:-7}"
+BC_RBMSG="Press ENTER to reboot the computer..."
 BC_NEXTCHAIN=/.initrd/bootchain/bootchain.next
 BC_PASSED=/.initrd/bootchain/passed
 handlerdir=/lib/bootchain
@@ -149,6 +150,17 @@ break_bc_loop()
 	:> "$BC_PASSED/bootchain-loop"
 
 	leave "break_bc_loop"
+}
+
+bc_reboot()
+{
+	enter "bc_reboot"
+
+	echo s >/proc/sysrq-trigger
+	echo u >/proc/sysrq-trigger
+	echo b >/proc/sysrq-trigger
+
+	fatal "bootchain aborted"
 }
 
 bypass_results()

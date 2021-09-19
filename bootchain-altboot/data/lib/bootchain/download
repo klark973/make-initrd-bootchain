@@ -282,11 +282,8 @@ check_avail_space()
 		text="not enough memory for download specified image"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$text, dialogs are disabled"
-		IM_errmsg "N${text:1}. Retry with ramdisk_size=$szkb after reboot."
-		message "$text, go to the next ring"
-		download_input_form
-		filesize=
-		rc=197
+		IM_errmsg "N${text:1}. Retry with ramdisk_size=$szkb after reboot. $BC_RBMSG"
+		bc_reboot
 	fi
 
 	leave "check_avail_space"
@@ -474,18 +471,15 @@ while :; do
 		run rm -f -- "$to"
 	rm -f -- "$datadir/ERROR"
 	debug "iteration failed (rc=$rc)"
-
-	if [ "${rc%%,*}" != 197 ]; then
-		text="connection error or bad URL/filename: '$url'"
-		[ -z "$NOASKUSER" ] ||
-			fatal "$text, dialogs are disabled"
-		[ -z "$entered" ] ||
-			IM_errmsg "Connection error or specified URL unavailable now!"
-		message "$text, go to the next ring"
-		download_input_form
-	fi
-
 	unset rc
+
+	text="connection error or bad URL/filename: '$url'"
+	[ -z "$NOASKUSER" ] ||
+		fatal "$text, dialogs are disabled"
+	[ -z "$entered" ] ||
+		IM_errmsg "Connection error or specified URL unavailable now!"
+	message "$text, go to the next ring"
+	download_input_form
 done
 
 [ -z "$dstreg" ] ||
