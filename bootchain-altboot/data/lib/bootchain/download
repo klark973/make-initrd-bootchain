@@ -215,6 +215,8 @@ get_file_size()
 		message "retrieving image file size: '$url'"
 
 		i=0
+		[ "$method" != ftp ] ||
+			opts="$opts --ftp-pasv"
 		tmpf="$(run mktemp -t)"
 		while [ "$i" -lt "$timeout" ]; do
 			rc=0
@@ -238,6 +240,8 @@ get_file_size()
 					break
 				fi
 			fi
+			[ -n "$entered" ] ||
+				break
 			i=$((3 + $i))
 			sleep 3
 		done
@@ -299,6 +303,8 @@ read_image()
 		opts="$opts --silent --no-buffer --connect-timeout 5"
 		opts="$opts --max-redirs 0 --max-filesize $filesize"
 
+		[ "$method" != ftp ] ||
+			opts="$opts --ftp-pasv"
 		[ "$method" != ftp ] || [ -z "$user" ] || [ -z "$pass" ] ||
 			auth="$user:$pass"
 		( curl ${opts}${auth:+ -u "$auth"} -- "$url" ||
