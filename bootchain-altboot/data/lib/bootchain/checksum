@@ -100,8 +100,8 @@ if [ "$CHECKSUM" = "$check" ]; then
 elif [ -n "$NOASKUSER" ]; then
 	fatal "image file checksum mismatch"
 else
-	IM_errmsg "Image file checksum mismatch!"
-	altboot_restart
+	IM_errmsg "Image file checksum mismatch! $BC_RBMSG"
+	bc_reboot
 fi
 
 # shellcheck disable=SC2119
