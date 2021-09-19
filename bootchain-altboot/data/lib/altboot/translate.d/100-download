@@ -2,7 +2,7 @@
 
 case "$method" in
 ftp|http|url)
-	ALTBOOT=download
+	ALTBOOT="waitnet,download"
 	if grep -qws ramdisk_size /proc/cmdline; then
 		VALUE="method=$method;to=RD;fuid=$STAGENAME"
 	else

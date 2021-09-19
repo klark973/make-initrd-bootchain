@@ -22,6 +22,7 @@ Requires: %name-waitdev     = %version-%release
 Requires: %name-interactive = %version-%release
 Requires: %name-altboot     = %version-%release
 Requires: %name-localdev    = %version-%release
+Requires: %name-waitnet     = %version-%release
 Requires: %name-nfs         = %version-%release
 Requires: %name-cifs        = %version-%release
 Requires: %name-liverw      = %version-%release
@@ -31,7 +32,7 @@ AutoReq: noshell, noshebang
 Source0: %name-%version.tar
 
 %description
-Meta-package with full set of the %child modules for %parent
+Meta-package with the full set of the %child modules for %parent
 
 %package doc
 Summary: %parent-%child documentation
@@ -109,11 +110,21 @@ AutoReq: noshell, noshebang
 %description localdev
 localdev sub-module for %name
 
+%package waitnet
+Summary: waitnet sub-module for %name
+Group: System/Base
+BuildArch: noarch
+Requires: %name-altboot = %version-%release
+AutoReq: noshell, noshebang
+
+%description waitnet
+waitnet sub-module for %name
+
 %package nfs
 Summary: nfs sub-module for %name
 Group: System/Base
 BuildArch: noarch
-Requires: %name-altboot = %version-%release
+Requires: %name-waitnet = %version-%release
 Requires: nfs-utils
 Requires: iproute2
 AutoReq: noshell, noshebang
@@ -125,7 +136,7 @@ nfs sub-module for %name
 Summary: cifs sub-module for %name
 Group: System/Base
 BuildArch: noarch
-Requires: %name-altboot = %version-%release
+Requires: %name-waitnet = %version-%release
 Requires: cifs-utils
 Requires: hostinfo
 AutoReq: noshell, noshebang
@@ -182,6 +193,9 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 
 %files localdev
 %_datadir/%parent/features/%child-localdev
+
+%files waitnet
+%_datadir/%parent/features/%child-waitnet
 
 %files nfs
 %_datadir/%parent/features/%child-nfs

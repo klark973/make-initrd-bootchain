@@ -171,6 +171,7 @@ download_input_form()
 		method=url
 	${method}_input_form
 	entered=1
+	imgsize=
 
 	leave "download_input_form"
 }
@@ -323,11 +324,11 @@ download_image()
 {
 	enter "download_image"
 
-	local text distro="$OEM_DISTRIBUTION"
+	local text distro="the $OEM_DISTRIBUTION"
 
 	[ -n "$fuid" ] || [ -z "$directory" ] ||
-		disro="${directory##*/}"
-	text="Downloading the $distro into $target..."
+		disro="'${directory##*/}'"
+	text="Downloading $distro into $target..."
 	message "downloading image: '$url'"
 	(read_image |save_image) 2>&1 |
 		IM_gauge "[ Downloading image... ]" "$text"
@@ -388,20 +389,31 @@ if [ -z "$dstreg" ]; then
 fi
 
 if [ -f "$altboot_auto" ]; then
-	[ "$method" = url ] ||
+	if [ "$method" != url ]; then
+		imgsize=
 		url=
+	fi
 	directory=
 	server=
 	user=
 	pass=
-	imgsize=
 fi
 
 if [ "$method" = http ] || [ "$method" = ftp ]; then
-	directory="${directory:-$OEM_URL_NETINST}"
-	server="${server:-$OEM_SRV_NETINST}"
-	[ -n "$server" ] ||
-		wait_gateway
+	if [ -z "$directory" ]; then
+		directory="$OEM_URL_NETINST"
+		imgsize=
+	fi
+	if [ -z "$server" ]; then
+		server="$OEM_SRV_NETINST"
+		imgsize=
+	fi
+	if [ -z "$server" ]; then
+		. altboot-net-functions
+
+		server="$(get_default_gateway)"
+		imgsize=
+	fi
 	url=
 	[ -z "$server" ] || [ -z "$directory" ] ||
 		url="$method://${server}${directory}"
@@ -485,7 +497,7 @@ if [ -z "$ALTBOOT_OLDROOT" ]; then
 	IM_update_bootsplash "found_media"
 elif [ -z "$(stage2_getenv METHOD)" ]; then
 	if [ "$method" = url ] || [ -z "$fuid" ]; then
-		stage2_setenv METHOD "url"
+		stage2_setenv METHOD "nfs"
 		stage2_setenv URL "$url"
 	else
 		stage2_setenv METHOD "$method"

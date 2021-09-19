@@ -7,6 +7,7 @@ MODULES="
 	interactive
 	altboot
 	localdev
+	waitnet
 	nfs
 	cifs
 	liverw

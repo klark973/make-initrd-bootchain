@@ -1,6 +1,7 @@
 #!/bin/bash -efu
 
 . altboot-sh-functions
+. altboot-net-functions
 
 check_parameter ALTBOOT_CIFS
 
@@ -158,36 +159,10 @@ start_connection()
 	IM_ponder_start "[ Connecting... ]"
 }
 
-find_samba_server()
-{
-	enter "find_samba_server"
-	start_connection
-
-	local i=0
-
-	while [ "$i" -lt "$timeout" ]; do
-		if [ -s /etc/resolv.conf ]; then
-			server="$(grep -sE '^nameserver' /etc/resolv.conf |
-					head -n1 |
-					sed -e 's/^nameserver[[:space:]]*//')"
-			[ -z "$server" ] || break
-		fi
-		i=$((1 + $i))
-		sleep 0.5
-	done
-
-	IM_ponder_stop
-	leave "find_samba_server"
-}
-
 connection_loop()
 {
 	enter "connection_loop"
-
 	IM_start_output form errmsg ponder
-	[ -n "$server" ] ||
-		find_samba_server
-	directory="${directory:-$OEM_CIFS_NETINST/current}"
 
 	if [ -z "$server" ] || [ -z "$directory" ]; then
 		[ -z "$NOASKUSER" ] ||
@@ -237,8 +212,18 @@ if [ -f "$altboot_auto" ]; then
 	pass=
 fi
 
+[ -n "$server" ] ||
+	server="$(get_dhcp_wins)"
+[ -n "$server" ] ||
+	server="$(get_first_dns)"
+[ -n "$server" ] ||
+	server="$(get_dhcp_next_server)"
+[ -n "$server" ] ||
+	server="$OEM_SRV_NETINST"
+[ -n "$directory" ] ||
+	directory="$OEM_CIFS_NETINST/current"
 timeout="${timeout:-20}"
-server="${server:-OEM_SRV_NETINST}"
+
 is_server_online || connection_loop
 
 debug "$PROG finished"

@@ -1,6 +1,7 @@
 #!/bin/bash -efu
 
 . altboot-sh-functions
+. altboot-net-functions
 
 check_parameter ALTBOOT_NFS
 
@@ -149,11 +150,7 @@ start_connection()
 connection_loop()
 {
 	enter "connection_loop"
-
 	IM_start_output form errmsg ponder
-	[ -n "$server" ] ||
-		wait_gateway
-	directory="${directory:-$OEM_NFS_NETINST/current}"
 
 	if [ -z "$server" ] || [ -z "$directory" ]; then
 		[ -z "$NOASKUSER" ] ||
@@ -200,8 +197,18 @@ if [ -f "$altboot_auto" ]; then
 	options=
 fi
 
+[ -n "$server" ] ||
+	server="$(get_dhcp_next_server)"
+[ -n "$server" ] ||
+	server="$(get_default_gateway)"
+[ -n "$server" ] ||
+	server="$OEM_SRV_NETINST"
+[ -n "$directory" ] ||
+	directory="$(get_dhcp_root_path)"
+[ -n "$directory" ] ||
+	directory="$OEM_NFS_NETINST/current"
 timeout="${timeout:-20}"
-server="${server:-OEM_SRV_NETINST}"
+
 is_server_online || connection_loop
 
 debug "$PROG finished"

@@ -13,6 +13,6 @@ if [ "$method" = cifs ]; then
 	[ -z "$user" ] ||
 		VALUE="$VALUE;user=$user;pass=$pass"
 	ALTBOOT_CIFS0="$VALUE"
-	ALTBOOT=cifs
+	ALTBOOT="waitnet,cifs"
 	VALUE=
 fi

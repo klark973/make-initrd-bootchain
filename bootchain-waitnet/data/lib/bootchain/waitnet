@@ -1,0 +1,94 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+. altboot-net-functions
+
+rbmsg="Press ENTER to reboot the computer..."
+
+
+reboot()
+{
+	echo s >/proc/sysrq-trigger
+	echo u >/proc/sysrq-trigger
+	echo b >/proc/sysrq-trigger
+	fatal "bootchain aborted"
+}
+
+
+# Entry point
+debug "$PROG started"
+IM_start_output ponder errmsg
+
+# Feature 'network' absent inside intramfs
+if [ ! -s /bin/network-sh-functions ]; then
+	message "feature 'network' absent inside initramfs"
+
+	if [ -z "$NOASKUSER" ]; then
+		msg="This disk builded without networking support."
+		msg="$msg Booting via FTP/HTTP methods is inpossible."
+		IM_errmsg "$msg $rbmsg"
+	fi
+
+	reboot
+fi
+
+# No network settings
+if [ "${IP:-0}" = 0 ] &&
+	[ "${ROUTE:-0}" = 0 ] &&
+	[ "${NAMESERVER:-0}" = 0 ] &&
+	[ "${IFNAME:-0}" = 0 ]
+then
+	message "network settings not defined in /proc/cmdline"
+
+	if [ -z "$NOASKUSER" ]; then
+		msg="Network settings not defined in /proc/cmdline."
+		msg="$msg Try with option 'ip=dhcp4' after reboot."
+		IM_errmsg "$msg $rbmsg"
+	fi
+
+	reboot
+fi
+
+# Wait network only once
+if [ ! -s "$NETBOOT_IFNAME" ]; then
+	IM_ponder_start "[ Bridging up interface... ]"
+
+	netdev=
+	n=$((2 * $IPTIMEOUT))
+	while [ $n -gt 0 ]; do
+		# shellcheck disable=SC2012
+		for netdev in $(ls /sys/class/net/) lo; do
+			[ "$netdev" != lo ] ||
+				continue
+			[ -r "/sys/class/net/$netdev/flags" ] ||
+				continue
+			ip -4 addr show dev "$netdev" 2>/dev/null |
+				grep -qs '    inet ' && break 2 ||:
+		done
+		netdev=
+		sleep 0.5
+		n=$(( $n - 1 ))
+	done
+	unset n
+
+	IM_ponder_stop
+
+	if [ -n "$netdev" ]; then
+		message "network device $netdev ready to connection"
+		echo "$netdev" >"$NETBOOT_IFNAME"
+	else
+		message "connection timeout"
+
+		if [ -z "$NOASKUSER" ]; then
+			msg="Can't bridge up network interface. Try with other"
+			msg="$msg network settings, wired connection and/or cable."
+			IM_errmsg "$msg $rbmsg"
+		fi
+
+		reboot
+	fi
+fi
+
+# shellcheck disable=SC2119
+bypass_results
+debug "$PROG finished"

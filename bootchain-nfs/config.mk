@@ -1,4 +1,4 @@
-$(call feature-requires,bootchain-altboot network)
+$(call feature-requires,bootchain-waitnet)
 $(call feature-disables,nfsroot)
 
 BOOTCHAIN_NFS_DATADIR = $(FEATURESDIR)/bootchain-nfs/data

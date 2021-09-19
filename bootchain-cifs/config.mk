@@ -1,4 +1,4 @@
-$(call feature-requires,bootchain-altboot network)
+$(call feature-requires,bootchain-waitnet)
 
 BOOTCHAIN_CIFS_DATADIR = $(FEATURESDIR)/bootchain-cifs/data
 

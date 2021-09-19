@@ -1,0 +1,153 @@
+#!/bin/bash -efu
+
+if [ -z "${__altboot_net_functions-}" ]; then
+__altboot_net_functions=1
+
+IPTIMEOUT="${IPTIMEOUT:-30}"
+NETBOOT_IFNAME=/.initrd/bootchain/BOOTIF
+
+
+# Endians-independed way for convert
+# bits counter to an IPv4 network mask.
+#
+bits_to_mask4()
+{
+	local i m=0 s=128 n="$1"
+	local a=255 b=0 c=0 d=0
+
+	if [ $n -le 8 ]; then
+		i=a
+	elif [ $n -le 16 ]; then
+		n=$(( $n - 8 ))
+		i=b
+	elif [ $n -le 24 ]; then
+		n=$(( $n - 16 ))
+		b=255
+		i=c
+	else
+		n=$(( $n - 24 ))
+		b=255
+		c=255
+		i=d
+	fi
+
+	while [ $n -gt 0 ]; do
+		m=$(( $m | $s ))
+		s=$(( $s >> 1 ))
+		n=$(( $n - 1 ))
+	done
+
+	case "$i" in
+	a) a="$m";;
+	b) b="$m";;
+	c) c="$m";;
+	d) d="$m";;
+	esac
+
+	printf "%d.%d.%d.%d" $a $b $c $d
+}
+
+# Endians-independed way for convert
+# IPv4 host address to network address.
+#
+ip4_to_network()
+{
+	local a="$1"
+	local m="$2"
+	local i IFS=.
+
+	# shellcheck disable=SC2048
+	set -- $a; a=( "$@" )
+
+	# shellcheck disable=SC2048
+	set -- $m; m=( "$@" )
+
+	for i in 0 1 2 3; do
+		[ "$i" = 0 ] ||
+			printf "."
+		printf "%d" $(( ${a[$i]} & ${m[$i]} ))
+	done
+}
+
+# Output IPv4 address of the next boot server (NFS).
+#
+get_dhcp_next_server()
+{
+	enter "get_dhcp_next_server"
+
+	local v
+
+	if [ -s "$NETBOOT_IFNAME" ]; then
+		read -r v <"$NETBOOT_IFNAME"
+		[ -z "$v" ] || [ ! -s "/.initrd/network/auto/ifaces/$v/siaddr" ] ||
+			head -n1 "/.initrd/network/auto/ifaces/$v/siaddr"
+	fi
+
+	leave "get_dhcp_next_server"
+}
+
+# Output UNIX path of the rootfs on the NFS-server.
+#
+get_dhcp_root_path()
+{
+	enter "get_dhcp_root_path"
+
+	local v
+
+	if [ -s "$NETBOOT_IFNAME" ]; then
+		read -r v <"$NETBOOT_IFNAME"
+		[ -z "$v" ] || [ ! -s "/.initrd/network/auto/ifaces/$v/rootpath" ] ||
+			head -n1 "/.initrd/network/auto/ifaces/$v/rootpath"
+	fi
+
+	leave "get_dhcp_root_path"
+}
+
+# Output IPv4 address of the first WINS server.
+#
+get_dhcp_wins()
+{
+	enter "get_dhcp_wins"
+
+	local v
+
+	if [ -s "$NETBOOT_IFNAME" ]; then
+		read -r v <"$NETBOOT_IFNAME"
+		[ -z "$v" ] || [ ! -s "/.initrd/network/auto/ifaces/$v/wins" ] ||
+			head -n1 "/.initrd/network/auto/ifaces/$v/wins" |
+				sed -e 's/[[:space:]]*.*$//'
+	fi
+
+	leave "get_dhcp_wins"
+}
+
+# Output IPv4 address of the default gateway.
+#
+get_default_gateway()
+{
+	enter "get_default_gateway"
+
+	run ip -4 route |
+		grep -sE '^default via ' |
+		head -n1 |
+		cut -f3 -d' '
+
+	leave "get_default_gateway"
+}
+
+# Output IPv4 address of the first name server.
+#
+get_first_dns()
+{
+	enter "get_first_dns"
+
+	if [ -s /etc/resolv.conf ]; then
+		grep -sE '^nameserver' /etc/resolv.conf |
+			head -n1 |
+			sed -e 's/^nameserver[[:space:]]*//'
+	fi
+
+	leave "get_first_dns"
+}
+
+fi # __altboot_net_functions

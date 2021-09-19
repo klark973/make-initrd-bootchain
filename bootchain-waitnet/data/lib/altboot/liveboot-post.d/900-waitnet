@@ -1,0 +1,93 @@
+#!/bin/bash -efu
+
+export_netconf()
+{
+	enter "export_netconf"
+
+	local netdev host domain dns1 dns2 gateway
+	local proto addr mask network bcast netbits
+
+	if [ -n "$(stage2_getenv DEVICE)" ]; then
+		message "DEVICE already exported to the stage2"
+		leave "export_netconf"
+		return 0
+	fi
+
+	if ! read -r netdev <"$NETBOOT_IFNAME" 2>/dev/null ||
+		[ ! -r "/sys/class/net/$netdev/flags" ]
+	then
+		message "network interface not found"
+		leave "export_netconf"
+		return 0
+	fi
+
+	addr="$(run ip -4 addr show dev "$netdev" |
+		grep -s '    inet ' |
+		head -n1)"
+	if [ -z "$addr" ]; then
+		message "network interface not ready: $netdev"
+		leave "export_netconf"
+		return 0
+	fi
+
+	dns1=
+	dns2=
+	domain=
+	proto=dhcp
+
+	if [ -s /etc/resolv.conf ]; then
+		domain="$(grep -sE '^search' /etc/resolv.conf |
+				head -n1 |
+				sed -e 's/^search[[:space:]]*//')"
+		dns1="$(get_first_dns)"
+
+		if [ -n "$dns1" ]; then
+			dns2="$(grep -sE '^nameserver' /etc/resolv.conf |
+					tail -n1 |
+					sed -e 's/^nameserver[[:space:]]*//')"
+			[ "$dns1" != "$dns2" ] || dns2=
+		fi
+	fi
+
+	[ -n "$domain" ] ||
+		domain="$(hostname -d 2>/dev/null ||:)"
+	host="/.initrd/network/state/dhcp/$netdev/ipv4/state"
+	[ -s "$host" ] && [ "$(head -n1 -- "$host")" = ready ] ||
+		proto=static
+	host="$(run hostname -s)"
+	gateway="$(get_default_gateway)"
+
+	[ -z "$host" ] || [ "$host" = "(none)" ] ||
+		stage2_setenv HOSTNAME "$host"
+	[ -z "$domain" ] ||
+		stage2_setenv DOMAINNAME "$domain"
+	[ -z "$dns1" ] ||
+		stage2_setenv DNS_SERVER "$dns1"
+	[ -z "$dns2" ] ||
+		stage2_setenv DNS_SERVER2 "$dns2"
+	[ -z "$gateway" ] ||
+		stage2_setenv GATEWAY "$gateway"
+	stage2_setenv DEVICE "$netdev"
+	stage2_setenv BOOTPROTO "$proto"
+
+	if [ "$proto" = static ]; then
+		# shellcheck disable=SC2048
+		set -- $addr
+
+		bcast="$4"
+		addr="${2%/*}"
+		netbits="${2##*/}"
+		mask="$(bits_to_mask4 "$netbits")"
+		network="$(ip4_to_network "$addr" "$mask")"
+
+		stage2_setenv IPADDR "$addr"
+		stage2_setenv NETMASK "$mask"
+		stage2_setenv NETWORK "$network"
+		stage2_setenv BROADCAST "$bcast"
+		stage2_setenv NETBITS "$netbits"
+	fi
+
+	leave "export_netconf"
+}
+
+[ -z "$ALTBOOT_OLDROOT" ] || [ ! -s "$NETBOOT_IFNAME" ] || export_netconf

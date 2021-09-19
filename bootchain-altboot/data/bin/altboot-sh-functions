@@ -222,28 +222,4 @@ altboot_restart()
 	exit 0
 }
 
-# Attn: wait_gateway() uses two global variables: $server and $timeout.
-# Also used `ip' utility which must be included to the initramfs image.
-#
-wait_gateway()
-{
-	enter "wait_gateway"
-	IM_ponder_start "[ Connecting... ]"
-
-	local i=0
-
-	while [ "$i" -lt "$timeout" ]; do
-		server="$(run ip route |
-				grep -sE '^default via ' |
-				cut -f3 -d' ')"
-		[ -z "$server" ] ||
-			break
-		i=$((1 + $i))
-		sleep 0.5
-	done
-
-	IM_ponder_stop
-	leave "wait_gateway"
-}
-
 fi # __altboot_sh_functions
