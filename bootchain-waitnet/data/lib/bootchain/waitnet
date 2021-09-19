@@ -74,7 +74,7 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 			IM_errmsg "$msg $BC_RBMSG"
 		fi
 
-		bc_reboot
+		altboot_restart
 	fi
 fi
 
