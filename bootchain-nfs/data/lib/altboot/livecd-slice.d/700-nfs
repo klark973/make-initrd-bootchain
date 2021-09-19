@@ -11,7 +11,7 @@ nfs_slice()
 	[ -n "$dirp" ] || dirp="$directory"
 
 	local parentdir="${dirp%/?*}" mnt=
-	local opts="${NFSOPTS:-intr,soft,nolock}"
+	local opts="${NFSOPTS:-intr,soft,nolock,timeo=30,retry=0}"
 	local mp="$prevdir.rw/rw$OEM_IMAGES_BASE"
 
 	if [ -z "$server" ]; then

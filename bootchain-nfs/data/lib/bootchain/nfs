@@ -19,6 +19,8 @@ b_a options
 OEM_NFS_NETINST="${OEM_NFS_NETINST:-/srv/public/netinst}"
 OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
 
+entered=
+
 
 nfs_input_form()
 {
@@ -55,6 +57,7 @@ nfs_input_form()
 	server="${server//\"/\\\"}"
 	directory="${directory//\"/\\\"}"
 	options="${options//\"/\\\"}"
+	entered=1
 
 	leave "nfs_input_form"
 }
@@ -79,7 +82,7 @@ is_server_online()
 	fi
 
 	[ -n "$opts" ] ||
-		opts="${NFSOPTS:-intr,soft,nolock}"
+		opts="${NFSOPTS:-intr,soft,nolock,timeo=30,retry=0}"
 	run mkdir -p -- "$mp" "$image"
 	run mount.nfs "$server:$dirpart" "$mp" -o "ro,$opts" || rc=1
 
@@ -163,14 +166,16 @@ connection_loop()
 	local i=0
 
 	while ! is_server_online; do
-		if [ "$i" -ge "$timeout" ]; then
+		if [ "$i" -ge "$timeout" ] || [ -z "$entered" ]; then
 			IM_ponder_stop
 
 			if [ -z "$NOASKUSER" ]; then
-				IM_errmsg "Connection timeout, try again!"
+				[ "$i" -lt "$timeout" ] ||
+					IM_errmsg "Connection timeout, try again!"
 				nfs_input_form
 			else
-				message "connection timeout, dialogs are disabled"
+				[ "$i" -lt "$timeout" ] ||
+					message "connection timeout, dialogs are disabled"
 				fatal "specified NFS-server does not responds"
 			fi
 
