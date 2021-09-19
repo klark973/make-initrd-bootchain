@@ -22,6 +22,8 @@ b_a options
 OEM_CIFS_NETINST="${OEM_CIFS_NETINST:-/netinst}"
 OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
 
+entered=
+
 
 samba_input_form()
 {
@@ -70,6 +72,7 @@ samba_input_form()
 	directory="${directory//\"/\\\"}"
 	options="${options//\"/\\\"}"
 	domain="${domain//\"/\\\"}"
+	entered=1
 
 	leave "samba_input_form"
 }
@@ -175,14 +178,16 @@ connection_loop()
 	local i=0
 
 	while ! is_server_online; do
-		if [ "$i" -ge "$timeout" ]; then
+		if [ "$i" -ge "$timeout" ] || [ -z "$entered" ]; then
 			IM_ponder_stop
 
 			if [ -z "$NOASKUSER" ]; then
-				IM_errmsg "Connection timeout, try again!"
+				[ "$i" -lt "$timeout" ] ||
+					IM_errmsg "Connection timeout, try again!"
 				samba_input_form
 			else
-				message "connection timeout, dialogs are disabled"
+				[ "$i" -lt "$timeout" ] ||
+					message "connection timeout, dialogs are disabled"
 				fatal "specified SAMBA-server does not responds"
 			fi
 
