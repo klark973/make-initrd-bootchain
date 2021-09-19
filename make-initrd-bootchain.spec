@@ -22,10 +22,10 @@ Requires: %name-waitdev     = %version-%release
 Requires: %name-interactive = %version-%release
 Requires: %name-altboot     = %version-%release
 Requires: %name-localdev    = %version-%release
+Requires: %name-liverw      = %version-%release
 Requires: %name-waitnet     = %version-%release
 Requires: %name-nfs         = %version-%release
 Requires: %name-cifs        = %version-%release
-Requires: %name-liverw      = %version-%release
 
 AutoReq: noshell, noshebang
 
@@ -33,15 +33,6 @@ Source0: %name-%version.tar
 
 %description
 Meta-package with the full set of the %child modules for %parent
-
-%package doc
-Summary: %parent-%child documentation
-Group: Documentation
-BuildArch: noarch
-AutoReq: noshell, noshebang
-
-%description doc
-Documentation, testing and development files for %parent-%child
 
 %package core
 Summary: %child-core module for %parent
@@ -110,6 +101,19 @@ AutoReq: noshell, noshebang
 %description localdev
 localdev sub-module for %name
 
+%package liverw
+Summary: liverw sub-module for %name
+Group: System/Base
+BuildArch: noarch
+Requires: %name-localdev = %version-%release
+Requires: e2fsprogs
+Requires: fdisk
+Requires: sfdisk
+AutoReq: noshell, noshebang
+
+%description liverw
+liverw sub-module for %name
+
 %package waitnet
 Summary: waitnet sub-module for %name
 Group: System/Base
@@ -144,18 +148,14 @@ AutoReq: noshell, noshebang
 %description cifs
 cifs sub-module for %name
 
-%package liverw
-Summary: liverw sub-module for %name
-Group: System/Base
+%package doc
+Summary: %parent-%child documentation
+Group: Documentation
 BuildArch: noarch
-Requires: %name-localdev = %version-%release
-Requires: e2fsprogs
-Requires: fdisk
-Requires: sfdisk
 AutoReq: noshell, noshebang
 
-%description liverw
-liverw sub-module for %name
+%description doc
+Documentation, testing and development files for %parent-%child
 
 %prep
 %setup -q
@@ -172,9 +172,6 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 %endif
 
 %files
-
-%files doc
-%_docdir/%name
 
 %files core
 %_datadir/%parent/features/%child-core
@@ -194,6 +191,9 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 %files localdev
 %_datadir/%parent/features/%child-localdev
 
+%files liverw
+%_datadir/%parent/features/%child-liverw
+
 %files waitnet
 %_datadir/%parent/features/%child-waitnet
 
@@ -203,8 +203,8 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 %files cifs
 %_datadir/%parent/features/%child-cifs
 
-%files liverw
-%_datadir/%parent/features/%child-liverw
+%files doc
+%_docdir/%name
 
 %changelog
 * Sun Sep 12 2021 Leonid Krivoshein <klark@altlinux.org> 0.1.4-alt1

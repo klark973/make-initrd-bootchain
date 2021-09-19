@@ -7,10 +7,10 @@ MODULES="
 	interactive
 	altboot
 	localdev
+	liverw
 	waitnet
 	nfs
 	cifs
-	liverw
 "
 BASHDIRS="
 	automatic
