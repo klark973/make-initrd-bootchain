@@ -17,7 +17,6 @@ b_a options
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_NFS_NETINST="${OEM_NFS_NETINST:-/srv/public/netinst}"
-OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
 
 entered=
 
@@ -203,11 +202,11 @@ if [ -f "$altboot_auto" ]; then
 fi
 
 [ -n "$server" ] ||
+	server="$OEM_SRV_NETINST"
+[ -n "$server" ] ||
 	server="$(get_dhcp_next_server)"
 [ -n "$server" ] ||
 	server="$(get_default_gateway)"
-[ -n "$server" ] ||
-	server="$OEM_SRV_NETINST"
 [ -n "$directory" ] ||
 	directory="$(get_dhcp_root_path)"
 [ -n "$directory" ] ||

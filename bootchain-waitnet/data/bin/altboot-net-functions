@@ -6,6 +6,9 @@ __altboot_net_functions=1
 IPTIMEOUT="${IPTIMEOUT:-30}"
 NETBOOT_IFNAME=/.initrd/bootchain/BOOTIF
 
+# You can change defaults in /etc/sysconfig/bootchain
+OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
+
 
 # Endians-independed way for convert
 # bits counter to an IPv4 network mask.

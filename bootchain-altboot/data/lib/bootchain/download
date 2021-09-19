@@ -32,7 +32,6 @@ b_a timeout
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_URL_NETINST="${OEM_URL_NETINST:-/pub/netinst/current}"
-OEM_SRV_NETINST="${OEM_SRV_NETINST-}"
 
 
 back_to_main_menu()
@@ -408,13 +407,11 @@ if [ "$method" = http ] || [ "$method" = ftp ]; then
 		imgsize=
 	fi
 	if [ -z "$server" ]; then
-		server="$OEM_SRV_NETINST"
-		imgsize=
-	fi
-	if [ -z "$server" ]; then
 		. altboot-net-functions
 
-		server="$(get_default_gateway)"
+		server="$OEM_SRV_NETINST"
+		[ -n "$server" ] ||
+			server="$(get_default_gateway)"
 		imgsize=
 	fi
 	url=
