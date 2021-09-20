@@ -88,6 +88,8 @@ http_input_form()
 	text="$text the $OEM_DISTRIBUTION."
 
 	while :; do
+		[ -n "$server" ] ||
+			server="$(get_default_gateway)"
 		IM_form "$title" "$text" 2		\
 			server     64 "HTTP-server"	\
 			directory 128 "Directory"	\
@@ -129,6 +131,8 @@ ftp_input_form()
 	text="$text if necessary (leave Login blank for anonymous)."
 
 	while :; do
+		[ -n "$server" ] ||
+			server="$(get_default_gateway)"
 		IM_form "$title" "$text" 4		\
 			server     64 "FTP-server"	\
 			directory 128 "Directory"	\
@@ -424,18 +428,18 @@ if [ -f "$altboot_auto" ]; then
 fi
 
 if [ "$method" = http ] || [ "$method" = ftp ]; then
-	if [ -z "$directory" ]; then
+	. altboot-net-functions
+
+	if [ -z "$directory" ] && [ -n "$OEM_URL_NETINST" ]; then
 		directory="$OEM_URL_NETINST"
 		imgsize=
 	fi
-	if [ -z "$server" ]; then
-		. altboot-net-functions
 
+	if [ -z "$server" ] && [ -n "$OEM_SRV_NETINST" ]; then
 		server="$OEM_SRV_NETINST"
-		[ -n "$server" ] ||
-			server="$(get_default_gateway)"
 		imgsize=
 	fi
+
 	url=
 	[ -z "$server" ] || [ -z "$directory" ] ||
 		url="$method://${server}${directory}"
