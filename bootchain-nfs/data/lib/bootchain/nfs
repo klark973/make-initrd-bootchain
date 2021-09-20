@@ -32,6 +32,8 @@ nfs_input_form()
 	text="$text file) containing the $OEM_DISTRIBUTION."
 
 	while :; do
+		[ -n "$server" ] ||
+			server="$(get_default_gateway)"
 		IM_form "$title" "$text" 3		\
 			server     64 "NFS-server"	\
 			directory 128 "Directory"	\
@@ -205,8 +207,6 @@ fi
 	server="$OEM_SRV_NETINST"
 [ -n "$server" ] ||
 	server="$(get_dhcp_next_server)"
-[ -n "$server" ] ||
-	server="$(get_default_gateway)"
 [ -n "$directory" ] ||
 	directory="$(get_dhcp_root_path)"
 [ -n "$directory" ] ||
