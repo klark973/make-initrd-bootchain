@@ -161,10 +161,11 @@ scan_devices()
 			continue
 		fi
 
-		if [ -n "$target" ]; then
-			message "specified target found: $target ($major:$minor)"
+		[ -n "$target" ] ||
+			continue
+		[ "${saved}p1" = "$target" ] || [ "${saved}1" = "$target" ] ||
 			ntargets=$((1 + $ntargets))
-		fi
+		message "specified target found: $target ($major:$minor)"
 	done < /proc/partitions
 
 	[ "$ntargets" = 1 ] ||
