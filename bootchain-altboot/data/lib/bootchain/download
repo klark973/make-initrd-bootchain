@@ -203,42 +203,64 @@ get_file_size()
 	elif [ -n "$imgsize" ]; then
 		filesize="$imgsize"
 	else
-		local opts="-sI ${CURLOPTS-} --max-redirs 0"
-		local regex="^Content\-Length:[[:space:]]*"
-		local httperr=" (301|302|401|403|404) "
-		local i rc tmpf
+		local opts="-sI ${CURLOPTS-}" i=0 rc tmpf status auth=
+		local regex="s/^Content\-Length:[[:space:]]+([0-9]+)/\1/p"
 
 		IM_ponder_start \
 			"[ Connecting... ]" \
 			"Requesting image from the server..."
 		message "retrieving image file size: '$url'"
 
-		i=0
+		opts="$opts --no-buffer --connect-timeout 5 --max-time 7"
+		opts="$opts --max-redirs 0 --write-out %{http_code}"
 		[ "$method" != ftp ] ||
 			opts="$opts --ftp-pasv"
-		tmpf="$(run mktemp -t)"
+		[ "$method" != ftp ] || [ -z "$user" ] ||
+			auth="$user:$pass"
+		tmpf="$(run mktemp -qt)"
+
 		while [ "$i" -lt "$timeout" ]; do
-			rc=0
-			run curl $opts -- "$url" >"$tmpf" ||
-				rc=$?
+			rc=0; run rm -f -- "$tmpf"
+			status="$(run curl ${opts}${auth:+ -u "$auth"} \
+					--output "$tmpf" --url "$url")" || rc=$?
 			[ ! -s "$tmpf" ] ||
 				fdump "$tmpf"
-			if [ "$rc" = 0 ]; then
-				if [ "${url:0:7}" != "http://" ] ||
-					head -n1 -- "$tmpf" |grep -qs ' 200 '
-				then
-					filesize="$(grep -sE "$regex" "$tmpf" |
-							sed 's/[^[:digit:]]//g')"
-					[ -z "$filesize" ] || break
-				elif [ "${url:0:7}" = "http://" ] &&
-					head -n1 -- "$tmpf" |grep -qsE "$httperr"
-				then
+			debug "curl status: $rc, protoclol status: $status"
+
+			if [ "$rc" = 0 ] && [ "$method" = http ]; then
+				case "$status" in
+				301|302|401|403|404)
 					# This is unrecoverable client/server error,
 					# there is no point in waiting for a fix
 					message "unrecoverable http error"
 					break
-				fi
+					;;
+				200)	# OK
+					;;
+				*)	rc=1
+					;;
+				esac
+			elif [ "$rc" = 0 ] && [ "$method" = ftp ]; then
+				case "$status" in
+				202|225|231|331|332|404|421|425|426|450|451|5??)
+					# This is unrecoverable client/server error,
+					# there is no point in waiting for a fix
+					message "unrecoverable ftp error"
+					break
+					;;
+				200|226|350)
+					# OK
+					;;
+				*)	rc=1
+				esac
 			fi
+
+			if [ "$rc" = 0 ] && [ -s "$tmpf" ]; then
+				filesize="$(sed -E -n "$regex" "$tmpf" |
+						sed -e 's,\r$,,')"
+				[ -z "$filesize" ] || break
+			fi
+
 			[ -n "$entered" ] ||
 				break
 			i=$((3 + $i))
@@ -301,7 +323,7 @@ read_image()
 
 		[ "$method" != ftp ] ||
 			opts="$opts --ftp-pasv"
-		[ "$method" != ftp ] || [ -z "$user" ] || [ -z "$pass" ] ||
+		[ "$method" != ftp ] || [ -z "$user" ] ||
 			auth="$user:$pass"
 		( curl ${opts}${auth:+ -u "$auth"} -- "$url" ||
 			printf '%s, curl\n' "$?" >"$datadir/ERROR"
