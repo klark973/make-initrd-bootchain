@@ -3,7 +3,6 @@
 if [ -z "${__altboot_net_functions-}" ]; then
 __altboot_net_functions=1
 
-IPTIMEOUT="${IPTIMEOUT:-30}"
 NETBOOT_IFNAME=/.initrd/bootchain/BOOTIF
 
 # You can change defaults in /etc/sysconfig/bootchain
@@ -118,7 +117,7 @@ get_dhcp_wins()
 		read -r v <"$NETBOOT_IFNAME"
 		[ -z "$v" ] || [ ! -s "/.initrd/network/auto/ifaces/$v/wins" ] ||
 			head -n1 "/.initrd/network/auto/ifaces/$v/wins" |
-				sed -e 's/[[:space:]]*.*$//'
+				sed -E 's/^([^[:space:]]+).*$/\1/'
 	fi
 
 	leave "get_dhcp_wins"

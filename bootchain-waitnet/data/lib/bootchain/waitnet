@@ -9,12 +9,12 @@ debug "$PROG started"
 IM_start_output ponder errmsg
 
 # Feature 'network' absent inside intramfs
-if [ ! -s /bin/network-sh-functions ]; then
+if [ ! -x /lib/initrd/cmdline.d/network ]; then
 	message "feature 'network' absent inside initramfs"
 
 	if [ -z "$NOASKUSER" ]; then
 		msg="This disk builded without networking support."
-		msg="$msg Booting via FTP/HTTP methods is inpossible."
+		msg="$msg Booting via any network protocol is inpossible."
 		IM_errmsg "$msg $BC_RBMSG"
 	fi
 
@@ -24,26 +24,41 @@ fi
 # No network settings
 if [ "${IP:-0}" = 0 ] &&
 	[ "${ROUTE:-0}" = 0 ] &&
-	[ "${NAMESERVER:-0}" = 0 ] &&
-	[ "${IFNAME:-0}" = 0 ]
+	[ "${IFNAME:-0}" = 0 ] &&
+	[ "${NAMESERVER:-0}" = 0 ]
 then
-	message "network settings not defined in /proc/cmdline"
+	msg="network settings not defined in /proc/cmdline"
 
-	if [ -z "$NOASKUSER" ]; then
-		msg="Network settings not defined in /proc/cmdline."
-		msg="$msg Try with option 'ip=dhcp4' after reboot."
+	if [ ! -d /proc/sys/net/ipv4 ]; then
+		msg="IPv4 not available, $msg"
+		[ -z "$NOASKUSER" ] ||
+			fatal "$msg, dialogs are disabled"
+		message "$msg"
+		msg="$msg. Try with the option 'ip=dhcp4' after reboot."
 		IM_errmsg "$msg $BC_RBMSG"
+		bc_reboot
 	fi
 
-	bc_reboot
+	message "$msg"
+
+	{ echo 'export IP="1"'
+	  echo 'export ROUTE="0"'
+	  echo 'export IFNAME="0"'
+	  echo 'export NAMESERVER="0"'
+	  echo 'export IP0="dhcp4"'
+	} >> /.initrd/initenv
+
+	/lib/initrd/cmdline.d/network >/dev/null 2>&1 ||
+		fatal "can't reconfigure network settings"
 fi
 
 # Wait network only once
 if [ ! -s "$NETBOOT_IFNAME" ]; then
 	IM_ponder_start "[ Bridging up interface... ]"
 
+	n=80
 	netdev=
-	n=$((2 * $IPTIMEOUT))
+	ifaces=' '
 	while [ $n -gt 0 ]; do
 		# shellcheck disable=SC2012
 		for netdev in $(ls /sys/class/net/) lo; do
@@ -51,14 +66,18 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 				continue
 			[ -r "/sys/class/net/$netdev/flags" ] ||
 				continue
+			if [ -n "${ifaces##* $netdev *}" ]; then
+				echo add >"/sys/class/net/$netdev/uevent"
+				ifaces="$ifaces $netdev "
+			fi
 			ip -4 addr show dev "$netdev" 2>/dev/null |
 				grep -qs '    inet ' && break 2 ||:
 		done
 		netdev=
-		sleep 0.5
+		sleep 0.2
 		n=$(( $n - 1 ))
 	done
-	unset n
+	unset n ifaces
 
 	IM_ponder_stop
 
@@ -71,7 +90,7 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 		if [ -z "$NOASKUSER" ]; then
 			msg="Can't bridge up network interface. Try with other"
 			msg="$msg network settings, wired connection and/or cable."
-			IM_errmsg "$msg $BC_RBMSG"
+			IM_errmsg "$msg"
 		fi
 
 		altboot_restart

@@ -354,8 +354,8 @@ download_image()
 
 	local text distro="the $OEM_DISTRIBUTION"
 
-	[ -n "$fuid" ] || [ -z "$directory" ] ||
-		disro="'${directory##*/}'"
+	[ -n "$fuid" ] ||
+		distro="'${url##*/}'"
 	text="Downloading $distro into $target..."
 	message "downloading image: '$url'"
 	(read_image |save_image) 2>&1 |
@@ -483,6 +483,15 @@ while :; do
 		printf '%s, check available space\n' "$?" >"$datadir/ERROR"
 	[ -z "$filesize" ] ||
 		download_image
+	if [ "$method" = ftp ] && [ -s "$datadir/ERROR" ] &&
+	   [ "$(head -n1 -- "$datadir/ERROR" ||:)" = "7, curl" ]
+	then
+		[ -z "$dstreg" ] ||
+			run rm -f -- "$to"
+		rm -f -- "$datadir/ERROR"
+		sleep 2
+		download_image
+	fi
 	url="$saved_url"
 	unset saved_url
 
