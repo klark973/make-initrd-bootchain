@@ -124,13 +124,6 @@ next_bootchain()
 	debug "BOOTCHAIN REPLACED: '${_v}'"
 }
 
-has_module()
-{
-	[ -f "/etc/initrd/cmdline.d/bootchain-$1" ] ||
-	[ -f "/etc/bootchain.d/$1" ] ||
-		return 1
-}
-
 is_step_passed()
 {
 	[ -f "$BC_PASSED/$PROG" ] ||

@@ -16,7 +16,7 @@ debug()
 }
 
 
-if has_module interactive; then
+if has_feature bootchain-interactive; then
 	. interactive-sh-functions
 
 	[ "x${1-}" != "x--foreground" ] ||

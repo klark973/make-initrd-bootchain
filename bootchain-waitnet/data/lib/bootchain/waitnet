@@ -8,8 +8,8 @@
 debug "$PROG started"
 IM_start_output ponder errmsg
 
-# Feature 'network' absent inside intramfs
-if [ ! -x /lib/initrd/cmdline.d/network ]; then
+# Feature 'network' absent
+if ! has_feature network; then
 	message "feature 'network' absent inside initramfs"
 
 	if [ -z "$NOASKUSER" ]; then
