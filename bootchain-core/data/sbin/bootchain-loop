@@ -163,12 +163,20 @@ else
 
 	run "$handlerdir/debug" ||:
 	debug "last step finished with exit code $rc"
+fi
 
-	if [ -f "$BC_LOGFILE" ]; then
-		if [ -d "$rootmnt/var/log" ]; then
-			run cp -Lf -- "$BC_LOGFILE" "$rootmnt/var/log/"
-		else
-			run cp -Lf -- "$BC_LOGFILE" "$mntdir/"
-		fi
+if [ -f "$BC_LOGFILE" ] && [ -n "${BC_DEBUG}${BC_TEST-}" ]; then
+	if [ -d "$rootmnt/var/log" ]; then
+		destdir="$rootmnt/var/log"
+	else
+		run mkdir -p -- "$mntdir"
+		destdir="$mntdir"
 	fi
+
+	if [ -n "${BC_TEST-}" ]; then
+		debug "test '$BC_TEST' in the stage1 passed"
+		echo "$BC_TEST" >"$destdir"/BC-TEST.passed
+	fi
+
+	run cp -Lf -- "$BC_LOGFILE" "$destdir/"
 fi
