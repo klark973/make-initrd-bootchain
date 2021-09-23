@@ -28,8 +28,8 @@ while [ "$i" -lt "${WAITDEV:-0}" ]; do
 	eval "spec=\"\${WAITDEV$i-}\""
 
 	if [ -n "$spec" ] && get_dev_wpfx dev "$spec"; then
-		printf '%s\n' "$dev" >"$i"
+		printf '%s\n' "$dev" > "$i"
 	fi
 
-	i=$((1 + $i))
+	i=$(($i + 1))
 done
