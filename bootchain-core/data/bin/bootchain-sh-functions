@@ -26,7 +26,6 @@ fi
 
 [ -n "$BC_DEBUG" ] && BC_FGVT_ACTIVATE=1 ||
 	BC_FGVT_ACTIVATE="${BC_FGVT_ACTIVATE:-7}"
-BC_RBMSG="Press ENTER to reboot the computer..."
 BC_NEXTCHAIN=/.initrd/bootchain/bootchain.next
 BC_PASSED=/.initrd/bootchain/passed
 handlerdir=/lib/bootchain

@@ -15,7 +15,7 @@ if ! has_feature network; then
 	if [ -z "$NOASKUSER" ]; then
 		msg="This disk builded without networking support."
 		msg="$msg Booting via any network protocol is inpossible."
-		IM_errmsg "$msg $BC_RBMSG"
+		IM_errmsg "$msg $IM_RBMSG"
 	fi
 
 	bc_reboot
@@ -35,7 +35,7 @@ then
 			fatal "$msg, dialogs are disabled"
 		message "$msg"
 		msg="$msg. Try with the option 'ip=dhcp4' after reboot."
-		IM_errmsg "$msg $BC_RBMSG"
+		IM_errmsg "$msg $IM_RBMSG"
 		bc_reboot
 	fi
 

@@ -100,7 +100,7 @@ if [ "$CHECKSUM" = "$check" ]; then
 elif [ -n "$NOASKUSER" ]; then
 	fatal "image file checksum mismatch"
 else
-	IM_errmsg "Image file checksum mismatch! $BC_RBMSG"
+	IM_errmsg "Image file checksum mismatch! $IM_RBMSG"
 	bc_reboot
 fi
 

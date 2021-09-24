@@ -307,7 +307,7 @@ check_avail_space()
 		text="not enough memory for download specified image"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$text, dialogs are disabled"
-		IM_errmsg "N${text:1}. Retry with ramdisk_size=$szkb after reboot. $BC_RBMSG"
+		IM_errmsg "N${text:1}. Retry with ramdisk_size=$szkb after reboot. $IM_RBMSG"
 		bc_reboot
 	fi
 

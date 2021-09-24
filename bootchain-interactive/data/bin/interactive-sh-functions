@@ -25,6 +25,9 @@ _IM_unsplashed="${_IM_flag}/BOOTSPLASH-STOPPED"
 _IM_activated="${_IM_flag}/VT-ACTIVATED"
 _IM_VT_number="${_IM_VT_number:-2}"
 
+# Standart "reboot message"
+IM_RBMSG="Press ENTER to reboot the computer..."
+
 
 IM_is_active()
 {
