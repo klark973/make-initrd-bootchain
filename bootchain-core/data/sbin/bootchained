@@ -7,12 +7,10 @@ pidfile="/var/run/$PROG.pid"
 
 exit_handler()
 {
-	local rc=$?
-
+	local rc="$?"
 	trap - EXIT
 	rm -f -- "$pidfile"
 	wait
-
 	exit $rc
 }
 
