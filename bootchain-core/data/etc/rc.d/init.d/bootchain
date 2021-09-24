@@ -33,26 +33,18 @@ use_hooks()
 
 start() {
 	RETVAL=0
-
 	if [ "${ROOT-}" = bootchain ] || [ "${ROOT-}" = pipeline ]; then
 		use_hooks /lib/bootchain-prepare.d
 		start_daemon --background $ARGS "$NAME"
 		RETVAL=$?
 	fi
-
 	return $RETVAL
 }
 
 stop() {
-	RETVAL=0
-
-	if [ "${ROOT-}" = bootchain ] || [ "${ROOT-}" = pipeline ]; then
-		stop_daemon $ARGS "$NAME"
-		RETVAL=$?
-		rm -f -- "$PIDFILE"
-		use_hooks /lib/bootchain-cleanup.d
-	fi
-
+	stop_daemon $ARGS "$NAME"
+	RETVAL=$?
+	rm -f -- "$PIDFILE"
 	return $RETVAL
 }
 
