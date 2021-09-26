@@ -1,0 +1,161 @@
+#!/bin/bash -efu
+
+. altboot-sh-functions
+
+check_parameter ALTBOOT_COPYFILE
+
+regular=
+devname=
+
+b_a()
+{
+	get_bootarg COPYFILE "$1"
+}
+
+b_a src
+b_a dst
+b_a size
+
+# BOOTIMG used in propagator compatibility mode only
+BOOTIMG=/run/rootfs.squash
+
+
+check_file_size()
+{
+	enter "check_file_size"
+
+	if [ -z "$size" ]; then
+		debug "retrieving file size: '$src'"
+		size="$(run stat -L -c%s -- "$src")" && [ -n "$size" ] ||
+			fatal "can't determinate file size by specified path"
+	fi
+
+	leave "check_file_size"
+}
+
+check_avail_space()
+{
+	enter "check_avail_space"
+
+	local text avail number sysfs
+	local szkb="$(( $size / 1024 + 1 ))"
+	local regex="s/^MemAvailable:[[:space:]]+([0-9]+)[^0-9]*/\1/p"
+
+	if [ -n "$regular" ]; then
+		avail="$(sed -E -n "$regex" /proc/meminfo ||:)"
+	else
+		number="$(mountpoint -x -- "$dst")"
+		sysfs="/sys/dev/block/$number/size"
+		[ -r "$sysfs" ] && read -r avail <"$sysfs" || avail=
+	fi
+
+	avail="$(( ${avail:-0} / 2 ))"
+	message "available: $avail KiB, required: $szkb KiB"
+
+	if [ "$avail" -lt "$szkb" ]; then
+		text="not enough memory for copy specified file"
+		[ -z "$NOASKUSER" ] ||
+			fatal "$text, dialogs are disabled"
+		text="N${text:1}."
+		[ -n "$regular" ] || [ "${dst:0:8}" != /dev/ram ] ||
+			text="$text Retry with ramdisk_size=$szkb after reboot."
+		IM_errmsg "$text $IM_RBMSG"
+		bc_reboot
+	fi
+
+	leave "check_avail_space"
+}
+
+copy_file_dialog()
+{
+	enter "copy_file_dialog"
+
+	local text="Copying the $OEM_DISTRIBUTION into $devname..."
+
+	message "copying '$src' to '$dst'"
+
+	{ pv -n -W -i 1 -S -s "$size" -- "$src" >"$dst" ||
+		:>"$datadir/ERROR"
+	} 2>&1 |IM_gauge "[ Copying file... ]" "$text"
+
+	if [ ! -f "$datadir/ERROR" ]; then
+		run sync
+	else
+		rm -f -- "$datadir/ERROR"
+		fatal "copy operation failed"
+	fi
+
+	[ -z "$NOTTYS" ] ||
+		reset
+	leave "copy_file_dialog"
+}
+
+
+# Entry point
+[ -z "$ALTBOOT_OLDROOT" ] ||
+	launch_step_once
+debug "$PROG started ($(get_parameter ALTBOOT_COPYFILE))"
+
+[ -n "$prevdir" ] && mountpoint -q -- "$prevdir" ||
+	fatal "no previous step results to copy file"
+[ -n "$src" ] && [ -r "${prevdir}${src}" ] ||
+	fatal "specified source file is not accessible: $src"
+IM_start_output errmsg gauge
+
+case "$dst" in
+step-[1-9]*|pipe[0-9]*)
+	devname="$(resolve_target "$dst")"
+	dst="$(resolve_devname "$devname")"
+	[ -d "$devname" ] && [ -n "$dst" ] ||
+		fatal "invalid step# specified, can't resolve the device name"
+	;;
+''|RD)
+	if ! get_free_ramdisk dst; then
+		[ ! -b /dev/ram0 ] || [ ! -r /sys/block/ram0/size ] ||
+			fatal "no free RAM-disk found"
+		dst="$datadir/image"
+		regular=1
+	fi
+	;;
+/dev/?*)
+	;;
+*)
+	dst="$datadir/image"
+	regular=1
+	;;
+esac
+
+[ -z "$regular" ] || [ -z "$ALTBOOT_OLDROOT" ] || [ -f "$mntdir"/DIRTY ] ||
+	dst="$BOOTIMG"
+devname="the RAM"
+
+if [ -z "$regular" ]; then
+	[ -b "$dst" ] ||
+		fatal "specified target block device not found: $dst"
+	case "$dst" in
+	/dev/ram[0-9]*)
+		mark_used_ramdisk "$dst"
+		devname="the RAM-disk"
+		;;
+	*)
+		devname="device $dst"
+		;;
+	esac
+fi
+
+src="${prevdir}${src}"
+check_file_size
+check_avail_space
+copy_file_dialog
+[ -z "$regular" ] ||
+	run chmod -- 0600 "$dst"
+lomount devname "$dst"
+[ -z "$regular" ] || [ "$dst" = "$BOOTIMG" ] ||
+	:>"$mntdir"/DIRTY
+debug "DEVNAME: $devname"
+debug "FILESIZE: $size"
+printf '%s\n' "$size" >"$destdir/FILESIZE"
+printf '%s\n' "$devname" >"$destdir/DEVNAME"
+run cp -a -- "$devname" "$destdir/dev"
+
+debug "$PROG finished"
