@@ -49,25 +49,33 @@ get_parameter()
 resolve_target()
 {
 	local target="$1"
+	local where="${target%%/*}"
+	local n="${#where}"
 
-	case "${target%%/*}" in
+	target="${target:$n}"
+
+	case "$where" in
 	'')
 		;;
 	pipe[0-9]|pipe[0-9][0-9]|pipe[0-9][0-9][0-9])
-		target="$mntdir/dst/step${target:4}"
+		n="$(( ${basestep:-0} + ${where:4} ))"
+		[ ! -d "$mntdir/dst/step$n" ] && return 0 ||
+			target="$mntdir/dst/step${n}${target}"
 		;;
-	step[0-9]|step[0-9][0-9]|step[0-9][0-9][0-9])
-		target="$mntdir/dst/$target"
+	step-[1-9]|step-[1-9][0-9]|step-[1-9][0-9][0-9])
+		n="$(( ${stepnum:-0} - ${where:5} ))"
+		[ "${basestep:-0}" -le "$n" ] && [ -d "$mntdir/dst/step$n" ] &&
+			target="$mntdir/dst/step${n}${target}" || return 0
 		;;
 	*)
 		if [ -z "${prevdir-}" ]; then
-			message "no previous step results to use with $PROG"
+			message "no previous step results to use with $name"
 			return 0
 		fi
-		if [ "$target" = DEVNAME ] && [ -s "$prevdir/DEVNAME" ]; then
-			read -r target <"$prevdir/DEVNAME" ||:
+		if [ "$where" = DEVNAME ] && [ -s "$prevdir/DEVNAME" ]; then
+			read -r target <"$prevdir/DEVNAME" 2>/dev/null ||:
 		else
-			target="$prevdir/${target#/}"
+			target="$prevdir/${where#/}${target}"
 		fi
 		;;
 	esac

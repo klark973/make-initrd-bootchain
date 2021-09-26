@@ -6,6 +6,7 @@ bcretry="${bcretry:-1}"
 stepnum="${stepnum:-0}"
 chainsteps="${chainsteps-}"
 prevdir="${prevdir-}"
+basestep="$stepnum"
 BC_IM_supported=
 
 
@@ -83,7 +84,8 @@ while [ -n "$chainsteps" ]; do
 		else
 			message "[$callnum] Handler: $exe"
 
-			export name callnum datadir destdir prevdir
+			export name callnum datadir destdir
+			export basestep stepnum prevdir
 
 			for try in 1 2 3 4 5; do
 				[ -z "$BC_DEBUG" ] ||
@@ -128,6 +130,7 @@ while [ -n "$chainsteps" ]; do
 		debug "chain will be reloaded by $BC_NEXTCHAIN:"
 		fdump "$BC_NEXTCHAIN"
 		. "$BC_NEXTCHAIN"
+		basestep="$stepnum"
 		run rm -f -- "$BC_NEXTCHAIN"
 	fi
 
