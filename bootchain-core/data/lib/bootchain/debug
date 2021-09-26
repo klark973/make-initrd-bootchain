@@ -30,34 +30,31 @@ message "DEST DIR: $destdir"
 		listpvdir
 	elif [ ! -b "$prevdir/dev" ] &&
 		[ ! -c "$prevdir/dev" ] &&
-		[ ! -s "$prevdir/DEVNAME" ] &&
-		[ ! -s "$prevdir/FILESIZE" ]
+		[ ! -s "$prevdir/DEVNAME" ]
 	then
 		listpvdir
 	else
 		if [ -b "$prevdir/dev" ] || [ -c "$prevdir/dev" ]; then
-			devno="$(mountpoint -x -- "$prevdir/dev")"
-			[ -b "$prevdir/dev" ] &&
-				devname=/sys/dev/block ||
-				devname=/sys/dev/char
-			devname="$(grep -sE ^DEVNAME= "$devname/$devno/uevent" |cut -f2- -d=)"
-			printf 'dev (%s -> %s)\n' "$devno" "/dev/$devname"
+			devname="$(resolve_devname "$prevdir/dev")"
+			devno="$(get_majmin "$prevdir/dev" ||:)"
+			[ -z "$devno" ] || [ -z "$devname" ] ||
+				printf 'dev (%s -> %s)\n' "$devno" "$devname"
 		fi
 
 		if [ -s "$prevdir/DEVNAME" ]; then
-			read -r devname <"$prevdir/DEVNAME" ||
+			read -r devname <"$prevdir/DEVNAME" 2>/dev/null ||
 				devname=
 			if [ -z "$devname" ]; then
 				printf 'DEVNAME\n'
 			else
-				devno="$(mountpoint -x -- "$devname")" ||
+				devno="$(get_majmin "$devname")" ||
 					devno="ABSENT"
 				printf 'DEVNAME (%s -> %s)\n' "$devno" "$devname"
 			fi
 		fi
 
 		if [ -s "$prevdir/FILESIZE" ]; then
-			read -r fsize <"$prevdir/FILESIZE" ||
+			read -r fsize <"$prevdir/FILESIZE" 2>/dev/null ||
 				fsize="NOT READABLE"
 			printf 'FILESIZE (%s)\n' "$fsize"
 		fi
