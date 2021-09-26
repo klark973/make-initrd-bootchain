@@ -180,9 +180,7 @@ break_bc_loop()
 
 bc_reboot()
 {
-	enter "bc_reboot"
-
-	reboot -f -d
+	run reboot -f -d
 }
 
 bypass_results()
