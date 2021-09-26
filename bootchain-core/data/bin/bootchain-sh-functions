@@ -9,6 +9,7 @@ BC_LOG_VT=3
 [ ! -s /etc/sysconfig/bootchain ] ||
 	. /etc/sysconfig/bootchain
 
+. initrd-sh-functions
 . /.initrd/initenv
 . shell-signal
 
@@ -72,6 +73,31 @@ resolve_target()
 	esac
 
 	printf '%s' "$target"
+}
+
+resolve_devname()
+{
+	local dir="${1-}"
+	local devname=
+
+	[ -n "$dir" ] ||
+		dir="${prevdir-}"
+	[ -d "$dir" ] ||
+		return 0
+
+	if [ -s "$dir/DEVNAME" ]; then
+		read -r devname <"$dir/DEVNAME" 2>/dev/null ||:
+	elif [ -b "$dir/dev" ] || [ -c "$dir/dev" ]; then
+		devname="$(get_majmin "$dir/dev" ||:)"
+		devname="/sys/dev/block/$devname/uevent"
+		[ -b "$dir/dev" ] ||
+			devname="/sys/dev/char/$devname/uevent"
+		devname="/dev/$(sed -E -n 's/^DEVNAME=(.*)/\1/p' "$devname" 2>/dev/null ||:)"
+	fi
+
+	[ -b "$devname" ] || [ -c "$devname" ] ||
+		devname=
+	printf '%s' "$devname"
 }
 
 debug()

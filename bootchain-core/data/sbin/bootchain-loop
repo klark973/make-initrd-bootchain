@@ -1,6 +1,5 @@
 #!/bin/bash -efu
 
-. initrd-sh-functions
 . bootchain-sh-functions
 
 bcretry="${bcretry:-1}"
