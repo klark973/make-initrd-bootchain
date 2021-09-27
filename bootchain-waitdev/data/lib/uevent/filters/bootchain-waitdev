@@ -3,7 +3,7 @@
 . /.initrd/initenv
 . initrd-sh-functions
 
-get_dev_wpfx()
+get_dev_prefixed()
 {
 	local retval="$1" name="$2"
 
@@ -27,7 +27,7 @@ i=0
 while [ "$i" -lt "${WAITDEV:-0}" ]; do
 	eval "spec=\"\${WAITDEV$i-}\""
 
-	if [ -n "$spec" ] && get_dev_wpfx dev "$spec"; then
+	if [ -n "$spec" ] && get_dev_prefixed dev "$spec"; then
 		printf '%s\n' "$dev" > "$i"
 	fi
 
