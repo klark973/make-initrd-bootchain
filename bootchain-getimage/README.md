@@ -1,4 +1,8 @@
-# Bootchain sub-module: getimage
+# Feature bootchain-getimage
+
+This is not a standalone feature. This is an add-on to the bootchain-core
+feature. It allows to get a remote image and mount it. This is useful for
+network boot.
 
 ## Chain elements
 
