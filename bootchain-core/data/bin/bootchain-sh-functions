@@ -58,22 +58,34 @@ resolve_target()
 	'')
 		;;
 	pipe[0-9]|pipe[0-9][0-9]|pipe[0-9][0-9][0-9])
-		n="$(( ${basestep:-0} + ${where:4} ))"
-		[ ! -d "$mntdir/dst/step$n" ] && return 0 ||
-			target="$mntdir/dst/step${n}${target}"
+		[ -d "$mntdir/dst/step${where:4}" ] ||
+			return 0
+		target="$(readlink-e "$mntdir/dst/step${where:4}")${target}"
 		;;
 	step-[1-9]|step-[1-9][0-9]|step-[1-9][0-9][0-9])
-		n="$(( ${stepnum:-0} - ${where:5} ))"
-		[ "${basestep:-0}" -le "$n" ] && [ -d "$mntdir/dst/step$n" ] &&
-			target="$mntdir/dst/step${n}${target}" || return 0
+		case "$destdir" in
+		"$mntdir"/dst/step[0-9]*)
+			n="${destdir##*/}"
+			n="$(( ${n:4} - ${where:5} ))"
+			;;
+		*)
+			return 0
+			;;
+		esac
+		[ "$n" -ge 0 ] && [ -d "$mntdir/dst/step$n" ] ||
+			return 0
+		target="$(readlink-e "$mntdir/dst/step$n")${target}"
 		;;
 	*)
 		if [ -z "${prevdir-}" ]; then
 			message "no previous step results to use with $name"
 			return 0
 		fi
-		if [ "$where" = DEVNAME ] && [ -s "$prevdir/DEVNAME" ]; then
-			read -r target <"$prevdir/DEVNAME" 2>/dev/null ||:
+		if [ -z "$target" ] &&
+		   [ "$where" = DEVNAME ] &&
+		   [ -s "$prevdir"/DEVNAME ]
+		then
+			read -r target <"$prevdir"/DEVNAME ||:
 		else
 			target="$prevdir/${where#/}${target}"
 		fi
@@ -93,19 +105,18 @@ resolve_devname()
 	[ -d "$dir" ] ||
 		return 0
 
-	if [ -s "$dir/DEVNAME" ]; then
-		read -r devname <"$dir/DEVNAME" 2>/dev/null ||:
-	elif [ -b "$dir/dev" ] || [ -c "$dir/dev" ]; then
-		devname="$(get_majmin "$dir/dev" ||:)"
+	if [ -s "$dir"/DEVNAME ]; then
+		read -r devname <"$dir"/DEVNAME ||:
+	elif [ -b "$dir"/dev ] || [ -c "$dir"/dev ]; then
+		devname="$(get_majmin "$dir"/dev ||:)"
 		devname="/sys/dev/block/$devname/uevent"
-		[ -b "$dir/dev" ] ||
+		[ -b "$dir"/dev ] ||
 			devname="/sys/dev/char/$devname/uevent"
-		devname="/dev/$(sed -E -n 's/^DEVNAME=(.*)/\1/p' "$devname" 2>/dev/null ||:)"
+		devname="/dev/$(sed -E -n 's/^DEVNAME=(.*)/\1/p' "$devname" ||:)"
 	fi
 
-	[ -b "$devname" ] || [ -c "$devname" ] ||
-		devname=
-	printf '%s' "$devname"
+	[ ! -b "$devname" ] && [ ! -c "$devname" ] ||
+		printf '%s' "$devname"
 }
 
 debug()
