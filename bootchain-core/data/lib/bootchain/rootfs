@@ -4,7 +4,7 @@
 
 launch_step_once
 [ -n "$prevdir" ] && mountpoint -q -- "$prevdir" ||
-	fatal "no previous step results to use as rootfs"
+	fatal "no previous step to use as rootfs"
 [ "$prevdir" = "$rootmnt" ] ||
 	run mount --move -- "$prevdir" "$rootmnt"
 echo localdev > /etc/initrd/method

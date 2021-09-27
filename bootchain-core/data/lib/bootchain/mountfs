@@ -13,4 +13,4 @@ opts=
 [ -c "$target" ] || [ -b "$target" ] ||
 	opts='ro,loop'
 
-run mount ${opts:+-o $opts} -- "$target" "$destdir"
+run mount ${opts:+-o $opts} "$target" "$destdir"
