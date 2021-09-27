@@ -17,24 +17,9 @@ NAME=bootchained
 PIDFILE="/var/run/$NAME.pid"
 ARGS="--lockfile $LOCKFILE --pidfile $PIDFILE --name $NAME --displayname $NAME"
 
-use_hooks()
-{
-	local hook hdir="$1"
-
-	if [ -d "$hdir" ]; then
-		# shellcheck disable=SC2012
-		for hook in $(ls -1 -- "$hdir"/* |sort) _; do
-			[ -s "$hook" ] ||
-				continue
-			. "$hook"
-		done
-	fi
-}
-
 start() {
 	RETVAL=0
 	if [ "${ROOT-}" = bootchain ] || [ "${ROOT-}" = pipeline ]; then
-		use_hooks /lib/bootchain-prepare.d
 		start_daemon --background $ARGS "$NAME"
 		RETVAL=$?
 	fi
