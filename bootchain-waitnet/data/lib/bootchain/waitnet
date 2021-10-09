@@ -54,9 +54,9 @@ fi
 
 # Wait network only once
 if [ ! -s "$NETBOOT_IFNAME" ]; then
-	IM_ponder_start "[ Bridging up interface... ]"
+	IM_ponder_start "[ Bringing up network... ]"
 
-	n=80
+	n=240
 	netdev=
 	ifaces=' '
 	while [ $n -gt 0 ]; do
@@ -88,7 +88,7 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 		message "connection timeout"
 
 		if [ -z "$NOASKUSER" ]; then
-			msg="Can't bridge up network interface. Try with other"
+			msg="Couldn't bring up network interface. Try with other"
 			msg="$msg network settings, wired connection and/or cable."
 			IM_errmsg "$msg"
 		fi
