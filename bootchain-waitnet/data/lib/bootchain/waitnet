@@ -3,6 +3,8 @@
 . altboot-sh-functions
 . altboot-net-functions
 
+bring_up=
+
 
 # Entry point
 debug "$PROG started"
@@ -50,6 +52,7 @@ then
 
 	/lib/initrd/cmdline.d/network >/dev/null 2>&1 ||
 		fatal "can't reconfigure network settings"
+	bring_up=1
 fi
 
 # Wait network only once
@@ -66,12 +69,13 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 				continue
 			[ -r "/sys/class/net/$netdev/flags" ] ||
 				continue
-			if [ -n "${ifaces##* $netdev *}" ]; then
+			if [ -n "$bring_up" ] && [ -n "${ifaces##* $netdev *}" ]; then
 				echo add >"/sys/class/net/$netdev/uevent"
 				ifaces="$ifaces $netdev "
+			else
+				ip -4 addr show dev "$netdev" 2>/dev/null |
+					grep -qs '    inet ' && break 2 ||:
 			fi
-			ip -4 addr show dev "$netdev" 2>/dev/null |
-				grep -qs '    inet ' && break 2 ||:
 		done
 		netdev=
 		sleep 0.2
