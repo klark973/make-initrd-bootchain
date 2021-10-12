@@ -22,5 +22,5 @@ feature. It allows to wait a specified block or character special devices.
 Cmdline: root=bootchain bootchain=waitdev,mountfs,mountfs,overlayfs,rootfs waitdev=CDROM:LABEL=ALT_regular-rescue/x86_64 mountfs=dev mountfs=rescue
 
 Following these parameters, the bootchain wait local CDROM drive labeled as
-`ALT_regular-rescue/x86_64`, mount it, mount squash file `rescue` as a loop
+"ALT_regular-rescue/x86_64", mount it, mount squash file "rescue" as a loop
 from it, make final rootfs writable using overlayfs and will try to boot from it.

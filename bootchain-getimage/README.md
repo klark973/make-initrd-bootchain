@@ -19,6 +19,6 @@ a corresponding element is mentioned in the `bootchain`.
 
 Cmdline: root=bootchain bootchain=getimage,mountfs,overlayfs,rootfs getimage=http://ftp.altlinux.org/pub/people/mike/iso/misc/vi-20140918-i586.iso mountfs=rescue
 
-Following these parameters, the bootchain downloads the vi-20140918-i586.iso
+Following these parameters, the bootchain downloads the "vi-20140918-i586.iso"
 image, mount it as a loop, make it writable using overlayfs and will try to
 boot from it.
