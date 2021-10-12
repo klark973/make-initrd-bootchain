@@ -9,8 +9,8 @@ _IM_ponder_bg()
 	local dlgcmd="IM_gauge \"$1\" \"$2\""
 	local delay="$3" step="$4" percent=0 forward=1
 
-	while [ ! -f "${_IM_ponder_finished}" ]; do
-		eval "echo $percent |$dlgcmd"
+	( while [ ! -f "${_IM_ponder_finished}" ]; do
+		echo "$percent"
 
 		if [ $forward -ne 0 ]; then
 			if [ $percent -lt 100 ]; then
@@ -33,9 +33,10 @@ _IM_ponder_bg()
 		[ $percent -ge 0 ] ||
 			percent=0
 		sleep "$delay"
-	done
+	  done
 
-	eval "echo 100 |$dlgcmd"
+	  echo "100"
+	) |eval "$dlgcmd"
 }
 
 IM_ponder_start()
