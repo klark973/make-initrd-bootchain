@@ -184,7 +184,7 @@ break_bc_loop()
 {
 	enter "break_bc_loop"
 
-	:> "$BC_PASSED/bootchain-loop"
+	:> "$BC_PASSED/bootchained"
 
 	leave "break_bc_loop"
 }
