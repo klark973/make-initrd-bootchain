@@ -35,6 +35,10 @@ if [ "x${1-}" != "x--foreground" ]; then
 
 	if [ "${RDLOG-}" = console ]; then
 		BC_LOGFILE=/dev/console
+	elif [ "${RDLOG-}" = printk ]; then
+		BC_LOGFILE=/dev/ttyprintk
+		[ -e "$BC_LOGFILE" ] ||
+			mknod "$BC_LOGFILE" c 5 3
 	elif [ -z "${NOTTYS-}" ] &&
 		[ -n "$BC_LOG_VT" ] &&
 		[ ! -c "$BC_LOGFILE" ] &&
