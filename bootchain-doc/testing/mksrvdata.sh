@@ -113,7 +113,7 @@ write_tpl "rescue+http+normal" "$image_opts"
 image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
 write_tpl "rescue+http+hash+normal" "$image_opts"
 
-# no debug: use rdshell for check and save resulting /var/log/bootchained.log
+# no debug: use rdshell for check and save resulting /var/log/chaind.log
 image_opts="rdshell $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
 write_tpl "altinst+http+no-debug" "$image_opts"
 image_opts="rdshell $altboot_opts ramdisk_size=$live_isosize $live_opts"
@@ -147,7 +147,7 @@ write_tpl "rescue+ftp+normal" "$image_opts"
 image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
 write_tpl "rescue+ftp+hash+normal" "$image_opts"
 
-# no debug: use rdshell for check and save resulting /var/log/bootchained.log
+# no debug: use rdshell for check and save resulting /var/log/chaind.log
 image_opts="rdshell $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
 write_tpl "altinst+ftp+no-debug" "$image_opts"
 image_opts="rdshell $altboot_opts ramdisk_size=$live_isosize $live_opts"
@@ -185,7 +185,7 @@ write_tpl "rescue+nfs+normal" "$image_opts"
 image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
 write_tpl "rescue+nfs+hash+normal" "$image_opts"
 
-# no debug: use rdshell for check and save resulting /var/log/bootchained.log
+# no debug: use rdshell for check and save resulting /var/log/chaind.log
 image_opts="rdshell $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
 write_tpl "altinst+nfs+no-debug" "$image_opts"
 image_opts="rdshell $altboot_opts ramdisk_size=$live_st2size $live_opts"
@@ -227,7 +227,7 @@ write_tpl "rescue+cifs+normal" "$image_opts"
 image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
 write_tpl "rescue+cifs+hash+normal" "$image_opts"
 
-# no debug: use rdshell for check and save resulting /var/log/bootchained.log
+# no debug: use rdshell for check and save resulting /var/log/chaind.log
 image_opts="rdshell $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
 write_tpl "altinst+cifs+no-debug" "$image_opts"
 image_opts="rdshell $altboot_opts ramdisk_size=$live_st2size $live_opts"

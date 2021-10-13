@@ -13,7 +13,7 @@
 . /.initrd/initenv
 . /etc/init.d/template
 
-NAME=bootchained
+NAME=chaind
 PIDFILE="/var/run/$NAME.pid"
 ARGS="--lockfile $LOCKFILE --pidfile $PIDFILE --name $NAME --displayname $NAME"
 

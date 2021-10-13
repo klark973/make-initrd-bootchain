@@ -21,7 +21,7 @@ us to optimize fill in `initramfs` only which we are need.
 
 - `/bin/bootchain-sh-functions` - common API and evolution
   of `pipeline-sh-functions`.
-- `/sbin/bootchained` - daemon, evolution of `pipelined`.
+- `/sbin/chaind` - daemon, evolution of `pipelined`.
 - `/sbin/bootchain-logvt` - script which allow to control sub terminal.
 - `/etc/rc.d/init.d/bootchain` - sysvinit start script.
 
@@ -51,7 +51,7 @@ us to optimize fill in `initramfs` only which we are need.
 - Modularity: loading methods are initially separated from the common
   code and daemon.
 - The main loop of the `bootchain-loop` daemon is separated from the
-  `bootchained` daemon code, which provides the ability to bring the daemon
+  `chaind` daemon code, which provides the ability to bring the daemon
   to the foreground at any time. In fact, this restarts the `bootchain-loop`
   process on a specific terminal, although initially the daemon runs this
   process in the background.
@@ -92,13 +92,13 @@ us to optimize fill in `initramfs` only which we are need.
   configurations of `/etc/sysconfig/bootchain`, and not only through boot
   parameters, see the details in the corresponding section.
 - The `bootchianed` daemon offers visual and advanced debugging. By default,
-  the log is kept in `/var/log/bootchained.log` and is available on tty3,
+  the log is kept in `/var/log/chaind.log` and is available on tty3,
   and when enabled advanced debugging or self-testing functions are also copied
   to stage2. Service step-the `debug` script in advanced debugging mode is run
   before by launching any other step-script and allows you to visually track
   the received values at each <IN>.
 
-Despite the differences, `bootchained` is backward compatible with previously
+Despite the differences, `chaind` is backward compatible with previously
 written steps for the `pipelined` daemon and does not require changes for
 configurations with `root=pipeline`.
 
@@ -118,7 +118,7 @@ situation is incorrigible and repeating will just waste of time and make a
 system log is filling up. But the daemon `pipelined` don't know how to work
 with this situations.
 
-## New approach in bootchained daemon
+## New approach in chaind daemon
 
 For steps-scripts are suggested before finish work with code of status 0 call
 break_bc_loop() for tell to the daemon about ready stage2 and needed finish
@@ -162,7 +162,7 @@ building the image initramfs, optional and may contain the following parameters:
   together with the `bootchain-interactive` features included in initramfs.
 - `BC_LOGFILE` - the full path to the log file or the name of a special device,
   to which debugging messages will be output. In NATIVE mode, the default value
-  is the default value is `/var/log/bootchained.log`, in compatibility mode with
+  is the default value is `/var/log/chaind.log`, in compatibility mode with
   `pipeline` the default value is `/var/log/pipelined.log`.
 - `mntdir` - where to create subdirectories of the boot chain steps. In NATIVE
   mode the default value is `/dev/bootchain`, in COMPATIBILITY mode with
@@ -195,7 +195,7 @@ addressing, as if they are hidden.
   code, which will lead to their starting five times, in total. This mode of
   operation of the daemon operates by default.
 
-## External elements of the bootchain (steps-scripts)
+## External elements of the boot chain (steps-scripts)
 
 - `mountfs` - mounts a file or device from the result of the previous or other
   specified step.

@@ -20,7 +20,7 @@ if [ "${ROOT-}" = pipeline ]; then
 	mntdir="${mntdir:-/dev/pipeline}"
 	pipeline_mode=1
 else
-	BC_LOGFILE="${BC_LOGFILE:-/var/log/bootchained.log}"
+	BC_LOGFILE="${BC_LOGFILE:-/var/log/chaind.log}"
 	mntdir="${mntdir:-/dev/bootchain}"
 	pipeline_mode=
 fi
@@ -184,7 +184,7 @@ break_bc_loop()
 {
 	enter "break_bc_loop"
 
-	:> "$BC_PASSED/bootchained"
+	:> "$BC_PASSED/chaind"
 
 	leave "break_bc_loop"
 }

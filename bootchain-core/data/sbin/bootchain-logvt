@@ -3,7 +3,7 @@
 . bootchain-sh-functions
 
 pid=
-pidfile=/var/run/bootchained.pid
+pidfile=/var/run/chaind.pid
 
 
 exit_handler()
