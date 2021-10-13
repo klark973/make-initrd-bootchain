@@ -39,11 +39,14 @@ if [ "x${1-}" != "x--foreground" ]; then
 		BC_LOGFILE=/dev/ttyprintk
 		[ -e "$BC_LOGFILE" ] ||
 			mknod "$BC_LOGFILE" c 5 3
-	elif [ -z "${NOTTYS-}" ] &&
+	elif [ -z "${CONSOLE-}" ] &&
 		[ -n "$BC_LOG_VT" ] &&
+		[ -z "${NOASKUSER-}" ] &&
 		[ ! -c "$BC_LOGFILE" ] &&
 		command -v openvt >/dev/null
 	then
+		[ -z "${RDLOG-}" ] ||
+			BC_LOGFILE="$RDLOG"
 		touch -- "$BC_LOGFILE"
 		[ -e "/dev/tty$BC_LOG_VT" ] ||
 			mknod "/dev/tty$BC_LOG_VT" c 4 "$BC_LOG_VT"

@@ -52,7 +52,7 @@ IM_choice()
 	text="$(eval "$dlgcmd" 2>&1 1>&3)" || rc=$?
 	exec 3>&-
 
-	[ -z "$NOTTYS" ] ||
+	[ -z "$CONSOLE" ] ||
 		reset
 	[ $rc -eq 0 ] ||
 		return $rc

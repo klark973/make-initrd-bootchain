@@ -24,7 +24,7 @@ exit_handler()
 
 
 # Entry point
-[ -z "${NOTTYS-}" ] && [ -n "$BC_LOG_VT" ] ||
+[ -z "${CONSOLE-}" ] && [ -z "${NOASKUSER-}" ] && [ -n "$BC_LOG_VT" ] ||
 	exit 1
 set_cleanup_handler exit_handler
 exec </dev/null >"/dev/tty$BC_LOG_VT" 2>&1

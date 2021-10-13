@@ -20,6 +20,6 @@ IM_dlgmsg()
 		--title "$title"				\
 		--msgbox "\n$text"				\
 		$((4 + $height)) $width ||:
-	[ -z "$NOTTYS" ] ||
+	[ -z "$CONSOLE" ] ||
 		reset
 }

@@ -56,7 +56,7 @@ IM_form()
 	values=$(eval "$dlgcmd" 2>&1 1>&3) || rc=$?
 	exec 3>&-
 
-	[ -z "$NOTTYS" ] ||
+	[ -z "$CONSOLE" ] ||
 		reset
 	[ "$rc" = 0 ] ||
 		return $rc

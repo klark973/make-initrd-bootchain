@@ -85,7 +85,7 @@ copy_file_dialog()
 		fatal "copy operation failed"
 	fi
 
-	[ -z "$NOTTYS" ] ||
+	[ -z "$CONSOLE" ] ||
 		reset
 	leave "copy_file_dialog"
 }

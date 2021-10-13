@@ -13,7 +13,7 @@ message_time=1
 # Public
 IM_BACKTITLE=
 IM_WIDGET_ARGS=
-NOTTYS="${NOTTYS-}"
+CONSOLE="${CONSOLE-}"
 NOASKUSER="${NOASKUSER-}"
 NOLINES="${NOLINES-}"
 
@@ -49,7 +49,7 @@ _IM_exit_handler()
 	if IM_is_active; then
 		IM_ponder_stop
 		rootdelay_unpause
-		if [ -z "$NOTTYS" ]; then
+		if [ -z "$CONSOLE" ] && [ -z "$NOASKUSER" ]; then
 			clear
 			chvt 1
 		fi
@@ -72,7 +72,7 @@ IM_exec()
 	! IM_is_active ||
 		fatal "already in interactive mode"
 
-	if [ -n "$NOTTYS" ]; then
+	if [ -n "$CONSOLE" ] || [ -n "$NOASKUSER" ]; then
 		exec "$@"
 	else
 		[ -e "/dev/tty${_IM_VT_number}" ] ||
@@ -93,12 +93,12 @@ IM_activate()
 		fatal "already in interactive mode"
 	set_cleanup_handler _IM_exit_handler
 
-	if [ -n "$NOTTYS" ]; then
+	if [ -n "$NOASKUSER" ]; then
+		exec </dev/null >/dev/null 2>>"$logfile"
+	elif [ -n "$CONSOLE" ]; then
 		exec </dev/console >/dev/console 2>>"$logfile"
 	else
-		exec	<"/dev/tty${_IM_VT_number}" \
-			>"/dev/tty${_IM_VT_number}" \
-			2>>"$logfile"
+		exec <"/dev/tty${_IM_VT_number}" >"/dev/tty${_IM_VT_number}" 2>>"$logfile"
 	fi
 
 	mkdir -p -- "${_IM_flag}"
@@ -109,7 +109,10 @@ IM_activate()
 	export LANG=C
 
 	# Determinating maximum width
-	if [ -z "${_IM_max_width}" ]; then
+	if [ -n "$NOASKUSER" ]; then
+		_IM_max_width=80
+		printf '%s\n' "${_IM_max_width}" >"${_IM_flag}/MAX-WIDTH"
+	elif [ -z "${_IM_max_width}" ]; then
 		local esc cols rows
 
 		# The snippet above by Oleg Nesterov (C) was modified for IM, see:
@@ -127,7 +130,9 @@ IM_activate()
 	fi
 
 	# Activating IM VT
-	if [ -n "$NOTTYS" ]; then
+	if [ -n "$NOASKUSER" ]; then
+		message "TTY's not used, dialogs are disabled"
+	elif [ -n "$CONSOLE" ]; then
 		activate-interactive-vt
 		message "TTY's not available, using current system console"
 	elif [ -z "$delay" ]; then
@@ -141,9 +146,8 @@ IM_activate()
 	# Warm up: back title do not displayed only with the first widget
 	# after openvt(), single dialog exec strangely solve this problem.
 	#
-	if [ -z "$NOTTYS" ]; then
-		dialog	$IM_WIDGET_ARGS			\
-			${NOLINES:+--ascii-lines}	\
+	if [ -z "$CONSOLE" ] && [ -z "$NOASKUSER" ]; then
+		dialog	${NOLINES:+--ascii-lines}	\
 			--backtitle "WARM UP"		\
 			--title "[ Loading widgets ]"	\
 			--pause "" 7 40 0		\

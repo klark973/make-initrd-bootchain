@@ -4,7 +4,7 @@ Feature adds the ability to use dialogs in the initramfs scripts.
 
 ## Boot parameters
 
-- `nottys` - Disable to switch TTY's, it useful for netconsole.
+- `console=...` - Disable to switch TTY's, it useful for netconsole.
 - `noaskuser` - Disable all input dialogs, it useful for console without user.
 - `nolines` - Disable pseudo-graphics line drawing, it useful if not supported.
 
@@ -17,7 +17,7 @@ Feature adds the ability to use dialogs in the initramfs scripts.
 
 - `$IM_BACKTITLE` - Back title for all input and output dialogs.
 - `$IM_WIDGET_ARGS` - Additional arguments for `dialog` command.
-- `$NOTTYS` - Non-empty value, if switching TTY's are disabled.
+- `$CONSOLE` - Non-empty value, if switching TTY's are disabled.
 - `$NOASKUSER` - Non-empty value, if input dialogs are disabled.
 - `$NOLINES` - Non-empty value, if pseudo-graphics line drawing are disabled.
 
@@ -142,12 +142,13 @@ echo <integer> | IM_gauge <title> [<text>]
 
 Example:
 ```
-for i in $(seq 1 10); do
-    echo "${i}0" | IM_gauge "[ Loading... ]"
+( for i in $(seq 1 10); do
+    echo "${i}0"
     sleep 1
-done
+  done
+) | IM_gauge "[ Loading... ]"
 
-[ -z "$NOTTYS" ] ||
+[ -z "$CONSOLE" ] ||
     reset
 ```
 

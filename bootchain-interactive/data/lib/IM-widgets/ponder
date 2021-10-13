@@ -61,7 +61,7 @@ IM_ponder_stop()
 	:> "${_IM_ponder_finished}"
 	wait "${_IM_ponder_pid}" 2>/dev/null ||:
 	rm -f -- "${_IM_ponder_finished}"
-	[ -z "$NOTTYS" ] ||
+	[ -z "$CONSOLE" ] ||
 		reset
 	_IM_ponder_pid=
 }

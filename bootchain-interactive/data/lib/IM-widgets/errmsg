@@ -22,7 +22,7 @@ IM_errmsg()
 		--title "[ Error! ]"				\
 		--msgbox "\n$text"				\
 		$((4 + $height)) $width ||:
-	[ -z "$NOTTYS" ] ||
+	[ -z "$CONSOLE" ] ||
 		reset
 	[ ! -s /etc/dialogrc.error ] ||
 		export DIALOGRC=

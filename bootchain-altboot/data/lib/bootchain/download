@@ -360,7 +360,7 @@ download_image()
 	message "downloading image: '$url'"
 	(read_image |save_image) 2>&1 |
 		IM_gauge "[ Downloading image... ]" "$text"
-	[ -z "$NOTTYS" ] || reset
+	[ -z "$CONSOLE" ] || reset
 
 	leave "download_image"
 }
