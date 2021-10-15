@@ -33,11 +33,19 @@ altboot_config()
 			fatal "$text"
 		IM_start_input choice
 
+		if [ -n "${RDSHELL-}" ]; then
+			METHODS_LIST="$METHODS_LIST shell"
+			METHODS_MENU="$METHODS_MENU shell \"Emergency shell\""
+		fi
+		METHODS_LIST="$METHODS_LIST reboot shutdown"
+		METHODS_MENU="$METHODS_MENU reboot \"Reboot the computer\""
+		METHODS_MENU="$METHODS_MENU shutdown \"Turn OFF the computer\""
+
 		[ -s "$altboot_auto" ] &&
 		read -r method <"$altboot_auto" ||
 			method=
 		IM_WIDGET_ARGS="${method:+--default-item \"$method\"}"
-		text="Please choose the installation method."
+		text="Please choose the installation method or special action."
 		method=
 
 		while ! eval "IM_choice method \"$text\" $METHODS_MENU"; do
@@ -102,6 +110,35 @@ altboot_config()
 			message "unsupported $PROG method specified: '$method'"
 			altboot_method_choice
 		fi
+		;;
+	esac
+
+	# Check special action
+	case "$method" in
+	reboot)
+		echo
+		bc_reboot
+		;;
+	shutdown)
+		echo
+		run poweroff -f
+		;;
+	shell)
+		[ -c "$BC_LOGFILE" ] && VALUE="\r" ||
+			VALUE="\rSee '$BC_LOGFILE' for boot process details.\n"
+		if [ -n "$CONSOLE" ]; then
+			echo -ne "${VALUE}(initramfs)\$ "
+			break_bc_loop
+			debug "$PROG finished"
+			exit 0
+		fi
+		VALUE="${VALUE}Press Alt-F${_IM_VT_number} for "
+		VALUE="${VALUE}return back to the main menu.\n"
+		VALUE="${VALUE}Type 'exit' to continue booting.\n"
+		VALUE="${VALUE}(initramfs)\$ "
+		echo -ne "$VALUE" >>/dev/tty1
+		chvt 1
+		altboot_restart
 		;;
 	esac
 
