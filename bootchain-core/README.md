@@ -64,9 +64,9 @@ us to optimize fill in `initramfs` only which we are need.
   feature, can move to the foreground and continue working on a specific terminal,
   by default, tty2. Jointly features `bootchain-core` and `bootchain-interactive`
   they lay the foundation for building simple text installers in stage1.
-- The `bootchianed` daemon allows you to overload the chain with a new set of
-  steps, thanks to this, you can change the logic of work "on the fly", support
-  loops and conditional jumps, in text dialogs it is an opportunity to go back.
+- The `chaind` daemon allows you to overload the chain with a new set of steps,
+  thanks to this, you can change the logic of work "on the fly", support loops
+  and conditional jumps, in text dialogs it is an opportunity to go back.
 - Keeps records of the steps taken at least once and allows you to prevent their
   re-launch.
 - `bootchain-sh-functions` extends the API of the original `pipeline-sh-functions`,
@@ -83,20 +83,20 @@ us to optimize fill in `initramfs` only which we are need.
   of the previous step through symbolic links to mount points inside initramfs,
   outside the tree the results of the steps, which provides, if necessary, the
   overlap mounting mechanism inherent in the program `propagator`.
-- Along with the NATIVE mode of operation, the `bootchianed` daemon can work
-  in COMPATIBILITY WITH `pipeline`. In the NATIVE mode of operation, the daemon
+- Along with the NATIVE mode of operation, the `chaind` daemon can work in
+  COMPATIBILITY WITH `pipeline`. In the NATIVE mode of operation, the daemon
   imposes another an approach to processing the status code of the completed
   step and the method of premature completion of the boot chain, see the details
   in the corresponding section.
 - The daemon can be configured when building initramfs via the included file
   configurations of `/etc/sysconfig/bootchain`, and not only through boot
   parameters, see the details in the corresponding section.
-- The `bootchianed` daemon offers visual and advanced debugging. By default,
-  the log is kept in `/var/log/chaind.log` and is available on tty3,
-  and when enabled advanced debugging or self-testing functions are also copied
-  to stage2. Service step-the `debug` script in advanced debugging mode is run
-  before by launching any other step-script and allows you to visually track
-  the received values at each <IN>.
+- The `chaind` daemon offers visual and advanced debugging. By default, the log
+  is kept in `/var/log/chaind.log` and is available on tty3, and when enabled
+  advanced debugging or self-testing functions are also copied to stage2. Service
+  step-the `debug` script in advanced debugging mode is run before by launching
+  any other step-script and allows you to visually track the received values at
+  each <IN>.
 
 Despite the differences, `chaind` is backward compatible with previously
 written steps for the `pipelined` daemon and does not require changes for
