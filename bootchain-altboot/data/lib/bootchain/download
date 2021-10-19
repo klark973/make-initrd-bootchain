@@ -229,7 +229,7 @@ get_file_size()
 					--output "$tmpf" --url "$url")" || rc=$?
 			[ ! -s "$tmpf" ] ||
 				fdump "$tmpf"
-			debug "curl status: $rc, protoclol status: $status"
+			debug "curl status: $rc, protocol status: $status"
 
 			if [ "$rc" = 0 ] && [ "$method" = http ]; then
 				case "$status" in
