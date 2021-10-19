@@ -15,7 +15,7 @@ cifs_slice()
 		return 0
 	fi
 
-	local prefix parentdir="${prefix%/?*}"
+	local prefix parentdir="${directory%/?*}"
 	local opts mp dirpart share service mnt=
 
 	prefix="$(stage2_getenv PREFIX)"
