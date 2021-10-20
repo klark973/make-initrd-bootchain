@@ -7,27 +7,25 @@
 - Необходима система с настроенным hasher и максимаьно свежим mkimage.
 - Желательно иметь много ОЗУ и собирать всё на tmpfs, у меня 32Гб + SWAP.
 - Желательно иметь зеркало свежего среза Сизифа, у меня оно в /ALT/Sisyphus.
-- Исходный пакет make-initrd-bootchain пока можно взять только здесь:
-  http://git.altlinux.org/people/klark/packages/make-initrd-bootchain.git
+- Исходный пакет make-initrd-bootchain доступен в Сизифе: http://git.altlinux.org/gears/m/make-initrd-bootchain.git
 - На рабочей машине должны быть установлены: qemu/kvm, fakeroot, sha256sum, squashfs-tools, 7zip и usermode-fs-tools.
 
-Тестирование будем выполнять на стенде с использованием qemu/kvm. Для реального железа и другой виртуализации описываемый сценарий можно адаптировать. Мы можем расшарить файлы между хостом и гостевым сервером сетевой загрузки. Но одним из проверяемых сетевых протоколов является NFS, который не позволит экспортировать нужное, если данные лежат в хост-системе и импортируются через файловую систему 9p. Так что на хост-системе мы создадим "диск данных" сервера сетевой загрузки и подключим его вторым диском к виртуальной машине "сервера".
+Тестирование будем выполнять на стенде с использованием qemu/kvm. Для реального железа и другой виртуализации описываемый сценарий можно адаптировать. Мы можем расшарить файлы между хостом и гостевым сервером сетевой загрузки. Но одним из проверяемых сетевых протоколов является NFS, который не позволит экспортировать нужное, если данные лежат в хост-системе и импортируются через файловую систему 9p. Так что на хост-системе мы создадим "диск данных" сервера сетевой загрузки и подключим его вторым диском к виртуальной машине "сервера". В качестве альтернативы можно было бы использовать rsync для копирования данных с хоста на внутренний диск "сервера" в гостевой машине через 9p, но такой вариант приводит к дополнительным манипуляциям и дополнительному расходу памяти.
 
 
 I. Подготовка исходных материалов
 ---------------------------------
 
-1. Собираем make-initrd-bootchain локально или получаем RPM'ки иным способом. В моём случае первый вариант, результат окажется в /home/klark/hasher-repo/x86_64/RPMS.hasher/*.rpm:
+1. Собираем make-initrd-bootchain локально или получаем RPM'ки иным способом. В моём случае первый вариант, результат окажется в /home/klark/hasher-repo/x86_64/RPMS.hasher/make-initrd-bootchain*.rpm:
 
 $ cd ~/build/
-$ git clone git://git.altlinux.org/people/klark/packages/make-initrd-bootchain.git
+$ git clone git://git.altlinux.org/gears/m/make-initrd-bootchain.git
 $ cd make-initrd-bootchain/ && gear-hsh && hsh --clean
 
 
-2. Клонируем http://git.altlinux.org/people/antohami/packages/mkimage-profiles.git в ~/build/antohami-pipeline/, переключаемся на ветку pipeline3. Правильный файл features.in/initrd-pipeline/stage1/scripts.d/80-make-initrd-for-pipeline берём из ~/build/make-initrd-bootchain/samples/80-make-initrd-for-pipeline и готовим списки и конфиг APT'а для Сизифа:
+2. Клонируем git://git.altlinux.org/people/antohami/packages/mkimage-profiles.git в ~/build/antohami-bootchain/, переключаемся на ветку next. Готовим списки и конфиг APT'а для Сизифа:
 
-$ cd ~/build/antohami-pipeline/
-$ cp -Lf ~/build/make-initrd-bootchain/samples/80-make-initrd-for-pipeline features.in/initrd-pipeline/stage1/scripts.d/
+$ cd ~/build/antohami-bootchain/
 
 $ cat >sisyphus.list <<EOF
 rpm file:/ALT/Sisyphus x86_64 classic
@@ -77,11 +75,11 @@ $ make APTCONF="$PWD/sisyphus.conf" REPORT=1 DEBUG=1 regular-mate.iso
 
 4. Чтобы создать сквош оверлея корневой системы, запускаем скрипт:
 
-$ ~/build/make-initrd-bootchain/mksquash.sh
+$ ~/build/make-initrd-bootchain/bootchain-doc/scripts/mksquash.sh
 
 либо готовим в отдельном каталоге структуру папок и файлов для этого сквоша и тогда запускаем тот же скрипт следующим образом:
 
-$ ~/build/make-initrd-bootchain/mksquash.sh /путь/к/файлам/rootfs
+$ ~/build/make-initrd-bootchain/bootchain-doc/scripts/mksquash.sh /путь/к/файлам/rootfs
 
 Результат будет сохранён в $TMPDIR/out/root.squashfs.
 
@@ -90,23 +88,17 @@ $ ~/build/make-initrd-bootchain/mksquash.sh /путь/к/файлам/rootfs
 
 $ mkdir $TMPDIR/server-data
 $ cd $TMPDIR/server-data/
+$ ~/build/make-initrd-bootchain/bootchain-doc/scripts/mksrvdata.sh $HOME/.ssh/id_ed25519.pub
 
-Копируем в этот каталог публичный ключ ssh, если хотим получить удалённое управление сервером сетевой загрузки с хост-системы:
-
-$ cp -Lf ~/.ssh/id_ed25519.pub PUBKEY
-
-Копировать SSH-ключ необязательно, но если это сделать, он будет использован при настройке сервера. Теперь выполняем:
-
-$ ~/build/make-initrd-bootchain/mksrvdata.sh
-
-Результат будет размещён в текущем каталоге, в данном примере это $TMPDIR/server-data/.
+Передаём свой публичный ключ ssh, если хотим получить удалённое управление сервером сетевой загрузки с хост-системы.
+Передавать SSH-ключ необязательно, но если это сделать, он будет использован при настройке сервера.
 
 
 6. Чтобы создать образ диска данных сервера сетевой загрузки, выполняем команду:
 
 $ dir2extfs -q -t ext4 [-r reserved_mib] -L SRVDATA -- $TMPDIR/out/srvdata.raw
 
-См. подсказку (--help), а детали -- тут: https://www.altlinux.org/Usermode-fs-tools#dir2extfs . После '-r' можно указать объём свободного места, иначе его не останется на диске. В результате выполнения этой команды будет создан образ диска ext4 с меткой тома SRVDATA, который можно будет подключать к виртуалке сервера сетевой загрузки (файл $TMPDIR/srvdata.raw). Промежуточные данные при этом больше не понадобятся, т.е. $TMPDIR/server-data можно удалить.
+См. подсказку (--help), а детали -- тут: https://www.altlinux.org/Usermode-fs-tools#dir2extfs . После '-r' можно указать объём свободного места, иначе его не останется на диске. В результате выполнения этой команды будет создан образ диска ext4 с меткой тома SRVDATA, который можно будет подключать к виртуалке сервера сетевой загрузки (файл $TMPDIR/out/srvdata.raw). Промежуточные данные при этом больше не понадобятся, т.е. $TMPDIR/server-data можно удалить.
 
 $ cd .. && rm -rf server-data
 
@@ -116,6 +108,13 @@ $ truncate -s 3G -- $TMPDIR/out/srvdata.raw
 $ /sbin/mke2fs -q -j -t ext4 -L SRVDATA -d . -- $TMPDIR/out/srvdata.raw
 
 Размер образа (3G) подбирается эмпирическим путём. При этом версия e2fsprogs должна быть не менее 1.44. В противном случае придётся стать пользователем root, смонтировать файл как loop-устройство, отформатировать отдельной командой, затем смонтировать куда-то, другой командой скопировать содержимое каталога server-data на этот раздел, после чего отмонтировать и освободить loop-устройство.
+
+
+7. Конвертируем образ диска данных в формат qcow2:
+
+$ cd $TMPDIR/out/
+$ qemu-img convert -f raw -O qcow2 srvdata.raw ../srvdata.img
+$ cd .. && rm -rf out
 
 
 II. Подготовка сервера сетевой загрузки

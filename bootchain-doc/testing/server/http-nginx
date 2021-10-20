@@ -1,0 +1,35 @@
+#!/bin/sh -efu
+
+daemons="$daemons nginx"
+packages="$packages nginx"
+start_services="$start_services nginx"
+
+nginx_setup()
+{
+	echo
+	echo "HTTP-server setup (nginx)..."
+	mkdir -p /etc/nginx/sites-enabled.d
+	mkdir -p /etc/nginx/sites-available.d
+	ln -snf ../sites-available.d/boot.conf \
+		/etc/nginx/sites-enabled.d/boot.conf
+	cat >>/etc/nginx/sites-available.d/boot.conf <<-EOF
+	server {
+	  listen $server:80;
+	  server_name $server;
+
+	  location / {
+	    root /srv;
+	  }
+
+	  access_log /var/log/nginx/access.log;
+	}
+	EOF
+	cat >/etc/sysconfig/nginx <<-EOF
+	### nginx startup related configuration
+	# ULIMIT_ARGS: whatever limits you might need to raise;
+	#              most probably default value should suffice
+	#              (maximum 16384 simultaneously open files)
+	ULIMIT_ARGS="-n 16384"
+	EOF
+}
+

@@ -1,0 +1,270 @@
+#!/bin/sh -efu
+
+##########################################################################
+# This script must be launched once by root after install minimal server #
+##########################################################################
+
+# Defaults
+dnssrv=bind
+httpsrv=nginx
+ftpsrv=vsftpd
+nfsver=4
+daemons=
+cert8sp=
+REPO=
+MIRROR="/ALT"
+start_services=
+packages="htop screen tzdata"
+stop_services="nscd nslcd acpid postfix smartd daemontools"
+rm_packages="alterator-dhcp alterator-netinst *-virtualbox-*"
+rm_modules="bcmwl virtualbox-addition virtualbox-addition-video"
+rm_modules="$rm_modules virtualbox-addition-guest drm-radeon drm-nvidia"
+rm_modules="$rm_modules drm-nouveau drm-ancient ndpi v4l bbswitch"
+
+# Startup directory
+rundir="$(realpath -- "${0%/*}")"
+
+# User configuration
+. "$rundir"/server.conf
+
+# Privates
+iface=
+subnet=
+server=
+gateway=
+
+# Check ALT 8SP
+case "$REPO" in
+c8|c8.1|c9f1)
+	cert8sp=1
+	;;
+*)	grep -qws cliff /etc/altlinux-release && cert8sp=1 ||:
+	;;
+esac
+
+# Stop some services
+[ -z "$cert8sp" ] || {
+	systemctl stop alt-checksum.service integalert.service ||:
+	systemctl disable alt-checksum.service integalert.service ||:
+} >/dev/null 2>&1
+
+# Shares setup
+cat >>/etc/fstab <<EOF
+LABEL=SRVDATA	/srv		ext4	noatime,nodiratime,nodev,nosuid			1 2
+mirror		$MIRROR		9p	ro,trans=virtio,version=9p2000.L		0 0
+backup		/mnt/host	9p	rw,trans=virtio,version=9p2000.L,access=any	0 0
+
+/srv/public/netinst/current /srv/public/netinst/mnt	iso9660		noauto,loop,ro	0 0
+EOF
+mkdir -p /srv /mnt/host "$MIRROR"
+mount "$MIRROR" && mount /mnt/host
+if [ ! -d "$MIRROR/${REPO:-Sisyphus}" ]; then
+	echo "Local repository not found" >&2
+	exit 1
+fi
+LC_TIME=C date >/mnt/host/setup.log
+tail -f -- /mnt/host/setup.log &
+exec >>/mnt/host/setup.log 2>&1
+echo; echo "FSTAB:"
+cat /etc/fstab
+echo
+
+# Determinate internal subnet
+echo "Scanning interfaces..."
+for i in $(ls /etc/net/ifaces/) _; do
+	case "$i" in
+	default|lo|unknown|_)
+		continue
+		;;
+	*)	[ -r "/etc/net/ifaces/$i/ipv4address" ] ||
+			continue
+		[ -L "/sys/class/net/$i" ] ||
+			continue
+		read -r subnet <"/etc/net/ifaces/$i/ipv4address"
+		iface="$i"
+		break
+		;;
+	esac
+done
+if [ -n "$iface" ] && [ -n "$subnet" ] && echo "$subnet" |
+	grep -qsE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/24$'
+then
+	server="${subnet%/*}"
+	subnet="${server%.*}"
+	gateway="${subnet}.1"
+	domain="$(hostname -d)"
+	cat <<-EOF
+	Interface name:		$iface
+	Domain name:		$domain
+	Internal subnet:	$subnet.0/24
+	Server address:		$server
+	Gateway address:	$gateway
+	Broadcast address:	$subnet.255
+
+	EOF
+else
+	echo "Interface with static IP settings not found" >&2
+	exit 1
+fi
+
+# Root environment setup
+if [ -d "$rundir"/rootconf ]; then
+	rm -rf /root/.config 2>/dev/null ||:
+	mv -f -- "$rundir"/rootconf /root/.config
+	chmod -R g-rwx,o-rwx /root/.config
+	chown -R 0:0 /root/.config
+fi
+cat >>/root/.bashrc <<EOF
+
+# Is interactive shell?
+if [ -z "\${-##*i*}" ]; then
+	case "\${TERM-}" in
+	xterm*|rxvt*)
+		PS1='\[\e]0;root@\h: \w\a\]\[\033[01;31m\]\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]# ';;
+	*)
+		PS1='\[\033[01;31m\]\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]# ';;
+	esac
+fi
+
+EOF
+
+# Allow SSH-access for root
+if [ -s "$rundir"/PUBKEY ]; then
+	mkdir -p /root/.ssh && chmod 700 /root/.ssh
+	cat -- "$rundir"/PUBKEY >>/root/.ssh/authorized_keys
+	chmod 600 /root/.ssh/authorized_keys
+	rm -f -- "$rundir"/PUBKEY
+fi
+echo "PermitRootLogin yes" >>/etc/openssh/sshd_config
+
+# Daemons
+. "$rundir/ipxe-v4"
+. "$rundir/dns-$dnssrv"
+. "$rundir/ftp-$ftpsrv"
+. "$rundir/http-$httpsrv"
+. "$rundir/nfs-v$nfsver"
+. "$rundir/samba-v4"
+
+# Sources list setup
+if [ -n "$REPO" ]; then
+	apt-repo rm all
+	if [ ! -d "$MIRROR/$REPO/noarch" ]; then
+		apt-repo add "$REPO"
+	else
+		cat >>/etc/apt/sources.list <<-EOF
+
+		rpm file:$MIRROR/$REPO x86_64 classic
+		rpm file:$MIRROR/$REPO x86_64-i586 classic
+		rpm file:$MIRROR/$REPO noarch classic
+
+		EOF
+	fi
+fi
+
+# Special case for upgrade ALT 8SP
+if [ -z "$REPO" ] && [ -n "$cert8sp" ]; then
+	REPO="http://update.altsp.su/pub/distributions/ALTLinux"
+	apt-repo rm all
+	cat >>/etc/apt/sources.list.d/altsp.list <<-EOF
+	rpm [cert8] $REPO cf/branch/x86_64 classic
+	rpm [cert8] $REPO cf/branch/x86_64-i586 classic
+	rpm [cert8] $REPO cf/branch/noarch classic
+	EOF
+	REPO=
+	apt-get update
+	apt-get dist-upgrade -y
+fi
+
+# Additional sources list setup
+[ ! -s "$rundir"/sources.list ] ||
+	cat "$rundir"/sources.list >>/etc/apt/sources.list
+echo "Sources list:"
+apt-repo
+echo
+
+# Remove kernels
+echo "Removing old kernels..."
+rpm -qa |grep -qs 'kernel-image-un-def' &&
+	remove-old-kernels -f -t un-def ||:
+remove-old-kernels -f -t std-def ||:
+list=
+
+# Remove other packages
+for i in $rm_modules; do
+	rpm -q kernel-modules-$i-std-def >/dev/null 2>&1 &&
+		list="$list kernel-modules-$i-std-def" ||:
+done
+if [ -n "$rm_packages" ]; then
+	for i in $rm_packages; do
+		if eval "rpm -qa $i" >/dev/null 2>&1; then
+			list="$list $(eval "rpm -qa $i" 2>/dev/null |
+					grep -v kernel-modules)" ||:
+		fi
+	done
+fi
+if [ -n "$list" ]; then
+	echo "Removing packages:$list..."
+	apt-get remove -y --purge $list
+fi
+
+# System upgrade and install software
+apt-get update && apt-get dist-upgrade -y
+apt-get install -y $packages
+
+# GRUB setup
+sed -i -E "s, smem=1,,g" /etc/sysconfig/grub2
+k="GRUB_TIMEOUT"
+sed -i -E "s,^#?$k=.*,$k=0," /etc/sysconfig/grub2
+k="GRUB_CMDLINE_LINUX"
+i="failsafe vga=normal nosplash ipv6.disable=1"
+[ -z "$cert8sp" ] ||
+	i="$i smem=1"
+sed -i -E "s,^$k=.*,$k='$i'," /etc/sysconfig/grub2
+k="${k}_DEFAULT"
+i="quiet panic=30 vga=normal splash ipv6.disable=1"
+[ -z "$cert8sp" ] ||
+	i="$i smem=1"
+sed -i -E "s,^$k=.*,$k='$i'," /etc/sysconfig/grub2
+
+# Linux kernel upgrade
+update-kernel -f -t std-def
+echo; echo "Kernel and modules installed:"
+uname -a && rpm -qa 'kernel-image-*' 'kernel-modules-*'
+
+# Disable startup services
+{ for i in $stop_services _; do
+	[ "$i" != _ ] ||
+		continue
+	systemctl stop $i ||:
+	systemctl disable $i ||:
+  done
+  # Disable this more hardly
+  systemctl mask nscd nslcd ||:
+} >/dev/null 2>&1
+
+# Daemons setup
+for i in $daemons _; do
+	[ "$i" != _ ] ||
+		continue
+	${i}_setup
+done
+echo
+
+# Enable startup services
+echo "Finishing installation..."
+for i in $start_services _; do
+	[ "$i" != _ ] ||
+		continue
+	systemctl enable $i
+done
+
+# Prepare iPXE scripts
+rm -rf /srv/public/netinst/ipxe
+cp -Lrf /srv/templates /srv/public/netinst/ipxe
+(set +f; sed -i -e "s/@SERVER@/$server/g" /srv/public/netinst/ipxe/*)
+
+# Cleanup
+LC_TIME=C date
+:> /mnt/host/FINISHED
+exec reboot
+exit 1

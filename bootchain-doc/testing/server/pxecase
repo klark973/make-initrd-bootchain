@@ -1,0 +1,40 @@
+#!/bin/sh -efu
+
+netinst="/srv/public/netinst"
+bootdir="/srv/boot"
+
+
+fatal()
+{
+	printf "%s fatal: %s\n" "${0##*/}" "$*" >&2
+	exit 1
+}
+
+
+# Show usage
+if [ -z "${1-}" ]; then
+	echo "Usage: ${0##*/} <testname>" >&2
+	exit 0
+fi
+
+# Checks
+[ -s "$netinst/ipxe/$1" ] ||
+	fatal "test case not exists:" "$1"
+[ -d "$bootdir" ] ||
+	fatal "boot directory not found:" "$bootdir"
+distro="${1%%+*}"
+[ -s "$netinst/$distro"/image.iso ] &&
+[ -s "$netinst/$distro"/initrd.img ] &&
+[ -s "$netinst/$distro"/vmlinuz ] ||
+	fatal "required distro files not found"
+
+# Entry point
+cd / && umount -fl -- "$netinst"/mnt 2>/dev/null ||:
+cd -- "$netinst"/ && rm -rf boot current
+ln -snf -- boot/image.iso current
+ln -snf -- "$distro" boot
+cd -- "$bootdir"/
+ln -snf -- "$netinst/ipxe/$1" script.ipxe
+ln -snf -- "$netinst"/boot/initrd.img ./
+ln -snf -- "$netinst"/boot/vmlinuz ./
+cd / && mount "$netinst"/mnt

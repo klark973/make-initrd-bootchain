@@ -1,0 +1,15 @@
+#!/bin/sh
+
+service NetworkManager stop
+service network stop
+for i in 3 2 1 0; do
+    ip link delete tap$i
+done
+ip link delete eth0
+ip link delete vbr0
+chown 0:0 /dev/net/tun
+rm -rf /etc/net/ifaces/eth0
+rm -rf /etc/net/ifaces/vbr0
+service NetworkManager start
+ip a
+

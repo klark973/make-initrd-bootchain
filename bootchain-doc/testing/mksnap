@@ -1,0 +1,12 @@
+#!/bin/sh -efu
+
+# Entry point
+PROGDIR="$(realpath -- "${0%/*}")"
+
+. "$PROGDIR"/server.conf
+
+[ -s "$IMAGE" ] || exit 0
+echo "Creating server snapshot..."
+pigz -qnc9 <"$IMAGE" >"$SRC"
+pigz -qnc9 <"$SRVDATA" >"$SDT"
+

@@ -1,18 +1,21 @@
 #!/bin/bash -efu
 
+pubkey="${1-}"
 server="@SERVER@"
 TMPDIR="${TMPDIR:-/tmp}"
-srcdir="${1:-$TMPDIR/out}"
-common_opts="vmlinuz initrd=initrd.img fastboot root=bootchain bootchain=fg,altboot ip=dhcp"
+progdir="$(realpath -- "${0%/*}")"
+netX_opts="ifname=bootif0:\${netX/mac} ip=bootif0:dhcp4"
+common_opts="vmlinuz initrd=initrd.img fastboot root=bootchain bootchain=fg,altboot"
+rescue_opts="live stagename=rescue showopts vga=normal nosplash autorun=directory:/boot"
 altinst_opts="stagename=altinst lowmem showopts vga=normal quiet splash lang=ru_RU"
 live_opts="live stagename=live lowmem showopts quiet splash lang=ru_RU"
-rescue_opts="live stagename=rescue showopts vga=normal splash=0"
-forensic_opts="max_loop=16 forensic"
+forensic_base_opts="max_loop=16 forensic"
+srcdir="$TMPDIR/out"
 
 
 fatal()
 {
-	printf "fatal: %s\n" "$*" >&2
+	printf "%s fatal: %s\n" "${0##*/}" "$*" >&2
 	exit 1
 }
 
@@ -51,12 +54,119 @@ write_tpl()
 
 	kernel http://$server/boot/vmlinuz
 	initrd http://$server/boot/initrd.img
-	imgargs $common_opts $opts
+	imgargs $common_opts bc_test=$name $opts
 	boot
 	EOF
 }
 
+ns_suite()
+{
+	local method="$1" dir="$2" name="ns-$1"
+	local opts="automatic=method:$method,server:$server,directory:$dir"
 
+	# normal boot
+	write_tpl "altinst+$name+normal"	"bc_debug $opts $altinst_opts"
+	write_tpl "live+$name+normal"		"bc_debug $opts $live_opts"
+	write_tpl "rescue+$name+normal"		"bc_debug $opts $rescue_opts"
+	write_tpl "rescue+$name+hash+normal"	"bc_debug $opts $forensic_opts"
+
+	# no debug: use rdshell for check and save resulting log
+	write_tpl "altinst+$name+no-debug"	"rdshell $opts $altinst_opts"
+	write_tpl "live+$name+no-debug"		"rdshell $opts $live_opts"
+	write_tpl "rescue+$name+no-debug"	"$opts $rescue_opts"
+	write_tpl "rescue+$name+hash+no-debug"	"$opts $forensic_opts"
+
+	# 3x network interfaces
+	opts="$opts $netX_opts"
+	write_tpl "altinst+$name+3xnet"		"bc_debug $opts $altinst_opts"
+	write_tpl "live+$name+3xnet"		"bc_debug $opts $live_opts"
+	write_tpl "rescue+$name+hash+3xnet"	"bc_debug $opts $forensic_opts"
+
+	# errors: no such directory on the server
+	opts="automatic=method:$method,server:$server,directory:/a/b/c"
+	write_tpl "altinst+$name+errors"	"bc_debug $opts $altinst_opts"
+	write_tpl "live+$name+errors"		"bc_debug $opts $live_opts"
+	write_tpl "rescue+$name+errors"		"bc_debug $opts $rescue_opts"
+	write_tpl "rescue+$name+hash+errors"	"bc_debug $opts $forensic_opts"
+}
+
+std_suite()
+{
+	local method="$1" dir="$2" name="$3"
+	local opts="bc_debug automatic=method:$method,directory:$dir"
+
+	# normal boot
+	write_tpl "altinst+$name+normal"	\
+		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
+	write_tpl "live+$name+slices"		\
+		  "$opts ramdisk_size=$live_st2size $live_opts"
+	write_tpl "rescue+$name+hash+slices"	\
+		  "$opts ramdisk_size=$rescue_st2size $forensic_opts"
+	write_tpl "live+$name+normal"		\
+		  "$opts ramdisk_size=$live_st2size profile=none $live_opts"
+	write_tpl "rescue+$name+normal"		\
+		  "$opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
+	write_tpl "rescue+$name+hash+normal"	\
+		  "$opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
+
+	# no debug: use rdshell for check and save resulting log
+	opts="rdshell automatic=method:$method,directory:$dir"
+	write_tpl "altinst+$name+no-debug"	\
+		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
+	write_tpl "live+$name+slices+no-debug"	\
+		  "$opts ramdisk_size=$live_st2size $live_opts"
+	write_tpl "rescue+$name+slices+no-debug" \
+		  "$opts ramdisk_size=$rescue_st2size $rescue_opts"
+	write_tpl "live+$name+no-debug"		\
+		  "$opts ramdisk_size=$live_st2size profile=none $live_opts"
+	write_tpl "rescue+$name+no-debug"	\
+		  "$opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
+	write_tpl "rescue+$name+hash+no-debug"	\
+		  "$opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
+
+	# 3x network interfaces
+	opts="bc_debug automatic=method:$method,directory:$dir $netX_opts"
+	write_tpl "altinst+$name+3xnet"		\
+		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
+	write_tpl "live+$name+3xnet"		\
+		  "$opts ramdisk_size=$live_st2size profile=none $live_opts"
+	write_tpl "rescue+$name+3xnet"		\
+		  "$opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
+	write_tpl "rescue+$name+hash+3xnet"	\
+		  "$opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
+
+	# Check only once
+	if [ -z "$dir" ]; then
+		# errors: no such directory on the server
+		opts="bc_debug automatic=method:$method,directory:/a/b/c"
+		write_tpl "altinst+$name+errors"	\
+			  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
+		write_tpl "live+$name+errors"		\
+			  "$opts ramdisk_size=$live_st2size $live_opts"
+		write_tpl "rescue+$name+errors"		\
+			  "$opts ramdisk_size=$rescue_st2size $rescue_opts"
+		write_tpl "rescue+$name+hash+errors"	\
+			  "$opts ramdisk_size=$rescue_st2size $forensic_opts"
+	fi
+}
+
+cons_suite()
+{
+	local method="$1" dir="$2"
+	local opts="bc_debug automatic=method:$method,server:$server,directory:$dir"
+
+	write_tpl "altinst+$method+netcons"	\
+		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
+	write_tpl "altinst+$method+silent"	\
+		  "$opts noaskuser ramdisk_size=$altinst_st2size $altinst_opts"
+	write_tpl "rescue+$method+hash+netcons"	\
+		  "$opts ramdisk_size=$rescue_st2size $forensic_opts"
+	write_tpl "rescue+$method+hash+silent"	\
+		  "$opts noaskuser ramdisk_size=$rescue_st2size $forensic_opts"
+}
+
+
+# Entry point
 [ -d "$srcdir" ] ||
 	fatal "source directory not found: $srcdir"
 srcdir="$(realpath -- "$srcdir")"
@@ -78,214 +188,96 @@ src_live="$srcdir/$(set +f; ls -X1 regular-mate-*.iso 2>/dev/null |tail -n1)"
 src_squash="$srcdir"/root.squashfs
 [ -s "$src_squash" ] ||
 	fatal "Rootfs overlay squash not found"
+[ -z "$pubkey" ] || [ -s "$pubkey" ] ||
+	fatal "Public SSH-key not found"
 cd "$dstdir"/
 
-mkdir -p public/netinst/overlays-live/default
-cd public/netinst/ && mkdir -p -m755 templates
+# Create data disk skeleton
+mkdir -p templates public/netinst/overlays-live/default
+cp -Lrf -- "$progdir"/server ./scripts
+cp -f -- "$progdir"/server.conf ./scripts/
+[ -z "$pubkey" ] ||
+	cat -- "$pubkey" >scripts/PUBKEY
+ln -snf public pub
+mkdir boot && cd boot/
+
+cat >autorun <<-EOF
+#!/bin/sh -efu
+
+[ -s /var/log/BC-TEST.passed ]
+testname="\$(head -n1 /var/log/BC-TEST.passed)"
+echo "Test case '\$testname' passed in the stage2."
+
+mount -t 9p backup /mnt
+[ ! -s /var/log/chaind.log ] ||
+    cp -Lf /var/log/chaind.log /mnt/
+cp -Lf /var/log/BC-TEST.passed /mnt/
+umount /mnt
+
+exec poweroff -f
+EOF
+
+chmod +x autorun
+ln -snf /srv/public/netinst/ipxe/rescue+ns-http+no-debug script.ipxe
+ln -snf /srv/public/netinst/boot/initrd.img ./
+ln -snf /srv/public/netinst/boot/vmlinuz ./
+cd ../public/netinst/ && mkdir mnt ipxe
 cp -Lf -- "$src_squash" overlays-live/default/
+
+rescue_hash="$(sha256sum "$src_rescue" |sed -E 's/\s+.*$//')"
+forensic_opts="$rescue_opts $forensic_base_opts hash=$rescue_hash"
 
 live_st2size="$(extract_bootimgs live "$src_live")"
 rescue_st2size="$(extract_bootimgs rescue "$src_rescue")"
 altinst_st2size="$(extract_bootimgs altinst "$src_altinst")"
 
-read -r rescue_hash <"./hash"
-forensic_opts="$rescue_opts $forensic_opts hash=$rescue_hash"
-unset rescue_hash
-rm -f hash
-
 live_isosize="$(copy_iso_image live "$src_live")"
 rescue_isosize="$(copy_iso_image rescue "$src_rescue")"
 altinst_isosize="$(copy_iso_image altinst "$src_altinst")"
 
-ln -snf rescue/image.iso current
-cd templates/
+read -r r_hash <"./hash" && rm -f "./hash"
+ln -snf boot/image.iso current
+ln -snf rescue boot
+cd ../../templates/
 
-### HTTP
+## Netstart test cases: complete ISO-image will be
+## downloaded into the tmpfs, RAM-disk do not used
 
-# normal boot
-altboot_opts="automatic=method:http,network:dhcp,server:$server,directory:/boot/image.iso"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+http+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_isosize $live_opts"
-write_tpl "live+http+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $rescue_opts"
-write_tpl "rescue+http+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+http+hash+normal" "$image_opts"
+ns_suite http	/pub/netinst/current
+ns_suite ftp	/pub/netinst/current
 
-# no debug: use rdshell for check and save resulting /var/log/chaind.log
-image_opts="rdshell $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+http+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$live_isosize $live_opts"
-write_tpl "live+http+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_isosize $rescue_opts"
-write_tpl "rescue+http+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+http+hash+no-debug" "$image_opts"
+## Standalone alterator-netinst test cases
 
-# errors: no such directory on the server
-altboot_opts="automatic=method:http,network:dhcp,directory:/a/b/c"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+http+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_isosize $live_opts"
-write_tpl "live+http+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $rescue_opts"
-write_tpl "rescue+http+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+http+hash+errors" "$image_opts"
+forensic_opts="$rescue_opts $forensic_base_opts hash=$r_hash"
 
-### FTP
+# Use default path
 
-# normal boot
-altboot_opts="automatic=method:ftp,network:dhcp,server:$server,directory:/boot/image.iso"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+ftp+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_isosize $live_opts"
-write_tpl "live+ftp+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $rescue_opts"
-write_tpl "rescue+ftp+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+ftp+hash+normal" "$image_opts"
+std_suite nfs	''				def-nfs
+std_suite cifs	''				def-cifs
+std_suite http	''				def-http
+std_suite ftp	''				def-ftp
 
-# no debug: use rdshell for check and save resulting /var/log/chaind.log
-image_opts="rdshell $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+ftp+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$live_isosize $live_opts"
-write_tpl "live+ftp+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_isosize $rescue_opts"
-write_tpl "rescue+ftp+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+ftp+hash+no-debug" "$image_opts"
+# Symlink to ISO-image file
 
-# errors: no such directory on the server
-altboot_opts="automatic=method:ftp,network:dhcp,directory:/a/b/c"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+ftp+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_isosize $live_opts"
-write_tpl "live+ftp+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $rescue_opts"
-write_tpl "rescue+ftp+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+ftp+hash+errors" "$image_opts"
+std_suite nfs	/srv/public/netinst/current	iso-nfs
+std_suite cifs	/srv/public/netinst/current	iso-cifs
+std_suite http	/pub/netinst/current		iso-http
+std_suite ftp	/pub/netinst/current		iso-ftp
 
-### NFS
+# Mount point or directory with the image contents
 
-# normal boot
-altboot_opts="automatic=method:nfs,network:dhcp"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+nfs+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_st2size $live_opts"
-write_tpl "live+nfs+slices" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $forensic_opts"
-write_tpl "rescue+nfs+hash+slices" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_st2size profile=none $live_opts"
-write_tpl "live+nfs+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
-write_tpl "rescue+nfs+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
-write_tpl "rescue+nfs+hash+normal" "$image_opts"
+std_suite nfs	/srv/public/netinst/mnt		mnt-nfs
+std_suite cifs	/srv/public/netinst/mnt		mnt-cifs
+std_suite http	/pub/netinst/mnt		mnt-http
+std_suite ftp	/pub/netinst/mnt		mnt-ftp
 
-# no debug: use rdshell for check and save resulting /var/log/chaind.log
-image_opts="rdshell $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+nfs+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$live_st2size $live_opts"
-write_tpl "live+nfs+slices+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_st2size $rescue_opts"
-write_tpl "rescue+nfs+slices+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$live_st2size profile=none $live_opts"
-write_tpl "live+nfs+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
-write_tpl "rescue+nfs+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
-write_tpl "rescue+nfs+hash+no-debug" "$image_opts"
+## Network and serial console test cases
 
-# errors: no such directory on the server
-altboot_opts="automatic=method:nfs,network:dhcp,directory:/a/b/c"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+nfs+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_st2size $live_opts"
-write_tpl "live+nfs+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $rescue_opts"
-write_tpl "rescue+nfs+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $forensic_opts"
-write_tpl "rescue+nfs+hash+errors" "$image_opts"
+altinst_opts="${altinst_opts//splash/nosplash console=ttyS0,115200n8}"
+forensic_opts="$forensic_opts console=ttyS0,115200n8"
 
-### CIFS
-
-# normal boot
-altboot_opts="automatic=method:cifs,network:dhcp"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+cifs+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_st2size $live_opts"
-write_tpl "live+cifs+slices" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $forensic_opts"
-write_tpl "rescue+cifs+hash+slices" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_st2size profile=none $live_opts"
-write_tpl "live+cifs+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
-write_tpl "rescue+cifs+normal" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
-write_tpl "rescue+cifs+hash+normal" "$image_opts"
-
-# no debug: use rdshell for check and save resulting /var/log/chaind.log
-image_opts="rdshell $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+cifs+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$live_st2size $live_opts"
-write_tpl "live+cifs+slices+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_st2size $rescue_opts"
-write_tpl "rescue+cifs+slices+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$live_st2size profile=none $live_opts"
-write_tpl "live+cifs+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
-write_tpl "rescue+cifs+no-debug" "$image_opts"
-image_opts="rdshell $altboot_opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
-write_tpl "rescue+cifs+hash+no-debug" "$image_opts"
-
-# errors: no such directory on the server
-altboot_opts="automatic=method:cifs,network:dhcp,directory:/a/b/c"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+cifs+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$live_st2size $live_opts"
-write_tpl "live+cifs+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $rescue_opts"
-write_tpl "rescue+cifs+errors" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $forensic_opts"
-write_tpl "rescue+cifs+hash+errors" "$image_opts"
-
-### Network console
-
-altinst_opts="${altinst_opts//splash/splash=0 nottys}"
-forensic_opts="$forensic_opts nottys"
-
-### HTTP
-
-altboot_opts="automatic=method:http,network:dhcp,server:$server,directory:/boot/image.iso"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+http+netcons" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+http+hash+netcons" "$image_opts"
-
-### FTP
-
-altboot_opts="automatic=method:ftp,network:dhcp,server:$server,directory:/boot/image.iso"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_isosize $altinst_opts"
-write_tpl "altinst+ftp+netcons" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_isosize $forensic_opts"
-write_tpl "rescue+ftp+hash+netcons" "$image_opts"
-
-### NFS
-
-altboot_opts="automatic=method:nfs,network:dhcp"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+nfs+netcons" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $forensic_opts"
-write_tpl "rescue+nfs+hash+netcons" "$image_opts"
-
-### CIFS
-
-altboot_opts="automatic=method:cifs,network:dhcp"
-image_opts="bc_debug $altboot_opts ramdisk_size=$altinst_st2size $altinst_opts"
-write_tpl "altinst+cifs+netcons" "$image_opts"
-image_opts="bc_debug $altboot_opts ramdisk_size=$rescue_st2size $forensic_opts"
-write_tpl "rescue+cifs+hash+netcons" "$image_opts"
+cons_suite nfs	/srv/public/netinst/current
+cons_suite cifs	/srv/public/netinst/current
+cons_suite http	/pub/netinst/current
+cons_suite ftp	/pub/netinst/current
 

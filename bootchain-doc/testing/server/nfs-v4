@@ -1,0 +1,24 @@
+#!/bin/sh -efu
+
+daemons="$daemons nfsv4"
+start_services="$start_services nfs"
+
+nfsv4_setup()
+{
+	echo
+	echo "NFS-server setup (v4)..."
+	sed -i -E 's,^udp6[[:space:]].*,#\0,' /etc/netconfig
+	sed -i -E 's,^tcp6[[:space:]].*,#\0,' /etc/netconfig
+	cat >/etc/exports <<-EOF
+	/srv/public $subnet.0/24(ro,insecure,subtree_check,no_root_squash)
+	/srv/public/netinst/mnt $subnet.0/24(ro,insecure,subtree_check,no_root_squash)
+	EOF
+	cat >>/etc/hosts.allow <<-EOF
+	portmap mountd nfsd statd lockd rquotad : $subnet.0/255.255.255.0
+	EOF
+	cat >>/etc/hosts.deny <<-EOF
+	portmap mountd nfsd statd lockd rquotad : ALL
+	EOF
+	exportfs ||:
+}
+

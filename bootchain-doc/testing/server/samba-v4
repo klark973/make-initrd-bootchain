@@ -1,0 +1,38 @@
+#!/bin/sh -efu
+
+daemons="$daemons samba"
+packages="$packages samba ldap-user-tools samba-common-tools samba-client"
+start_services="$start_services smb nmb"
+
+samba_setup()
+{
+	echo
+	echo "SAMBA-server setup (samba4)..."
+	(echo 123; echo 123) |smbpasswd -a user
+	cat >/etc/samba/smb.conf <<-EOF
+	[global]
+	  workgroup = TESTALT
+	  server string = Samba Server Version %v
+	  netbios name = NETBOOT
+	  interfaces = lo $iface
+	  hosts allow = 127. $subnet.
+	  log file = /var/log/samba/log.%m
+	  max log size = 50
+	  security = user
+	  passdb backend = tdbsam
+
+	[homes]
+	  comment = Home Directories
+	  browseable = no
+	  writable = yes
+	  valid users = %S
+
+	[netinst]
+	  comment = Network install
+	  path = /srv/public/netinst
+	  public = yes
+	  writable = no
+	  printable = no
+	EOF
+}
+

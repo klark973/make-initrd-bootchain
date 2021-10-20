@@ -1,0 +1,78 @@
+#!/bin/sh -efu
+
+fatal()
+{
+	echo "${0##*/} fatal: $*" >&2
+	exit 1
+}
+
+# Entry point
+PROGDIR="$(realpath -- "${0%/*}")"
+nw=
+
+. "$PROGDIR"/client.conf
+
+# Check interfaces
+[ -L /sys/class/net/tap0 ] &&
+[ -L /sys/class/net/tap1 ] ||
+	fatal "virtual network not ready, run virt-net-on first"
+
+# Restore saved MAC-addresses
+[ -s "$PROGDIR/HWADDR.lst" ] ||
+	fatal "Hardware addresses list not found"
+MAC_A="$(sed -n 3p -- "$PROGDIR/HWADDR.lst")"
+MAC_B="$(sed -n 4p -- "$PROGDIR/HWADDR.lst")"
+MAC_C="$(sed -n 5p -- "$PROGDIR/HWADDR.lst")"
+
+# Parse arguments
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-3xnet)	# Use additional network interfaces
+		nw="-netdev user,id=net0,restrict=on,net=172.16.1.5/24"
+		nw="$nw -device virtio-net-pci,netdev=net0,id=eth0,mac=$MAC_A"
+		nw="$nw -netdev user,id=net2,restrict=on"
+		nw="$nw -device virtio-net-pci,netdev=net2,id=eth2,mac=$MAC_C"
+		;;
+	--)	shift
+		break
+		;;
+	-*)	break
+		;;
+	esac
+	shift
+done
+
+# Diagnostics
+cat <<-EOF
+Exchange directory:	$HOSTDIR
+Client system disk:	$IMAGE
+Fake #1 interface:	eth0 ($MAC_A)
+Internal network:	eth1 ($MAC_B)
+Fake #2 interface:	eth2 ($MAC_C)
+EOF
+
+# Re-create disk
+rm -f -- "$IMAGE"
+qemu-img create -f qcow2 -o size=80G -- "$IMAGE" >/dev/null
+
+# Re-create exchange directory
+[ "$HOSTDIR" = "${HOME-}" ] || [ "$HOSTDIR" = "${TMPDIR:-/tmp}" ] ||
+	rm -rf -- "$HOSTDIR"
+mkdir -p -- "$HOSTDIR"
+
+# Run VM
+cd "$HOSTDIR"/
+QEMU_AUDIO_DRV=none \
+qemu-system-x86_64 -name "client/x86_64" -cpu kvm64 -enable-kvm -m 4096	\
+	-smp sockets=1,cores=4 -balloon virtio -machine type=q35,accel=kvm \
+	-drive if=none,id=drive0,discard=ignore,aio=threads,format=qcow2,file="$IMAGE" \
+	-device virtio-blk-pci,drive=drive0,scsi=off,write-cache=off	\
+	$nw -netdev tap,id=net1,ifname=tap1,script=no,downscript=no	\
+	-device virtio-net-pci,netdev=net1,id=eth1,mac="$MAC_B"		\
+	-fsdev local,security_model=none,id=fsdev0,path="$HOSTDIR"	\
+	-device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=backup	\
+	-soundhw pcspk -sdl -vga virtio -usb -ctrl-grab -no-fd-bootchk	\
+	-rtc base=localtime,clock=host,driftfix=slew -boot n "$@" ||
+		fatal "qemu finished with status code $?"
+cd "$OLDPWD"/
+

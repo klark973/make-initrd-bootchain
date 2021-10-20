@@ -1,8 +1,7 @@
 #!/bin/bash -efu
 
 srcdir="${1-}"
-TMPDIR="${TMPDIR:-/tmp}"
-dstdir="$TMPDIR"/out
+dstdir="${TMPDIR:-/tmp}"/out
 result="$dstdir"/root.squashfs
 
 
@@ -43,7 +42,6 @@ fi
 
 # shellcheck disable=SC2174
 mkdir -p -m755 -- "$dstdir"
-/sbin/mksquashfs "$srcdir" "$result" -root-owned -nopad \
+/sbin/mksquashfs "$srcdir" "$result" -root-owned \
 	-no-exports -no-sparse -no-xattrs -noappend -no-recovery
-exit 0
 

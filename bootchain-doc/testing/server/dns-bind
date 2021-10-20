@@ -1,0 +1,11 @@
+#!/bin/sh -efu
+
+daemons="$daemons bind"
+packages="$packages bind bind-control bind-utils openresolv-bind"
+
+bind_setup()
+{
+	echo
+	echo "DNS-server setup (bind)..."
+}
+

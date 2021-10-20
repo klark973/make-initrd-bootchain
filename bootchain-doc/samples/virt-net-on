@@ -1,0 +1,14 @@
+#!/bin/sh
+
+#killall nm-applet
+service NetworkManager stop
+cp -ar /root/etcnet-ifaces/* /etc/net/ifaces/
+service network restart
+for i in 0 1 2 3; do
+    tunctl -u klark -t tap$i
+    brctl addif vbr0 tap$i
+    ip link set tap$i up
+done
+chown klark:klark /dev/net/tun
+ip a
+

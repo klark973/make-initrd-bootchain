@@ -1,0 +1,82 @@
+#!/bin/sh -efu
+
+fatal()
+{
+	echo "${0##*/} fatal: $*" >&2
+	exit 1
+}
+
+# Entry point
+PROGDIR="$(realpath -- "${0%/*}")"
+ADD=
+
+. "$PROGDIR"/server.conf
+
+# Check interfaces
+[ -L /sys/class/net/tap0 ] &&
+[ -L /sys/class/net/tap1 ] ||
+	fatal "virtual network not ready, run virt-net-on first"
+
+# Check local mirror
+[ -d "$MIRROR"/"${REPO:-Sisyphus}" ] ||
+	fatal "local mirror not found: $MIRROR"
+
+# Create or restore system
+if [ ! -r "$IMAGE" ]; then
+	if [ -r "$SRC" ]; then
+		echo "Unpacking snapshot..."
+		[ ! -s "${SDT-}" ] ||
+			unpigz -qnc <"$SDT" >"$SRVDATA"
+		unpigz -qnc <"$SRC" >"$IMAGE"
+	else
+		# Check ISO-image
+		[ -s "$MEDIA" ] ||
+			fatal "installation media not found: $MEDIA"
+		qemu-img create -f qcow2 -o size=30G -- "$IMAGE" >/dev/null
+		ADD="-cdrom $MEDIA -boot order=d -no-reboot"
+	fi
+fi
+
+# Check data disk
+[ -s "$SRVDATA" ] ||
+	fatal "server data disk not found: $SRVDATA"
+
+# Make new or restore saved MAC-addresses
+"$PROGDIR"/mkhwaddr && [ -s "$PROGDIR/HWADDR.lst" ] ||
+	fatal "Hardware addresses list not found"
+MAC_A="$(sed -n 1p -- "$PROGDIR/HWADDR.lst")"
+MAC_B="$(sed -n 2p -- "$PROGDIR/HWADDR.lst")"
+
+# Diagnostics
+cat <<-EOF
+Exchange directory:	$HOSTDIR
+Server system disk:	$IMAGE
+Server data disk:	$SRVDATA
+Control interface:	eth0 ($MAC_A)
+Internal network:	eth1 ($MAC_B)
+EOF
+
+mkdir -p -- "$HOSTDIR"
+
+# Run VM
+cd "$HOSTDIR"/
+QEMU_AUDIO_DRV=none \
+qemu-system-x86_64 -name "$NAME/x86_64" -cpu kvm64 -enable-kvm -m 2048	\
+	-smp sockets=1,cores=2 -balloon virtio -machine type=q35,accel=kvm \
+	-drive if=none,id=drive0,discard=ignore,aio=threads,format=qcow2,file="$IMAGE" \
+	-device virtio-blk-pci,drive=drive0,scsi=off,write-cache=off	\
+	-drive if=none,id=drive1,discard=ignore,aio=threads,format=qcow2,file="$SRVDATA" \
+	-device virtio-blk-pci,drive=drive1,scsi=off,write-cache=off	\
+	-netdev user,id=net0,restrict=no,hostfwd=tcp::5555-:22		\
+	-device virtio-net-pci,netdev=net0,id=eth0,mac="$MAC_A"		\
+	-netdev tap,id=net1,ifname=tap0,script=no,downscript=no		\
+	-device virtio-net-pci,netdev=net1,id=eth1,mac="$MAC_B"		\
+	-fsdev local,security_model=passthrough,id=fsdev0,readonly,path="$MIRROR" \
+	-device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=mirror	\
+	-fsdev local,security_model=none,id=fsdev1,path="$HOSTDIR"	\
+	-device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=backup	\
+	-soundhw pcspk -sdl -vga virtio -usb -ctrl-grab -no-fd-bootchk	\
+	-rtc base=localtime,clock=host,driftfix=slew $ADD "$@" ||
+		fatal "qemu finished with status code $?"
+cd "$OLDPWD"/
+

@@ -1,0 +1,25 @@
+#!/bin/sh -efu
+
+daemons="$daemons vsftpd"
+packages="$packages vsftpd"
+rm_packages="$rm_packages anonftp"
+start_services="$start_services vsftpd.socket"
+
+vsftpd_setup()
+{
+	echo
+	echo "FTP-server setup (vsftpd)..."
+	cat >>/etc/vsftpd.conf <<-EOF
+
+	pasv_enable=YES
+	local_enable=YES
+	chroot_local_user=YES
+	local_root=/var/ftp
+	seccomp_sandbox=NO
+
+	EOF
+	rm -rf /var/ftp ||:
+	ln -sf /srv /var/ftp
+	sed -i -E 's/^(auth.*pam_listfile\.so.*)$/#\1/' /etc/pam.d/vsftpd
+}
+

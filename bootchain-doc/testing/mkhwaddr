@@ -1,0 +1,27 @@
+#!/bin/sh -efu
+
+makeaddr()
+{
+	printf 'DE:AD:BE:EF:%02X:%02X' "$1" "$2"
+}
+
+PROGDIR="$(realpath -- "${0%/*}")"
+ADDRLIST="$PROGDIR/HWADDR.lst"
+[ ! -s "$ADDRLIST" ] || exit 0
+
+LIST=' '
+for i in 1 2 3 4 5; do
+	while :; do
+		x=$((RANDOM & 0xFF))
+		y=$((RANDOM & 0xFF))
+		[ "$x" != "$y" ] ||
+			continue
+		a="$(makeaddr "$x" "$y")"
+		if [ -n "${LIST##* $a *}" ]; then
+			LIST="$LIST $a "
+			echo "$a"
+			break
+		fi
+	done
+done >"$ADDRLIST"
+
