@@ -14,7 +14,7 @@ overlayroot_config()
 
 	local usepart=1
 	local rootdev="${OVERLAYROOT%%;*}"
-	local overlay="${OVERLAYROOT#$rootdev;*}"
+	local overlay="${OVERLAYROOT#"$rootdev";*}"
 	local steps="waitdev,mountfs,liveboot,rootfs"
 
 	[ "$overlay" != "$OVERLAYROOT" ] ||

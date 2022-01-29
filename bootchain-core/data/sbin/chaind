@@ -85,7 +85,7 @@ while [ -n "$chainsteps" ]; do
 		[ -n "$BC_IM_supported" ] ||
 			fatal "bootchain-interactive feature required"
 		assign "callnum" "\${callnum_$name:-0}"
-		chainsteps="${chainsteps#$name}"
+		chainsteps="${chainsteps#"$name"}"
 		chainsteps="${chainsteps#,}"
 
 		if IM_is_active; then
@@ -102,19 +102,19 @@ while [ -n "$chainsteps" ]; do
 		fi
 
 	elif [ "$name" = noop ]; then
-		chainsteps="${chainsteps#$name}"
+		chainsteps="${chainsteps#"$name"}"
 		chainsteps="${chainsteps#,}"
 		prevdir=
 		message "[0] Step '$name' has been passed"
 
 	elif [ "$name" = retry ]; then
-		chainsteps="${chainsteps#$name}"
+		chainsteps="${chainsteps#"$name"}"
 		chainsteps="${chainsteps#,}"
 		bcretry=1
 		message "subsequent steps will restart after failure"
 
 	elif [ "$name" = noretry ]; then
-		chainsteps="${chainsteps#$name}"
+		chainsteps="${chainsteps#"$name"}"
 		chainsteps="${chainsteps#,}"
 		bcretry=0
 		message "daemon will be stopped immediately after any step failure"
@@ -174,7 +174,7 @@ while [ -n "$chainsteps" ]; do
 	fi
 
 	if [ ! -r "$BC_NEXTCHAIN" ]; then
-		chainsteps="${chainsteps#$name}"
+		chainsteps="${chainsteps#"$name"}"
 		chainsteps="${chainsteps#,}"
 	else
 		debug "chain will be reloaded by $BC_NEXTCHAIN:"

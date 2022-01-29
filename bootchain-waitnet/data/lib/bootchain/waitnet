@@ -69,7 +69,7 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 				continue
 			[ -r "/sys/class/net/$netdev/flags" ] ||
 				continue
-			if [ -n "$bring_up" ] && [ -n "${ifaces##* $netdev *}" ]; then
+			if [ -n "$bring_up" ] && [ -n "${ifaces##* "$netdev" *}" ]; then
 				echo add >"/sys/class/net/$netdev/uevent"
 				ifaces="$ifaces $netdev "
 			else

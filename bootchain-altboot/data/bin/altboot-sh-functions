@@ -47,7 +47,7 @@ get_bootarg()
 		__key="${__part%%=*}"
 
 		if [ "${__key}" = "${__varname}" ]; then
-			assign "${__varname}" "${__part#$__key=}"
+			assign "${__varname}" "${__part#"$__key"=}"
 			leave "get_bootarg"
 			return 0
 		fi

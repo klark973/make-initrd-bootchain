@@ -97,7 +97,7 @@ is_server_online()
 			return 1
 		fi
 
-		dirpart="${dirpart%/$isofile}"
+		dirpart="${dirpart%/"$isofile"}"
 
 		if [ -z "$dirpart" ]; then
 			leave "is_server_online"

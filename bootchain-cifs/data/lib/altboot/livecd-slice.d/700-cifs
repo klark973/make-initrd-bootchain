@@ -27,7 +27,7 @@ cifs_slice()
 	service="${overlays:1}"
 	share="${service%%/*}"
 	service="//$server/$share"
-	dirpart="${overlays#/$share}"
+	dirpart="${overlays#/"$share"}"
 
 	message "mounting CIFS overlays from ${service}${dirpart}"
 	mp="$(grep -s "$service /" /proc/mounts |cut -f2 -d' ')"

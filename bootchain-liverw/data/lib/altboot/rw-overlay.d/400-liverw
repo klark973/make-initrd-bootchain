@@ -34,10 +34,10 @@ create_disk_slice()
 		if [ -n "$partn" ]; then
 			case "$devname" in
 			*[0-9]p$partn)
-				whole="${devname%%p$partn}"
+				whole="${devname%%p"$partn"}"
 				;;
 			*$partn)
-				whole="${devname%%$partn}"
+				whole="${devname%%"$partn"}"
 				;;
 			esac
 		fi
@@ -131,7 +131,7 @@ create_disk_slice()
 				sed 's/  */ /g')"
 		start="$(echo "$devpath" |cut -f2 -d' ')"
 		lenght="$(echo "$devpath" |cut -f4 -d' ')"
-		partn="${devname#$whole}"
+		partn="${devname#"$whole"}"
 		partn="${partn#p}"
 
 		# Tell kernel about changes

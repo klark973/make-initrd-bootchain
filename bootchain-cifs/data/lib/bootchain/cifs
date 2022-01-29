@@ -101,7 +101,7 @@ is_server_online()
 
 	share="${service%%/*}"
 	service="//$server/$share"
-	dirpart="${directory#/$share}"
+	dirpart="${directory#/"$share"}"
 	ip="$(run resolve -s -t5 -- "$server" ||:)"
 	[ -z "$ip" ] || [ "$ip" = "$server" ] ||
 		opts="${opts:+$opts,}ip=$ip"

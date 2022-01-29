@@ -73,7 +73,7 @@ altboot_config()
 	while [ -n "$LINE" ]; do
 		PART="${LINE%%,*}"
 		KEY="${PART%%:*}"
-		VALUE="${PART#$KEY:}"
+		VALUE="${PART#"$KEY":}"
 		PART=$(( ${#PART} + 1 ))
 		LINE="${LINE:$PART}"
 

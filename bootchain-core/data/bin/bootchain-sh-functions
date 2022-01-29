@@ -203,7 +203,7 @@ bypass_results()
 
 	if [ -n "$srcdir" ] && [ "$srcdir" != "$destdir" ]; then
 		if [ -d "$realdir" ] || [ -L "$prevdir" ] ||
-			[ "$srcdir" = "${srcdir#$mntdir/}" ]
+			[ "$srcdir" = "${srcdir#"$mntdir"/}" ]
 		then
 			run rmdir -- "$destdir" ||:
 			run ln -snf -- "$(readlink-e "$srcdir")" "$destdir"

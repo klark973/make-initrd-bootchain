@@ -55,7 +55,7 @@ excludes=
 for e in $sclist; do
 	excludes="${excludes:+$excludes,}$e"
 
-	if [ "x${1-}" = "x-v" ] || [ "x${1-}" = "x--verbose" ]; then
+	if [ "${1-}" = "-v" ] || [ "${1-}" = "--verbose" ]; then
 		printf "*** Checking to %s...\n" "$e"
 		do_check -i "$e" ||:
 	fi

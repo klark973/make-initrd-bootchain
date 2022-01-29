@@ -236,10 +236,10 @@ device_choice()
 				if [ -n "$partn" ]; then
 					case "$devname" in
 					*[0-9]p$partn)
-						whole="${devname%%p$partn}"
+						whole="${devname%%p"$partn"}"
 						;;
 					*$partn)
-						whole="${devname%%$partn}"
+						whole="${devname%%"$partn"}"
 						;;
 					esac
 				fi
