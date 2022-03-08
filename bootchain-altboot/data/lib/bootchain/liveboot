@@ -126,7 +126,7 @@ elif [ "$overlayroot" = tmpfs ]; then
 	message "rootfs switched to the read-only mode, using tmpfs as overlay"
 elif [ -n "$overlayroot" ] && [ -n "$live_rw" ]; then
 	message "rootfs switched to the read-only mode, using $live_rw as overlay"
-elif [ "$stagename" = rescue ]; then
+elif [ "$stagename" = rescue ] || [ "$flags" != "${flags//*rescue*/}" ]; then
 	message "running rescue"
 elif [ "$stagename" = live ]; then
 	message "running live"

@@ -1,10 +1,9 @@
 #!/bin/bash -efu
 
 case "$overlayroot" in
-disabled|tmpfs)
-	live_rw=0
+tmpfs)	live_rw=1
 	;;
-'')
+'')	overlayroot=tmpfs
 	live_rw=1
 	;;
 UUID=?*)
@@ -21,9 +20,12 @@ LABEL=?*)
 	;;
 esac
 
-if [ "$live_rw" = 0 ]; then
-	live_rw=
-elif [ -n "$overlayroot" ] && [[ -z "$live_rw" || -n "$method" ]]; then
+if [ "$overlayroot" = disabled ]; then
+	if grep -qs " $prevdir squashfs " /proc/mounts; then
+		overlayroot=tmpfs
+		live_rw=1
+	fi
+elif [ -z "$live_rw" ] && [ -n "$overlayroot" ]; then
 	message "overlayroot will be ignored: '$overlayroot'"
 	overlayroot=
 fi
