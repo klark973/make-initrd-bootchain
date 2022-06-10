@@ -136,7 +136,7 @@ is_server_online()
 	if [ -n "$ALTBOOT_OLDROOT" ]; then
 		stage2_setenv METHOD "nfs"
 		stage2_setenv HOST "$server"
-		stage2_setenv PREFIX "$directory"
+		stage2_setenv PREFIX "/"
 		[ "$dirty" = 0 ] ||
 			stage2_setenv PIGGYBACK 1
 		bypass_results "$image"
