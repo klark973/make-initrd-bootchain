@@ -139,7 +139,7 @@ is_server_online()
 	if [ -n "$ALTBOOT_OLDROOT" ]; then
 		stage2_setenv METHOD "cifs"
 		stage2_setenv HOST "$server"
-		stage2_setenv PREFIX "/"
+		stage2_setenv PREFIX "$directory"
 		stage2_setenv SMBOPTS "$opts"
 		[ -z "$domain" ] ||
 			stage2_setenv SMBDOMAIN "$domain"
