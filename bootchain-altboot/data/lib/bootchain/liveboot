@@ -117,6 +117,17 @@ debug "$PROG started ($(get_parameter ALTBOOT_LIVEBOOT))"
 profile="${profile:-default}"
 timeout="${timeout:-20}"
 
+# Check for init inside stage2
+if [ -n "$ALTBOOT_OLDROOT" ] && [ -z "$NOASKUSER" ]; then
+	if [ ! -x "$prevdir${INIT:-/sbin/init}" ]; then
+		text="Specified INIT not found inside stage2 rootfs."
+		text="$text Retry with other init=... after reboot."
+		IM_start_output errmsg
+		IM_errmsg "$text $IM_RBMSG"
+		bc_reboot
+	fi
+fi
+
 use_hooks liveboot-init.d
 
 if [ "$overlayroot" = disabled ]; then
