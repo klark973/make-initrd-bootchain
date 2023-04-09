@@ -232,3 +232,5 @@ if [ -f "$BC_LOGFILE" ] && [ -n "${BC_DEBUG}${BC_TEST-}" ]; then
 
 	run cp -Lf -- "$BC_LOGFILE" "$destdir/"
 fi
+
+echo localdev > /etc/initrd/method

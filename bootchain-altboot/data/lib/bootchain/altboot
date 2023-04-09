@@ -194,5 +194,7 @@ IM_update_bootsplash "prepare"
 
 # shellcheck disable=SC2119
 bypass_results
+
+echo "$PROG" > /etc/initrd/method
 :> "$BC_PASSED/$PROG"
 debug "$PROG finished"

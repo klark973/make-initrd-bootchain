@@ -7,5 +7,9 @@ launch_step_once
 	fatal "no previous step to use as rootfs"
 [ "$prevdir" = "$rootmnt" ] ||
 	run mount --move -- "$prevdir" "$rootmnt"
-echo localdev > /etc/initrd/method
+
+while ! resume_checked; do
+	sleep 0.5
+done
+
 break_bc_loop
