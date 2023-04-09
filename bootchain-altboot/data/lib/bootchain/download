@@ -528,11 +528,10 @@ run cp -a -- "$devname" "$destdir/dev"
 if [ -z "$ALTBOOT_OLDROOT" ]; then
 	IM_update_bootsplash "found_media"
 elif [ -z "$(stage2_getenv METHOD)" ]; then
+	stage2_setenv METHOD "$method"
 	if [ "$method" = url ] || [ -z "$fuid" ]; then
-		stage2_setenv METHOD "nfs"
 		stage2_setenv URL "$url"
 	else
-		stage2_setenv METHOD "$method"
 		stage2_setenv HOST "$server"
 		stage2_setenv PREFIX "$directory"
 		if [ "$method" = ftp ] && [ -n "$user" ]; then
