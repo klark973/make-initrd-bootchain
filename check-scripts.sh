@@ -18,6 +18,7 @@ sclist="
 	SC2034
 	SC2086
 	SC2154
+	SC2317
 "
 
 skip_check="
