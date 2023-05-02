@@ -17,6 +17,13 @@ CONSOLE="${CONSOLE-}"
 NOASKUSER="${NOASKUSER-}"
 NOLINES="${NOLINES-}"
 
+# Don't use console for VT TTY's
+case "$CONSOLE" in
+tty[0-9]|tty[1-9][0-9])
+	CONSOLE=
+	;;
+esac
+
 # Internal
 _IM_max_width=
 _IM_widgetsdir=/lib/IM-widgets
