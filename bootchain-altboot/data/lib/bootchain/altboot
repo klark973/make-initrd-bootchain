@@ -35,7 +35,7 @@ altboot_config()
 
 		if [ -n "${RDSHELL-}" ]; then
 			METHODS_LIST="$METHODS_LIST shell"
-			METHODS_MENU="$METHODS_MENU shell \"Emergency shell\""
+			METHODS_MENU="$METHODS_MENU shell \"Exit from altboot\""
 		fi
 		METHODS_LIST="$METHODS_LIST reboot shutdown"
 		METHODS_MENU="$METHODS_MENU reboot \"Reboot the computer\""
@@ -124,21 +124,8 @@ altboot_config()
 		run poweroff -f
 		;;
 	shell)
-		[ -c "$BC_LOGFILE" ] && VALUE="\r" ||
-			VALUE="\rSee '$BC_LOGFILE' for boot process details.\n"
-		if [ -n "$CONSOLE" ]; then
-			echo -ne "${VALUE}(initramfs)\$ "
-			break_bc_loop
-			debug "$PROG finished"
-			exit 0
-		fi
-		VALUE="${VALUE}Press Alt-F${_IM_VT_number} for "
-		VALUE="${VALUE}return back to the main menu.\n"
-		VALUE="${VALUE}Type 'exit' to continue booting.\n"
-		VALUE="${VALUE}(initramfs)\$ "
-		echo -ne "$VALUE" >>/dev/tty1
-		chvt 1
-		altboot_restart
+		echo
+		fatal "execution mandatory terminated by user"
 		;;
 	esac
 
