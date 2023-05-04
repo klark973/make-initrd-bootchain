@@ -16,7 +16,7 @@ if ! has_feature network; then
 
 	if [ -z "$NOASKUSER" ]; then
 		msg="This disk builded without networking support."
-		msg="$msg Booting via any network protocol is inpossible."
+		msg="$msg Booting by any network protocol is inpossible."
 		IM_errmsg "$msg $IM_RBMSG"
 	fi
 
@@ -51,7 +51,7 @@ then
 	} >> /.initrd/initenv
 
 	/lib/initrd/cmdline.d/network >/dev/null 2>&1 ||
-		fatal "can't reconfigure network settings"
+		IM_fatal "can't reconfigure network settings"
 	bring_up=1
 fi
 
