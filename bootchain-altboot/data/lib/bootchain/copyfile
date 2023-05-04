@@ -27,7 +27,7 @@ check_file_size()
 	if [ -z "$size" ]; then
 		debug "retrieving file size: '$src'"
 		size="$(run stat -L -c%s -- "$src")" && [ -n "$size" ] ||
-			fatal "can't determinate file size by specified path"
+			IM_fatal "can't determinate file size by specified path"
 	fi
 
 	leave "check_file_size"
@@ -82,7 +82,7 @@ copy_file_dialog()
 		run sync
 	else
 		rm -f -- "$datadir/ERROR"
-		fatal "copy operation failed"
+		IM_fatal "copy operation failed"
 	fi
 
 	[ -z "$CONSOLE" ] ||
@@ -112,7 +112,7 @@ step-[1-9]*|pipe[0-9]*)
 ''|RD)
 	if ! get_free_ramdisk dst; then
 		[ ! -b /dev/ram0 ] || [ ! -r /sys/block/ram0/size ] ||
-			fatal "no free RAM-disk found"
+			IM_fatal "no free RAM-disk found"
 		dst="$datadir/image"
 		regular=1
 	fi
@@ -131,7 +131,7 @@ devname="the RAM"
 
 if [ -z "$regular" ]; then
 	[ -b "$dst" ] ||
-		fatal "specified target block device not found: $dst"
+		IM_fatal "specified target block device not found: $dst"
 	case "$dst" in
 	/dev/ram[0-9]*)
 		mark_used_ramdisk "$dst"
