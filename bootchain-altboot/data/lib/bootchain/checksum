@@ -65,23 +65,24 @@ if [ "$CHECKSUM" != "${CHECKSUM#*:}" ]; then
 		CHECKSUM="${CHECKSUM%%:*}"
 	fi
 fi
+
+IM_start_output gauge
+
 hashprog="${hashprog:-sha256sum}"
 command -v "$hashprog" >/dev/null ||
-	fatal "hash program not found: $hashprog"
+	IM_fatal "hash program not found: $hashprog"
 [ -n "$CHECKSUM" ] ||
-	fatal "hash summa not specified"
+	IM_fatal "hash summa not specified"
 check_prevstep_results ||
 	fatal "no previous step results to use with $PROG"
 [ "$datasize" -gt 0 ] 2>/dev/null ||
-	fatal "invalid data size: $datasize"
+	IM_fatal "invalid data size: $datasize"
 
 debug "hash summa: $CHECKSUM"
 debug "hash data size: $datasize"
 debug "hash check program: $hashprog"
 
 message "calculating image checksum for '$filename'..."
-
-IM_start_output gauge errmsg
 
 { head -c "$datasize" -- "$fullpath" |
   pv -n -i 0.5 -s $datasize |
@@ -95,14 +96,9 @@ IM_start_output gauge errmsg
 rm -f -- "$datadir/CHECKSUM"
 debug "calculated hash: $check"
 
-if [ "$CHECKSUM" = "$check" ]; then
-	message "checksum verified successfully"
-elif [ -n "$NOASKUSER" ]; then
-	fatal "image file checksum mismatch"
-else
-	IM_errmsg "Image file checksum mismatch! $IM_RBMSG"
-	bc_reboot
-fi
+[ "$CHECKSUM" = "$check" ] ||
+	IM_fatal "image file checksum mismatch"
+message "checksum verified successfully"
 
 # shellcheck disable=SC2119
 bypass_results
