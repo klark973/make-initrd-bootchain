@@ -165,6 +165,29 @@ IM_activate()
 	IM_load_all
 }
 
+IM_fatal()
+{
+	local text
+
+	if [ -n "$NOASKUSER" ]; then
+		fatal "$*, dialogs are disabled"
+	elif ! IM_is_active; then
+		fatal "$*"
+	else
+		text="$*"
+		text="$(echo "${text:0:1}" |tr '[:lower:]' '[:upper:]')${text:1}"
+
+		IM_WIDGET_ARGS="$IM_WIDGET_ARGS --yes-label \"Reboot\""
+		IM_WIDGET_ARGS="$IM_WIDGET_ARGS --no-label \"Exit\""
+
+		IM_start_input errchoice
+
+		IM_errchoice "$text. $IM_RBMSG" ||
+			fatal "$*"
+		reboot -f -d
+	fi
+}
+
 IM_load_widgets()
 {
 	local widget loaded

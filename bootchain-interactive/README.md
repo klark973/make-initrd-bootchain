@@ -4,7 +4,7 @@ Feature adds the ability to use dialogs in the initramfs scripts.
 
 ## Boot parameters
 
-- `console=...` - Disable to switch TTY's, it useful for netconsole.
+- `console=...` - Disable to switch TTY's, it useful for serial/netconsole.
 - `noaskuser` - Disable all input dialogs, it useful for console without user.
 - `nolines` - Disable pseudo-graphics line drawing, it useful if not supported.
 
@@ -26,6 +26,7 @@ Feature adds the ability to use dialogs in the initramfs scripts.
 - `IM_is_active()` - Returns 0, if interactive mode already activated.
 - `IM_exec()` - Re-execute specified process on the foreground (tty2, by default).
 - `IM_activate()` - Request to immediately or delayed activation of the interactive mode.
+- `IM_fatal()` - Display error message and terminate execution or reboot the computer.
 - `IM_load_widgets()` - Load specified widgets from the library.
 - `IM_load_all()` - Load all available widgets from the library.
 - `IM_start_output()` - Notify `interactive` feature about starting output.
@@ -98,6 +99,24 @@ IM_errmsg <text>
 Example:
 ```
 IM_errmsg "Disk read error, try again!"
+```
+
+### errchoice (input)
+
+Display error message and specified buttons, Yes and No by default.
+Returns 0 when Yes/Enter pressed or non-zero when No/Cancel pressed.
+Based on `dialog --yesno`. Also used internaly in `IM_fatal()`.
+
+Syntax:
+```
+IM_errchoice <text>
+```
+
+Example:
+```
+while IM_errchoice "Disk read error, retry again?"; do
+    sleep 1
+done
 ```
 
 ### form (input)
