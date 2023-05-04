@@ -14,7 +14,7 @@ debug "$PROG started ($SQUASHFS)"
 if [ -n "$prevdir" ] && mountpoint -q -- "$prevdir"; then
 	backfile="${prevdir}${SQUASHFS}"
 	[ -r "$backfile" ] ||
-		fatal "second stage file not found: '${SQUASHFS:1}'"
+		IM_fatal "second stage file not found: '${SQUASHFS:1}'"
 	lomount devname "$backfile"
 elif [ -z "$prevdir" ] || [ ! -s "$prevdir/DEVNAME" ] && [ ! -b "$prevdir/dev" ]; then
 	fatal "no previous step results to use with $PROG"
@@ -25,7 +25,7 @@ else
 fi
 
 [ -b "$devname" ] ||
-	fatal "invalid device or device name: '$devname'"
+	IM_fatal "invalid device or device name: '$devname'"
 
 if [ -z "$ALTBOOT_OLDROOT" ]; then
 	run mount -t squashfs -r -- "$devname" "$destdir"
