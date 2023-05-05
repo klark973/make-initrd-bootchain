@@ -49,17 +49,30 @@ IM_ponder_stop()
 
 _IM_exit_handler()
 {
-	local rc=$?
+	local mintime deadline rc=$?
 
 	trap - EXIT
 
 	if IM_is_active; then
 		IM_ponder_stop
-		rootdelay_unpause
+
 		if [ -z "$CONSOLE" ] && [ -z "$NOASKUSER" ]; then
 			clear
 			chvt 1
 		fi
+
+		if [ -f /.initrd/rootdelay/addtime ]; then
+			read -r deadline < /.initrd/rootdelay/deadline ||:
+			[ -n "$deadline" ] ||
+				deadline=0
+			mintime="$(date +%s)"
+			mintime=$((2 + $mintime))
+			[ "$mintime" -le "$deadline" ] ||
+				echo "$mintime" > /.initrd/rootdelay/deadline
+			rm -f /.initrd/rootdelay/addtime
+		fi
+
+		rootdelay_unpause
 		IM_show_bootsplash
 		rm -rf -- "${_IM_flag}"
 	fi

@@ -477,6 +477,9 @@ while :; do
 		url="${prevdir}${url}"
 	fi
 
+	:> /.initrd/rootdelay/addtime
+	rootdelay_pause
+
 	get_file_size ||
 		printf '%s, determinate file size\n' "$?" >"$datadir/ERROR"
 	[ -z "$filesize" ] || check_avail_space ||

@@ -144,6 +144,8 @@ if [ -z "$regular" ]; then
 fi
 
 src="${prevdir}${src}"
+:> /.initrd/rootdelay/addtime
+rootdelay_pause
 check_file_size
 check_avail_space
 copy_file_dialog

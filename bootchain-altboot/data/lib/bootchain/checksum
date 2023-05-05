@@ -84,6 +84,9 @@ debug "hash check program: $hashprog"
 
 message "calculating image checksum for '$filename'..."
 
+:> /.initrd/rootdelay/addtime
+rootdelay_pause
+
 { head -c "$datasize" -- "$fullpath" |
   pv -n -i 0.5 -s $datasize |
   "$hashprog" |
