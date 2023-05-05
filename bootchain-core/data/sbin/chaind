@@ -24,6 +24,13 @@ debug()
 		message "$*"
 }
 
+bc_fatal()
+{
+	date "+%s" > /.initrd/rootdelay/deadline
+	echo > /etc/initrd/method
+	fatal "$*"
+}
+
 
 # Only when daemon started first time
 if [ "x${1-}" != "x--foreground" ]; then
@@ -83,7 +90,7 @@ while [ -n "$chainsteps" ]; do
 
 	if [ "$name" = fg ]; then
 		[ -n "$BC_IM_supported" ] ||
-			fatal "bootchain-interactive feature required"
+			bc_fatal "bootchain-interactive feature required"
 		assign "callnum" "\${callnum_$name:-0}"
 		chainsteps="${chainsteps#"$name"}"
 		chainsteps="${chainsteps#,}"
@@ -194,7 +201,7 @@ if [ "$rc" = 2 ] && [ -n "$pipeline_mode" ]; then
 elif [ "$rc" = 0 ] && [ -f "$BC_PASSED/$PROG" ]; then
 	debug "finishing in bootchain mode"
 else
-	fatal "daemon terminated incorrectly (rc=$rc)"
+	bc_fatal "daemon terminated incorrectly (rc=$rc)"
 fi
 
 if [ -z "$BC_DEBUG" ]; then
