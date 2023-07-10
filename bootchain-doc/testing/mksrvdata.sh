@@ -62,7 +62,7 @@ write_tpl()
 ns_suite()
 {
 	local method="$1" dir="$2" name="ns-$1"
-	local opts="automatic=method:$method,server:$server,directory:$dir"
+	local opts="automatic=method:$method,type:iso,server:$server,directory:$dir"
 
 	# normal boot
 	write_tpl "altinst+$name+normal"	"bc_debug $opts $altinst_opts"
@@ -96,54 +96,90 @@ std_suite()
 	local opts="bc_debug automatic=method:$method,directory:$dir"
 
 	# normal boot
-	write_tpl "altinst+$name+normal"	\
+	write_tpl "altinst+$name+normal+rd"		\
 		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
-	write_tpl "live+$name+slices"		\
+	write_tpl "altinst+$name+normal+tmpfs"		\
+		  "$opts $altinst_opts"
+	write_tpl "live+$name+slices+rd"		\
 		  "$opts ramdisk_size=$live_st2size $live_opts"
-	write_tpl "rescue+$name+hash+slices"	\
+	write_tpl "live+$name+slices+tmpfs"		\
+		  "$opts $live_opts"
+	write_tpl "rescue+$name+hash+slices"		\
 		  "$opts ramdisk_size=$rescue_st2size $forensic_opts"
-	write_tpl "live+$name+normal"		\
+	write_tpl "live+$name+normal+rd"		\
 		  "$opts ramdisk_size=$live_st2size profile=none $live_opts"
-	write_tpl "rescue+$name+normal"		\
+	write_tpl "live+$name+normal+tmpfs"		\
+		  "$opts profile=none $live_opts"
+	write_tpl "rescue+$name+normal+rd"		\
 		  "$opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
-	write_tpl "rescue+$name+hash+normal"	\
+	write_tpl "rescue+$name+normal+tmpfs"		\
+		  "$opts profile=none $rescue_opts"
+	write_tpl "rescue+$name+hash+normal+rd"		\
 		  "$opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
+	write_tpl "rescue+$name+hash+normal+tmpfs"	\
+		  "$opts profile=none $forensic_opts"
 
 	# no debug: use rdshell for check and save resulting log
 	opts="rdshell automatic=method:$method,directory:$dir"
-	write_tpl "altinst+$name+no-debug"	\
+	write_tpl "altinst+$name+no-debug+rd"		\
 		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
-	write_tpl "live+$name+slices+no-debug"	\
+	write_tpl "altinst+$name+no-debug+tmpfs" 	\
+		  "$opts $altinst_opts"
+	write_tpl "live+$name+slices+no-debug+rd"	\
 		  "$opts ramdisk_size=$live_st2size $live_opts"
-	write_tpl "rescue+$name+slices+no-debug" \
+	write_tpl "live+$name+slices+no-debug+tmpfs"	\
+		  "$opts $live_opts"
+	write_tpl "rescue+$name+slices+no-debug+rd"	\
 		  "$opts ramdisk_size=$rescue_st2size $rescue_opts"
-	write_tpl "live+$name+no-debug"		\
+	write_tpl "rescue+$name+slices+no-debug+tmpfs"	\
+		  "$opts $rescue_opts"
+	write_tpl "live+$name+no-debug+rd"		\
 		  "$opts ramdisk_size=$live_st2size profile=none $live_opts"
-	write_tpl "rescue+$name+no-debug"	\
+	write_tpl "live+$name+no-debug+tmpfs"		\
+		  "$opts profile=none $live_opts"
+	write_tpl "rescue+$name+no-debug+rd"		\
 		  "$opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
-	write_tpl "rescue+$name+hash+no-debug"	\
+	write_tpl "rescue+$name+no-debug+tmpfs"		\
+		  "$opts profile=none $rescue_opts"
+	write_tpl "rescue+$name+hash+no-debug+rd"	\
 		  "$opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
+	write_tpl "rescue+$name+hash+no-debug+tmpfs"	\
+		  "$opts profile=none $forensic_opts"
 
 	# 3x network interfaces
 	opts="bc_debug automatic=method:$method,directory:$dir $netX_opts"
-	write_tpl "altinst+$name+3xnet"		\
+	write_tpl "altinst+$name+3xnet+rd"		\
 		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
-	write_tpl "live+$name+3xnet"		\
+	write_tpl "altinst+$name+3xnet+tmpfs"		\
+		  "$opts $altinst_opts"
+	write_tpl "live+$name+3xnet+rd"			\
 		  "$opts ramdisk_size=$live_st2size profile=none $live_opts"
-	write_tpl "rescue+$name+3xnet"		\
+	write_tpl "live+$name+3xnet+tmpfs"		\
+		  "$opts profile=none $live_opts"
+	write_tpl "rescue+$name+3xnet+rd"		\
 		  "$opts ramdisk_size=$rescue_st2size profile=none $rescue_opts"
-	write_tpl "rescue+$name+hash+3xnet"	\
+	write_tpl "rescue+$name+3xnet+tmpfs"		\
+		  "$opts profile=none $rescue_opts"
+	write_tpl "rescue+$name+hash+3xnet+rd"		\
 		  "$opts ramdisk_size=$rescue_st2size profile=none $forensic_opts"
+	write_tpl "rescue+$name+hash+3xnet+tmpfs"	\
+		  "$opts profile=none $forensic_opts"
 
 	# Check only once
 	if [ -z "$dir" ]; then
 		# errors: no such directory on the server
 		opts="bc_debug automatic=method:$method,directory:/a/b/c"
-		write_tpl "altinst+$name+errors"	\
+		write_tpl "altinst+$name+errors+rd"	\
 			  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
-		write_tpl "live+$name+errors"		\
+		write_tpl "altinst+$name+errors+tmpfs"	\
+			  "$opts $altinst_opts"
+		write_tpl "live+$name+errors+rd"	\
 			  "$opts ramdisk_size=$live_st2size $live_opts"
-		write_tpl "rescue+$name+errors"		\
+		write_tpl "live+$name+errors+tmpfs"	\
+			  "$opts ramdisk_size=$live_st2size $live_opts"
+		write_tpl "rescue+$name+errors+rd"	\
+			  "$opts ramdisk_size=$rescue_st2size $rescue_opts"
+		write_tpl "rescue+$name+errors+tmpfs"	\
 			  "$opts ramdisk_size=$rescue_st2size $rescue_opts"
 		write_tpl "rescue+$name+hash+errors"	\
 			  "$opts ramdisk_size=$rescue_st2size $forensic_opts"
@@ -155,14 +191,22 @@ cons_suite()
 	local method="$1" dir="$2"
 	local opts="bc_debug automatic=method:$method,server:$server,directory:$dir"
 
-	write_tpl "altinst+$method+netcons"	\
+	write_tpl "altinst+$method+netcons+rd"		\
 		  "$opts ramdisk_size=$altinst_st2size $altinst_opts"
-	write_tpl "altinst+$method+silent"	\
+	write_tpl "altinst+$method+netcons+tmpfs"	\
+		  "$opts $altinst_opts"
+	write_tpl "altinst+$method+silent+rd"		\
 		  "$opts noaskuser ramdisk_size=$altinst_st2size $altinst_opts"
-	write_tpl "rescue+$method+hash+netcons"	\
+	write_tpl "altinst+$method+silent+tmpfs"	\
+		  "$opts noaskuser $altinst_opts"
+	write_tpl "rescue+$method+hash+netcons+rd"	\
 		  "$opts ramdisk_size=$rescue_st2size $forensic_opts"
-	write_tpl "rescue+$method+hash+silent"	\
+	write_tpl "rescue+$method+hash+netcons+tmpfs"	\
+		  "$opts $forensic_opts"
+	write_tpl "rescue+$method+hash+silent+rd"	\
 		  "$opts noaskuser ramdisk_size=$rescue_st2size $forensic_opts"
+	write_tpl "rescue+$method+hash+silent+tmpfs"	\
+		  "$opts noaskuser $forensic_opts"
 }
 
 

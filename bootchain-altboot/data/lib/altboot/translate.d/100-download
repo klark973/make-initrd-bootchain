@@ -5,6 +5,8 @@ ftp|http|url)
 	ALTBOOT="waitnet,download"
 	if grep -qws ramdisk_size /proc/cmdline; then
 		VALUE="method=$method;to=RD;fuid=$STAGENAME"
+	elif [ "$type" != iso ]; then
+		VALUE="method=$method;to=TMPFS;fuid=$STAGENAME"
 	else
 		if [ -n "${HASH-}" ]; then
 			ALTBOOT="$ALTBOOT,checksum"
