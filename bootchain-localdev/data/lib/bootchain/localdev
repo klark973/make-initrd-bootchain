@@ -212,8 +212,8 @@ boot_device_choice()
 	local title="[ Optional fields ]"
 
 	local text="Please enter the full path to an ISO-image"
-	text="$text containing the $OEM_DISTRIBUTION or leave"
-	text="$text this field blank to use mounted partition"
+	text="$text${STAGENAME:+ containing the squash $STAGENAME}"
+	text="$text or leave this field blank to use mounted partition"
 	text="$text 'as is', or cancel to return step back."
 
 	while :; do

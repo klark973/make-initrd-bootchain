@@ -314,16 +314,13 @@ device_choice()
 		text="$text (${bs:-Volume}: $fssize, ${fstype}${title})"
 	}
 
+	text="Please choose the source"
 	if [ "$method" = oem ]; then
-		text="Please choose the partition with the"
-		text="$text OEM Drivers Update."
-	elif [ "$method" = cdrom ]; then
-		text="Please choose the drive with the $OEM_DISTRIBUTION"
-		text="$text to boot from or cancel and try again."
+		text="$text containing the OEM Drivers Update"
 	else
-		text="Please choose the partition with the $OEM_DISTRIBUTION"
-		text="$text on the boot media or cancel and try again."
+		text="$text${STAGENAME:+ containing the squash $STAGENAME} on the boot"
 	fi
+	text="$text or cancel and try again."
 
 	[ -d "$udevdata" ] ||
 		udevdata=

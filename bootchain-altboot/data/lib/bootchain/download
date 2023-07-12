@@ -47,8 +47,12 @@ url_input_form()
 
 	local title="[ Enter the URL ]"
 
-	local text="Please enter the URL or full path to the"
-	text="$text file containing the $OEM_DISTRIBUTION."
+	local text="Please enter "
+	if [ -n "$fuid" ]; then
+		text="$text the URL containing the squash $fuid."
+	else
+		text="$text full path to the file image."
+	fi
 
 	while :; do
 		IM_form "$title" "$text" 2		\
@@ -83,9 +87,12 @@ http_input_form()
 
 	local title="[ HTTP-server connection data ]"
 
-	local text="Please enter the name or IP address of the"
-	text="$text HTTP-server, and the directory containing"
-	text="$text the $OEM_DISTRIBUTION."
+	local text="Please enter the name or IP address of the HTTP-server, and"
+	if [ -n "$fuid" ]; then
+		text="$text the directory containing the squash $fuid."
+	else
+		text="$text full path to the file image."
+	fi
 
 	while :; do
 		[ -n "$server" ] ||
@@ -125,10 +132,14 @@ ftp_input_form()
 
 	local title="[ FTP-server connection data ]"
 
-	local text="Please enter the name or IP address of the"
-	text="$text FTP-server, and the directory containing"
-	text="$text the $OEM_DISTRIBUTION, and the Login/Password"
-	text="$text if necessary (leave Login blank for anonymous)."
+	local text="Please enter the name or IP address of the FTP-server, and"
+	if [ -n "$fuid" ]; then
+		text="$text the directory containing the squash $fuid"
+	else
+		text="$text full path to the file image"
+	fi
+	text="$text, and the Login/Password if necessary"
+	text="$text (leave Login blank for anonymous)."
 
 	while :; do
 		[ -n "$server" ] ||
@@ -352,11 +363,7 @@ download_image()
 {
 	enter "download_image"
 
-	local text distro="the $OEM_DISTRIBUTION"
-
-	[ -n "$fuid" ] ||
-		distro="'${url##*/}'"
-	text="Downloading $distro into $target..."
+	local text="Downloading ${url##*/} into $target..."
 	message "downloading image: '$url'"
 	(read_image |save_image) 2>&1 |
 		IM_gauge "[ Downloading image... ]" "$text"

@@ -70,7 +70,7 @@ copy_file_dialog()
 {
 	enter "copy_file_dialog"
 
-	local text="Copying the $OEM_DISTRIBUTION into $devname..."
+	local text="Copying the ${url##*/} into $devname..."
 
 	message "copying '$src' to '$dst'"
 

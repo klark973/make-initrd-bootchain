@@ -29,7 +29,7 @@ nfs_input_form()
 
 	local text="Please enter the name or IP address of the"
 	text="$text NFS-server, and the directory (or ISO image"
-	text="$text file) containing the $OEM_DISTRIBUTION."
+	text="$text file)${STAGENAME:+ containing the squash $STAGENAME}."
 
 	while :; do
 		[ -n "$server" ] ||

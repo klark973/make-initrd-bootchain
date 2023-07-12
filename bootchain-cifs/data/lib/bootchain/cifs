@@ -32,8 +32,8 @@ samba_input_form()
 
 	local text="Please enter the name or IP address of the"
 	text="$text SAMBA-server, and the directory (or ISO image"
-	text="$text file) containing the $OEM_DISTRIBUTION, and"
-	text="$text the Domain/Login/Password if necessary"
+	text="$text file)${STAGENAME:+ containing the squash $STAGENAME}"
+	text="$text, and the Domain/Login/Password if necessary"
 	text="$text (leave Login blank for guest logon)."
 
 	while :; do
