@@ -406,7 +406,7 @@ esac
 [ "$method" = url ] || [ -f "$mntdir"/DIRTY ] ||
 	to="$BOOTIMG"
 target="the RAM"
-timeout="${timeout:-20}"
+timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 
 if [ -z "$dstreg" ]; then
 	[ -b "$to" ] ||

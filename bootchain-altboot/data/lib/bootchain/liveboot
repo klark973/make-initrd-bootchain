@@ -115,7 +115,7 @@ debug "$PROG started ($(get_parameter ALTBOOT_LIVEBOOT))"
 [ -n "$method" ] ||
 	method="$(stage2_getenv METHOD)"
 profile="${profile:-default}"
-timeout="${timeout:-20}"
+timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 
 # Check for init inside stage2
 if [ -n "$ALTBOOT_OLDROOT" ] && [ -z "$NOASKUSER" ]; then

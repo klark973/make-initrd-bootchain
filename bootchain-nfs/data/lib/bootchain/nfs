@@ -211,7 +211,7 @@ fi
 	directory="$(get_dhcp_root_path)"
 [ -n "$directory" ] ||
 	directory="$OEM_NFS_NETINST/current"
-timeout="${timeout:-20}"
+timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 
 is_server_online || connection_loop
 

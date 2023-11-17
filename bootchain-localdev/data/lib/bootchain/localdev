@@ -323,7 +323,7 @@ if [ -z "$devspec" ] && [ -n "$prevdir" ] && [ ! -f "$altboot_auto" ]; then
 	fi
 fi
 
-timeout="${timeout:-20}"
+timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 label="${label//\\040/ }"
 IM_start_output choice form errmsg ponder
 

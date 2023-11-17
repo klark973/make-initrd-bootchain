@@ -226,7 +226,7 @@ fi
 	server="$(get_dhcp_next_server)"
 [ -n "$directory" ] ||
 	directory="$OEM_CIFS_NETINST/current"
-timeout="${timeout:-20}"
+timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 
 is_server_online || connection_loop
 

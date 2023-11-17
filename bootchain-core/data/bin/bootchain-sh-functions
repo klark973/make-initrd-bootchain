@@ -5,6 +5,7 @@ __bootchain_sh_functions=1
 
 BC_DEBUG=
 BC_LOG_VT=3
+BC_DEVICE_TIMEOUT=60
 
 [ ! -s /etc/sysconfig/bootchain ] ||
 	. /etc/sysconfig/bootchain

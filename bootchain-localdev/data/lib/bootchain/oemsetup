@@ -10,7 +10,7 @@ UPDATEMODULES="${UPDATEMODULES:-1}"
 update=initrd-update.img
 method=oem
 hardwait=7
-timeout=20
+timeout="$BC_DEVICE_TIMEOUT"
 profile=
 
 
