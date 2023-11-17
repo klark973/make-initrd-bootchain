@@ -9,7 +9,6 @@ label="${OEM_SETUP_STORAGE:-OEMSETUP}"
 UPDATEMODULES="${UPDATEMODULES:-1}"
 update=initrd-update.img
 method=oem
-hardwait=7
 timeout="$BC_DEVICE_TIMEOUT"
 profile=
 
@@ -62,7 +61,7 @@ main_loop()
 {
 	enter "main_loop"
 
-	local iter=0 nsec=0
+	local nsec=0
 
 	IM_start_output choice errmsg ponder
 	start_scan
@@ -71,35 +70,25 @@ main_loop()
 		debug "Idle before scan devices"
 		sleep 1
 		scan_devices
-		iter=$((1 + $iter))
 
 		if try_with_partition; then
 			IM_ponder_stop
 			break
 		fi
 
-		if [ "$iter" -ge "$hardwait" ]; then
-			if [ -z "$NOASKUSER" ]; then
-				IM_ponder_stop
-				device_choice && try_with_partition && break ||:
-			fi
+		nsec=$((1 + $nsec))
+		[ "$nsec" -ge "$timeout" ] ||
+			continue
+		IM_ponder_stop
+		[ -z "$NOASKUSER" ] ||
+			fatal "OEM drivers update not found, dialogs are disabled"
+		device_choice && try_with_partition && break ||:
 
-			nsec=$(( $nsec + $iter ))
-
-			if [ "$nsec" -ge "$timeout" ]; then
-				if [ -z "$NOASKUSER" ]; then
-					IM_errmsg "Device with OEM Drivers Update not found, try again!"
-				else
-					fatal "OEM drivers update not found, dialogs are disabled"
-				fi
-				nsec=0
-			fi
-
-			iter=0
-			[ -n "$NOASKUSER" ] ||
-				start_scan
-			debug "device not ready, go to the next ring"
-		fi
+		IM_errmsg "Device with OEM Drivers Update not found, try again!"
+		debug "the device is not ready, move on to the next iteration"
+		start_scan
+		timeout=20
+		nsec=0
 	done
 
 	leave "main_loop"
