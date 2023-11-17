@@ -8,7 +8,6 @@ check_parameter ALTBOOT_LOCALDEV
 target=
 devspec=
 devices=
-hardwait=7
 
 b_a()
 {
@@ -257,7 +256,7 @@ main_loop()
 {
 	enter "main_loop"
 
-	local iter=0 nsec=0
+	local nsec=0
 
 	start_scan
 
@@ -265,7 +264,6 @@ main_loop()
 		debug "Idle before scan devices"
 		sleep 1
 		scan_devices
-		iter=$((1 + $iter))
 
 		if is_target_found; then
 			debug "TARGET: '$target'"
@@ -273,30 +271,24 @@ main_loop()
 			break
 		fi
 
-		if [ "$iter" -ge "$hardwait" ]; then
-			if [ -z "$NOASKUSER" ]; then
-				IM_ponder_stop
-				boot_device_choice && break ||:
-			fi
+		nsec=$((1 + $nsec))
+		[ "$nsec" -ge "$timeout" ] ||
+			continue
+		IM_ponder_stop
 
-			nsec=$(( $nsec + $iter ))
-
-			if [ "$nsec" -ge "$timeout" ]; then
-				if [ -z "$NOASKUSER" ]; then
-					IM_errmsg "Boot device not defined, try again!"
-				elif [ -z "$devspec" ]; then
-					fatal "device not specified, dialogs are disabled"
-				else
-					fatal "specified device not found, dialogs are disabled"
-				fi
-				nsec=0
-			fi
-
-			iter=0
-			[ -n "$NOASKUSER" ] ||
-				start_scan
-			debug "device not ready, go to the next ring"
+		if [ -z "$NOASKUSER" ]; then
+			boot_device_choice && break ||:
+		elif [ -z "$devspec" ]; then
+			fatal "device not specified, dialogs are disabled"
+		else
+			fatal "specified device not found, dialogs are disabled"
 		fi
+
+		IM_errmsg "Boot device not detected, try again!"
+		debug "the device is not ready, move on to the next iteration"
+		start_scan
+		timeout=20
+		nsec=0
 	done
 
 	leave "main_loop"
@@ -327,7 +319,7 @@ timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 label="${label//\\040/ }"
 IM_start_output choice form errmsg ponder
 
-# With method=auto choose device manualy
+# With method=auto, the device is selected manually
 if [ -z "$NOASKUSER" ] && [ -f "$altboot_auto" ]; then
 	reset_devspec
 	scan_devices
