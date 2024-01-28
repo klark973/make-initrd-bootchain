@@ -1,1 +1,2 @@
 register_array string GETIMAGE
+register_array string PING

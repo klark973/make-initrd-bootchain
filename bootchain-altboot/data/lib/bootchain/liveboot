@@ -44,6 +44,7 @@ mount_overlays()
 		imgdir="$prevdir.rw/rw$OEM_OVERLAYS_DIR/${img##*/}"
 
 		run mkdir -p -- "$imgdir"
+		run modprobe -q 'devname:loop-control' ||:
 
 		if run mount -o ro,loop -- "$img" "$imgdir"; then
 			livecd_overlays="$imgdir:$livecd_overlays"

@@ -64,8 +64,7 @@ lomount()
 	local __loopdev
 	local __varname="$1" backdev="$2" imgdir="${3-}"
 
-	grep -qE '^loop ' /proc/modules ||
-		modprobe loop 2>/dev/null ||:
+	run modprobe -q 'devname:loop-control' ||:
 	__loopdev="$(run losetup -Lrf --show -- "$backdev" ||:)"
 
 	if [ -z "${__loopdev}" ] || [ ! -b "${__loopdev}" ]; then

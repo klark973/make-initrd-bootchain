@@ -5,11 +5,11 @@
 launch_step_once
 [ -n "$prevdir" ] && mountpoint -q -- "$prevdir" ||
 	fatal "no previous step to use as rootfs"
-[ "$prevdir" = "$rootmnt" ] ||
-	run mount --move -- "$prevdir" "$rootmnt"
 
 while ! resume_checked; do
 	sleep 0.5
 done
 
+[ "$prevdir" = "$rootmnt" ] ||
+	run mount --move -- "$prevdir" "$rootmnt"
 break_bc_loop
