@@ -1,4 +1,5 @@
 register_parameter string BOOTCHAIN
+register_parameter number PIPE_RETRY
 register_alias BOOTCHAIN PIPELINE
 register_parameter string BC_TEST
 register_parameter bool BC_DEBUG

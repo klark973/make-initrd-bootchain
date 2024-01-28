@@ -2,7 +2,9 @@
 
 . bootchain-sh-functions
 
-bcretry="${bcretry:-1}"
+bcretry="${PIPE_RETRY:-}"
+[ -n "$pipeline_mode" ] ||
+	bcretry="${bcretry:-5}"
 chainsteps="${chainsteps-}"
 stepnum="${stepnum:-0}"
 prevdir="${prevdir-}"
@@ -117,7 +119,9 @@ while [ -n "$chainsteps" ]; do
 	elif [ "$name" = retry ]; then
 		chainsteps="${chainsteps#"$name"}"
 		chainsteps="${chainsteps#,}"
-		bcretry=1
+		bcretry="${PIPE_RETRY:-}"
+		[ -n "$pipeline_mode" ] ||
+			bcretry="${bcretry:-5}"
 		message "subsequent steps will restart after failure"
 
 	elif [ "$name" = noretry ]; then
@@ -144,7 +148,8 @@ while [ -n "$chainsteps" ]; do
 
 			export name callnum datadir destdir prevdir
 
-			for try in 1 2 3 4 5; do
+			try="$bcretry"
+			while :; do
 				[ -z "$BC_DEBUG" ] ||
 					run "$handlerdir/debug" ||:
 				rc=0
@@ -157,7 +162,9 @@ while [ -n "$chainsteps" ]; do
 				message "[$callnum] Handler failed (rc=$rc, try=$try)"
 				[ ! -f "$BC_PASSED/$PROG" ] ||
 					break 2
-				[ "$bcretry" != 0 ] ||
+				[ -z "$try" ] || [ "$try" = 0 ] ||
+					try=$(( $try - 1 ))
+				[ "$try" != 0 ] ||
 					break
 				sleep 2
 			done
