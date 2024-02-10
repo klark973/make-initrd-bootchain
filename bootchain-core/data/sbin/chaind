@@ -5,18 +5,18 @@
 bcretry="${PIPE_RETRY:-}"
 [ -n "$pipeline_mode" ] ||
 	bcretry="${bcretry:-5}"
+pidfile="/var/run/$PROG.pid"
 chainsteps="${chainsteps-}"
 stepnum="${stepnum:-0}"
 prevdir="${prevdir-}"
 BC_IM_supported=
 
 
-exit_handler()
+bc_exit_handler()
 {
 	local rc="$?"
 	trap - EXIT
 	rm -f -- "$pidfile"
-	wait
 	exit $rc
 }
 
@@ -34,12 +34,16 @@ bc_fatal()
 }
 
 
-# Only when daemon started first time
-if [ "x${1-}" != "x--foreground" ]; then
-	pidfile="/var/run/$PROG.pid"
+# Daemon restarted in foreground
+if [ "${1-}" = "--foreground" ]; then
+	debug "daemon has been restarted in foreground"
+	trap bc_exit_handler EXIT
+	echo "$$" >"$pidfile"
+else
+	# Daemon started
 	[ ! -f "$pidfile" ] ||
 		fatal "already running"
-	set_cleanup_handler exit_handler
+	trap bc_exit_handler EXIT
 	echo "$$" >"$pidfile"
 
 	if [ "${RDLOG-}" = console ]; then
@@ -80,7 +84,7 @@ fi
 if has_feature bootchain-interactive; then
 	. interactive-sh-functions
 
-	[ "x${1-}" != "x--foreground" ] ||
+	[ "${1-}" != "--foreground" ] ||
 		IM_activate "$BC_FGVT_ACTIVATE" "$BC_LOGFILE"
 	BC_IM_supported=1
 fi

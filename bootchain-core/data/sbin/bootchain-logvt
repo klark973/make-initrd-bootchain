@@ -5,32 +5,33 @@
 pid=
 pidfile=/var/run/chaind.pid
 
-
 exit_handler()
 {
-	local rc=$?
+	local rc="$?"
 
-	trap - EXIT
-
-	if [ -n "$pid" ]; then
-		kill -TERM "$pid" ||
-			kill -KILL "$pid" ||:
-		wait "$pid" ||:
-	fi >/dev/null 2>&1
+	trap - EXIT TERM QUIT
 
 	clear
+	exec >/dev/null 2>&1
+	kill -TERM "$pid" ||
+		kill -KILL "$pid" ||:
+	wait "$pid" ||:
 	exit $rc
 }
-
 
 # Entry point
 [ -z "${CONSOLE-}" ] && [ -z "${NOASKUSER-}" ] && [ -n "$BC_LOG_VT" ] ||
 	exit 1
-set_cleanup_handler exit_handler
 exec </dev/null >"/dev/tty$BC_LOG_VT" 2>&1
 printf "bootchain logger started on tty%s\n\n" "$BC_LOG_VT"
 tail -f -- "$BC_LOGFILE" & pid="$!"
+trap exit_handler EXIT TERM QUIT
 
 while [ -f "$pidfile" ]; do
-	sleep 1
+	read -r ppid <"$pidfile" 2>/dev/null ||
+		ppid=
+	[ -n "$ppid" ] && kill -0 "$ppid" >/dev/null 2>&1 ||
+		break
+	sleep .7
 done
+

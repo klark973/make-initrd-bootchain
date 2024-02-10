@@ -58,6 +58,7 @@ _IM_exit_handler()
 
 		if [ -z "$CONSOLE" ] && [ -z "$NOASKUSER" ]; then
 			clear
+			exec >/dev/null 2>&1
 			chvt 1
 		fi
 
@@ -77,6 +78,8 @@ _IM_exit_handler()
 		rm -rf -- "${_IM_flag}"
 	fi
 
+	[ -n "${pidfile-}" ] ||
+		rm -f -- "${pidfile-}"
 	exit $rc
 }
 
@@ -111,7 +114,7 @@ IM_activate()
 
 	! IM_is_active ||
 		fatal "already in interactive mode"
-	set_cleanup_handler _IM_exit_handler
+	trap _IM_exit_handler EXIT
 
 	if [ -n "$NOASKUSER" ]; then
 		exec </dev/null >/dev/null 2>>"$logfile"

@@ -18,18 +18,36 @@ PIDFILE="/var/run/$NAME.pid"
 ARGS="--lockfile $LOCKFILE --pidfile $PIDFILE --name $NAME --displayname $NAME"
 
 start() {
-	RETVAL=0
+	local RETVAL=0
+
 	if [ "${ROOT-}" = bootchain ] || [ "${ROOT-}" = pipeline ]; then
-		start_daemon --background $ARGS "$NAME"
-		RETVAL=$?
+		start_daemon --background $ARGS "$NAME" ||
+			RETVAL="$?"
 	fi
+
 	return $RETVAL
 }
 
 stop() {
-	stop_daemon $ARGS "$NAME"
-	RETVAL=$?
-	rm -f -- "$PIDFILE"
+	local PID RETVAL=0
+
+	if [ -f "$PIDFILE" ]; then
+		read -r PID <"$PIDFILE" 2>/dev/null ||
+			PID=
+
+		if [ -n "$PID" ] && kill -0 "$PID" &>/dev/null; then
+			stop_daemon $ARGS "$NAME" ||
+				RETVAL="$?"
+			sleep 1
+		fi
+
+		rm -f -- "$PIDFILE"
+	fi
+
+	for PID in 7 6 5 4 3 2; do
+		deallocvt "$PID" &>/dev/null ||:
+	done
+
 	return $RETVAL
 }
 
