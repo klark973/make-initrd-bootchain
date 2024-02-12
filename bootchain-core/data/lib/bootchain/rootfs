@@ -10,6 +10,7 @@ while ! resume_checked; do
 	sleep 0.5
 done
 
-[ "$prevdir" = "$rootmnt" ] ||
-	run mount --move -- "$prevdir" "$rootmnt"
+# shellcheck disable=SC2119
+bypass_results
+
 break_bc_loop

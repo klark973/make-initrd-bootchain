@@ -72,10 +72,10 @@ else
 	debug "Booting with /proc/cmdline:"
 	fdump /proc/cmdline
 
-	run mkdir -p -- "$mntdir" "$BC_PASSED"
+	run mkdir -p -- "$mntdir" "$BC_PASSED" "$BC_ROOT"
 
 	mountpoint -q -- "$mntdir" ||
-		run mount -t tmpfs tmpfs "$mntdir" ||:
+		run mount -t tmpfs tmpfs "$mntdir"
 
 	chainsteps="$BOOTCHAIN"
 fi
@@ -215,14 +215,14 @@ else
 	bc_fatal "daemon terminated incorrectly (rc=$rc)"
 fi
 
+prevdir="$(readlink-e "$destdir" 2>/dev/null ||:)"
+
 if [ -z "$BC_DEBUG" ]; then
 	grep -qs " $mntdir/" /proc/mounts ||
 		run umount -- "$mntdir" &&
 		run rm -rf -- "$mntdir" ||:
 else
-	prevdir="$(readlink-e "$destdir" 2>/dev/null ||:)"
-	[ "$prevdir" = "$rootmnt" ] && datadir="" ||
-		datadir="$rootmnt"
+	datadir=
 	destdir=
 	callnum=0
 	name=STAGE2
@@ -236,8 +236,8 @@ else
 fi
 
 if [ -f "$BC_LOGFILE" ] && [ -n "${BC_DEBUG}${BC_TEST-}" ]; then
-	if [ -d "$rootmnt/var/log" ]; then
-		destdir="$rootmnt/var/log"
+	if [ -d "$prevdir/var/log" ]; then
+		destdir="$prevdir/var/log"
 	else
 		run mkdir -p -- "$mntdir"
 		destdir="$mntdir"
@@ -252,3 +252,5 @@ if [ -f "$BC_LOGFILE" ] && [ -n "${BC_DEBUG}${BC_TEST-}" ]; then
 fi
 
 echo localdev > /etc/initrd/method
+[ -z "$prevdir" ] || ! mountpoint -q -- "$prevdir" ||
+	run mount --move -- "$prevdir" "$rootmnt"

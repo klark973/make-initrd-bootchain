@@ -30,8 +30,8 @@ fi
 if [ -z "$ALTBOOT_OLDROOT" ]; then
 	run mount -t squashfs -r -- "$devname" "$destdir"
 else
-	run mount -t squashfs -r -- "$devname" "$rootmnt"
-	bypass_results "$rootmnt"
+	run mount -t squashfs -r -- "$devname" "$BC_ROOT"
+	bypass_results "$BC_ROOT"
 fi
 
 debug "$PROG finished"

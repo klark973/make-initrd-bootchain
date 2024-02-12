@@ -149,7 +149,7 @@ is_target_found()
 
 	image="$datadir"
 	[ -z "$ALTBOOT_OLDROOT" ] ||
-		image="$rootmnt"
+		image="$BC_ROOT"
 	run mkdir -p -- "$image"
 
 	if run mount --move -- "$mp" "$image"; then

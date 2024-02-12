@@ -92,7 +92,7 @@ is_server_online()
 	if [ -n "$ALTBOOT_OLDROOT" ]; then
 		[ -z "$OEM_CDROOT" ] ||
 			image="$OEM_CDROOT"
-		mp="$rootmnt"
+		mp="$BC_ROOT"
 	fi
 
 	[ -n "$opts" ] ||

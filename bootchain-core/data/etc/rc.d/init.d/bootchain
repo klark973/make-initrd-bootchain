@@ -38,11 +38,12 @@ stop() {
 		if [ -n "$PID" ] && kill -0 "$PID" &>/dev/null; then
 			stop_daemon $ARGS "$NAME" ||
 				RETVAL="$?"
-			sleep 1
 		fi
 
 		rm -f -- "$PIDFILE"
 	fi
+
+	sleep 1
 
 	for PID in 7 6 5 4 3 2; do
 		deallocvt "$PID" &>/dev/null ||:

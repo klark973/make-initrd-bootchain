@@ -64,8 +64,8 @@ message "DEST DIR: $destdir"
   fi
 
   # FIXME: make this better to specify interested mount points only
-  [ -z "${OEM_CDROOT-}" ] && regex="$rootmnt" ||
-	regex="$rootmnt $OEM_CDROOT"
+  [ -z "${OEM_CDROOT-}" ] && regex="$BC_ROOT" ||
+	regex="$BC_ROOT $OEM_CDROOT"
   regex="$regex $mntdir"
   regex="${regex//\//\\/}"
   regex=" (${regex// /\|})\/"
