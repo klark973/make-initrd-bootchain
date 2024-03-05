@@ -90,4 +90,11 @@ export_netconf()
 	leave "export_netconf"
 }
 
-[ -z "$ALTBOOT_OLDROOT" ] || [ ! -s "$NETBOOT_IFNAME" ] || export_netconf
+if [ -n "$ALTBOOT_OLDROOT" ] && [ -s "$NETBOOT_IFNAME" ]; then
+	if [ -n "$prevdir" ] && [ -s /etc/resolv.conf ]; then
+		if [ -d "$prevdir/etc" ] && [ ! -L "$prevdir/etc/resolv.conf" ]; then
+			run cp -Lf -- /etc/resolv.conf "$prevdir/etc/" ||:
+		fi
+	fi
+	export_netconf
+fi

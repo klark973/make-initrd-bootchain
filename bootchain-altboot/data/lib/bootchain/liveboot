@@ -96,8 +96,6 @@ do_overlay()
 
 	use_hooks liveboot-post.d
 
-	[ ! -r /etc/resolv.conf ] || [ ! -d "$prevdir/etc" ] ||
-		run cp -Lf -- /etc/resolv.conf "$prevdir/etc/"
 	bypass_results "$prevdir"
 
 	leave "do_overlay"
