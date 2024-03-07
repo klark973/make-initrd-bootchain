@@ -217,13 +217,13 @@ if [ -f "$altboot_auto" ]; then
 fi
 
 [ -n "$server" ] ||
-	server="$OEM_SRV_NETINST"
-[ -n "$server" ] ||
 	server="$(get_dhcp_wins)"
 [ -n "$server" ] ||
 	server="$(get_first_dns)"
 [ -n "$server" ] ||
 	server="$(get_dhcp_next_server)"
+[ -n "$server" ] ||
+	server="$OEM_SRV_NETINST"
 [ -n "$directory" ] ||
 	directory="$OEM_CIFS_NETINST/current"
 timeout="${timeout:-$BC_DEVICE_TIMEOUT}"

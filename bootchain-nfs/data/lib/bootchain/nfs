@@ -204,9 +204,9 @@ if [ -f "$altboot_auto" ]; then
 fi
 
 [ -n "$server" ] ||
-	server="$OEM_SRV_NETINST"
-[ -n "$server" ] ||
 	server="$(get_dhcp_next_server)"
+[ -n "$server" ] ||
+	server="$OEM_SRV_NETINST"
 [ -n "$directory" ] ||
 	directory="$(get_dhcp_root_path)"
 [ -n "$directory" ] ||
