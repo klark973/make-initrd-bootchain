@@ -1,0 +1,73 @@
+extends: default
+page:
+  background_color: FFFFFF
+  layout: portrait
+  initial_zoom: FitH
+  margin: [0.5in, 0.5in, 0.75in, 0.5in]
+  size: A4
+footer:
+  background-image: image:../images/footer.jpg[fit=fill]
+  height: 0.32in   # высота footer
+base:
+  font-size: 11
+title-page:
+  background-image: image::../images/title.jpg[fit=fill]
+  title:
+    top: 70%
+    font_size: floor($base_font_size * 2.0)
+  authors:
+    delimiter: '; '
+    content:
+      name_only: "{author}"
+      with_email: "{author} <{email}>"
+      with_url: "{url}[{author}]"
+codespan:
+  background_color: F5F5F5
+table:
+  head:
+    background-color: #F0F0F0
+role:
+  passed:
+    font-color: #FFFFFF
+    background-color: #00FF00
+    font-style: bold
+    text-transform: uppercase
+    border-offset: 1
+    border-radius: 3
+  skipped:
+    font-color: #000000
+    background-color: #96EFFF
+    text-transform: uppercase
+    border-offset: 1
+    border-radius: 3
+    font-size: 9.8
+  error:
+    font-color: #FFFFFF
+    background-color: #FF0000
+    font-style: bold
+    text-transform: uppercase
+    border-offset: 1
+    border-radius: 3
+  highlight-2:
+    background-color: #96EFFF
+      #font-color: #FF0000
+    border_offset: 1
+  blue:
+    background-color: #96EFFF
+      #font-color: #FF0000
+    border_offset: 1
+  mag-l:  # magenta light
+    background-color: #FFC2FF
+    border_offset: 1
+      #font-color: #FF0000
+  green-l:  # green light
+    background-color: #CFFCD7
+    font-color: #000000
+  mark-2:
+    background-color: FFFF00
+    border_offset: 1
+      #border-color: CCCCCC
+      #    border-offset: 2
+      #border-radius: 2
+      #border-width: 0.5
+    font-color: #000000

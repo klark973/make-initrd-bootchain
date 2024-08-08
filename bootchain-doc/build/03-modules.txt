@@ -1,0 +1,40 @@
+== Модули bootchain
+
+Разделение на модули (подпакеты) позволяет добиться оптимального наполнения
+initramfs только необходимым для загрузки содержимым. Так, для загрузки по
+протоколу NFS достаточно установить пакет *make-initrd-bootchain-nfs* и
+задействовать фичу *bootchain-nfs*, всё остальное попадёт в initramfs по
+зависимостям. Для создания универсального образа stage1 достаточно установки
+одного мета-пакета *make-initrd-bootchain*.
+
+* *make-initrd-bootchain* — мета-пакет, собирающий воедино все существующие
+  модули bootchain, он же исходный SRPM;
+* *make-initrd-bootchain-core* — базовый функционал, включая шаги debug, fg,
+  mountfs, noop, noretry, overlayfs, retry и rootfs;
+* *make-initrd-bootchain-getimage* — обеспечивает метод загрузки образов по
+  сети утилитой wget по протоколам HTTP и FTP;
+* *make-initrd-bootchain-waitdev* — обеспечивает метод ожидания локального
+  носителя по заданной спецификации;
+* *make-initrd-bootchain-interactive* — обеспечивает интерактивное
+  взаимодействие, предоставляет диалоговые виджеты;
+* *make-initrd-bootchain-waitnet* — обеспечивает ожидание сети и экспорт
+  сетевых настроек в stage2, используется всеми сетевыми методами загрузки
+  (ftp, http, nfs, cifs) и является временным кодом;
+* *make-initrd-bootchain-altboot* — весь общий функционал пропагатора и шаг,
+  транслирующий его аргументы;
+* *make-initrd-bootchain-localdev* — обеспечивает методы загрузки disk/cdrom,
+  установку дополнительных модулей ядра;
+* *make-initrd-bootchain-liverw* — обеспечивает дополнительный функционал для
+  работы с R/W-сеансами LiveCD и Rescue;
+* *make-initrd-bootchain-nfs* — обеспечивает метод загрузки с сервера NFS и
+  поддержку read-only слоёв LiveCD (сквошей);
+* *make-initrd-bootchain-cifs* — обеспечивает метод загрузки с сервера SAMBA
+  и поддержку read-only слоёв LiveCD (сквошей);
+* *make-initrd-bootchain-doc* — документация и набор тестов.
+
+См. также:
+
+* https://packages.altlinux.org/ru/sisyphus/srpms/make-initrd-bootchain/
+* https://git.altlinux.org/gears/m/make-initrd-bootchain.git
+* https://github.com/klark973/make-initrd-bootchain
+

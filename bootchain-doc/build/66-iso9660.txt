@@ -1,0 +1,19 @@
+=== iso9660
+
+Базовый неинтерактивный «шаг», входящий в подпакет *make-initrd-bootchain-altboot*.
+Монтирует устройство, полученное на предыдущем шаге, как CD/DVD-привод ISO-9660.
+Никаких параметров не требуется. Обычно используется после «шага» *download* при
+сетевой загрузке.
+
+.Примеры использования:
+[,,subs="verbatim,quotes"]
+----
+root=bootchain bootchain=fg,`*altboot*` ip=dhcp4 \
+  automatic=method:**ftp**,server:192.168.15.1,directory:/srv/public/netinst/current
+
+root=bootchain bootchain=fg,download,`*iso9660*`,squashfs,liveboot,rootfs ip=dhcp4 \
+  altboot_download=method=`*http*`;server=192.168.15.1;directory=/srv/public/netinst/current \
+  altboot_squashfs=/rescue \
+  altboot_liveboot=stagename=rescue;method=http;flags=live_ro,live_rw
+----
+

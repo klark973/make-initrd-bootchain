@@ -1,0 +1,27 @@
+=== squashfs
+
+Базовый неинтерактивный «шаг», входящий в подпакет *make-initrd-bootchain-altboot*.
+Монтирует через lomount() указанный файл из каталога или устройство, полученное
+на предыдущем шаге, как сквош.
+
+Параметры загрузки:
+
+* *altboot_squashfs* — обязательный, если результат предыдущего шага —
+  смонтированный каталог, то указывает путь к файлу со сквошом в этом каталоге.
+  В терминах пропагатора — rootfs второй стадии загрузки (/$stagename). Если
+  результатом предыдущего шага является устройство, передаваемое через *dev*
+  или *DEVNAME*, тогда этот параметр не используется, но он всё равно должен
+  содержать непустую строку (особенность регистрации массивов в make-initrd).
+
+.Примеры использования:
+[,,subs="verbatim,quotes"]
+----
+root=bootchain bootchain=fg,`*altboot*` ip=dhcp **stagename=rescue** \
+  automatic=method:ftp,network:dhcp,server:192.168.15.1,directory:/netinst/alt.iso
+
+root=bootchain bootchain=fg,download,iso9660,`*squashfs*`,liveboot,rootfs ip=dhcp \
+  altboot_download=to=RD;method=http;server=192.168.15.1;directory=/netinst/alt.iso \
+  `*altboot_squashfs*`=/live \
+  altboot_liveboot=**stagename=live**;method=http;flags=live_ro,live_rw
+----
+

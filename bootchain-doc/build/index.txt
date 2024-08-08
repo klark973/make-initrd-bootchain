@@ -1,0 +1,59 @@
+= От пропагатора к altboot
+Леонид Кривошеин, <klark@altlinux.org>
+2.1, 22.07.2024
+:doctype: book
+:chapter-signifier:
+:toc:
+:toc-title: Оглавление
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:icons: font
+:source-language: console
+:copyright: Copyright (C), ALT Linux Team
+:keywords: bootchain, altboot, propagator, pipeline, make-initrd, live
+:description: Настоящий документ можно считать официальным справочным \
+руководством к bootchain + altboot. Он описывает переход от загрузки \
+универсальных носителей на основе программы propagator и скрипта \
+init-bottom на загрузку с использованием run-time make-initrd, пошаговую \
+заргрузку pipeline и bootchain, а также построенную поверх bootchain новую \
+систему загрузки altboot, обеспечивающую совместимость со старым подходом \
+к загрузке через propagator.
+
+include::00-glossary.txt[]
+include::01-advantages.txt[]
+include::02-disadvantages.txt[]
+include::03-modules.txt[]
+include::10-quickstart.txt[]
+include::11-quickstart.txt[]
+include::12-quickstart.txt[]
+include::20-methods.txt[]
+include::25-basesteps.txt[]
+include::30-parameters.txt[]
+include::35-automatic.txt[]
+include::40-configure.txt[]
+include::45-debugging.txt[]
+include::50-pipeline.txt[]
+include::51-propagator.txt[]
+include::55-interactive.txt[]
+include::58-persistent.txt[]
+include::59-layers.txt[]
+include::60-bootchain.txt[]
+include::61-altboot.txt[]
+include::62-checksum.txt[]
+include::63-cifs.txt[]
+include::64-copyfile.txt[]
+include::65-download.txt[]
+include::66-iso9660.txt[]
+include::67-liveboot.txt[]
+include::68-localdev.txt[]
+include::69-nfs.txt[]
+include::70-oemsetup.txt[]
+include::71-overlayroot.txt[]
+include::72-squashfs.txt[]
+include::93-inout.txt[]
+include::95-developer.txt[]
+include::96-widgets.txt[]
+include::97-extension.txt[]
+include::99-links.txt[]
+

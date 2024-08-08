@@ -1,0 +1,79 @@
+=== localdev
+
+Интерактивный «шаг», входящий в подпакет *make-initrd-bootchain-localdev*,
+и обеспечивающий методы загрузки *disk* и *cdrom*. В процессе работы может
+выводить диалоги выбора накопителя и ввода дополнительных данных для метода
+*disk* (виджеты *choice* и *form*). При поиске локального устройства
+используется виджет *ponder*. Если на предыдущем шаге (например, был шаг
+*waitdev*) устройство было найдено, то не выполняет сканирование устройств
+и не выводит диалогов, а использует найденное устройство, что позволяет
+использовать более богатый выбор спецификации устройств *waitdev* и далее
+*localdev* в качестве fallback, а также комбинировать шаги, не внося изменений
+в код *altboot*. Если нужно явно игнорировать результаты предыдущего шага,
+слева от *localdev* следует поставить шаг *noop*.
+
+image::../images/bc10.jpg[align="center",scaledwidth="75%"]
+
+image::../images/bc12.jpg[align="center",scaledwidth="75%"]
+
+image::../images/bc-err5.jpg[align="center",scaledwidth="75%"]
+
+Параметры загрузки:
+
+* *altboot_localdev* — набор поддерживаемых аргументов в виде «ключ=значение»,
+  перечисленных через «;» (см. ниже).
+
+Поддерживаемые аргументы, в том числе, через *automatic=…*:
+
+* *method* — метод загрузки altboot: disk или cdrom (см. выше);
+* *disk* — название блочного устройства, ссылающегося на целый диск,
+  например: sda, md0, dm-0, nvme0n1;
+* *part* — название блочного устройства, ссылающегося на раздел,
+  например: sdb1, c0d0p3, md0p1, nvme0n1p2;
+* *uuid* — UUID файловой системы раздела для поиска по UUID;
+* *label* — метка тома файловой системы раздела для поиска по LABEL;
+* *directory* — путь к ISO-образу для метода disk, путь к сквошу для
+  метода cdrom;
+* *overlays* — определяет раздел, на котором находятся read-only слои
+  LiveCD при локальной загрузке:
+  - _метка тома_ (LABEL) — профили и слои будут искаться на устройстве
+    с указанной меткой тома;
+  - `*local_profile*` — будет использовано загрузочное устройство, на
+    котором находится rootfs;
+* `*timeout*` — предел временного ожидания для поиска носителя;
+* `*options*` — дополнительные опции монтирования;
+
+В случае успеха загрузки в режиме совместимости с пропагатором «шаг»
+*localdev* экспортирует в stage2 следующие переменные окружения:
+
+* *METHOD* — название выбранного метода загрузки altboot (disk или cdrom);
+* *DEVICE* — название устройства загрузочного диска или раздела, например:
+  sda, sdb1, md0p1, nvme0n1p2;
+* *PREFIX* —  полный путь к ISO-образу для метода disk, «/» — в остальных
+  случаях;
+* *PIGGYBACK*=1 — сообщает о двойном монтировании, когда приходится
+  монтировать ещё и ISO-образ с диска;
+
+.Примеры использования:
+[,,subs="verbatim,quotes"]
+----
+root=bootchain bootchain=fg,`*altboot*` \
+  automatic=method:**cdrom**,uuid:2021-05-30-13-35-30-00 \
+  stagename=altinst ramdisk_size=160905 lowmem
+
+root=bootchain bootchain=fg,`*altboot*` \
+  automatic=method:**cdrom**,uuid:2021-05-30-18-28-59-00,overlays:SLICES \
+  stagename=live ramdisk_size=1081725
+
+root=bootchain bootchain=fg,`*localdev*`,copyfile,checksum,squashfs,liveboot,rootfs \
+  `*altboot_localdev*`=method=cdrom;uuid=2021-05-30-12-55-00-00;directory=/rescue \
+  altboot_copyfile=dst=RD;src=rescue \
+  altboot_checksum=613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec \
+  altboot_liveboot=stagename=rescue;method=cdrom;flags=live_ro,rescue,live_rw
+----
+
+См. также:
+
+* https://bugzilla.altlinux.org/33954
+* https://bugzilla.altlinux.org/31068
+

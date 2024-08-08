@@ -1,0 +1,60 @@
+=== overlayroot
+
+Неинтерактивный базовый «шаг», входящий в подпакет *make-initrd-bootchain-altboot*.
+Обеспечивает простой синтаксис для закрытия на запись имеющейся rootfs, т.е. на
+обычной установленной системе. Основные действия выполняются шагами *waitdev*,
+*mountfs* и *liveboot*, данный шаг лишь упрощает синтаксис, делая его похожим на
+аналогичную фичу в дистрибутивах Ubuntu. На текущий момент не рекомендуется
+использовать одновременно с фичей *make-initrd* «resume» во избежании «гонок».
+
+Параметры загрузки:
+
+* *overlayroot* — обязательный, имеет формат: «<rootdev>[;<overlay>]», т.е.
+  определяет обычный корень, закрываемый на запись, и (необязательно) создаваемый
+  над ним оверлей. Оба значения описывают ожидаемые устройства, подобно waitdev.
+  Значения разделяются «;». Оверлей также может быть «tmpfs» (по умолчанию) или
+  «disabled», что предписывает временно вернуть обычный режим работы rootfs.
+
+.Примеры использования:
+[,,subs="verbatim,quotes"]
+----
+# Устанавливаем необходимые пакеты
+**apt-get install make-initrd-bootchain-altboot make-initrd-bootchain-waitdev**
+
+# Добавляем требуемые фичи в конфиг make-initrd
+**echo 'FEATURES += bootchain-altboot bootchain-waitdev' >>/etc/initrd.mk**
+
+# Добавляем параметры загрузки в конфиг grub:
+uuid="$(grep -E '^UUID=.*[[:space:]]*/[[:space:]]' /etc/fstab |awk '{print $1}')"
+cmdline="**root=bootchain bootchain=overlayroot overlayroot=UUID=$uuid** panic=30 splash"
+echo "GRUB_CMDLINE_LINUX_DEFAULT='$cmdline'" >>/etc/sysconfig/grub2
+
+# Выполняем ещё несколько команд
+**make-initrd**
+**update-grub**
+**reboot**
+----
+
+После перезагрузки все изменения будут записываться на tmpfs и не сохраняться
+между перезагрузками. Чтобы временно отменить данный режим закрытия rootfs на
+запись, в самом начале загрузки нажимаем «*E*» в меню grub и дописываем к
+параметру загрузки *overlayroot*=… строку «*;disabled*». Должно получиться
+что-то вроде:
+
+[,,subs="verbatim,quotes"]
+----
+overlayroot=UUID=83dc6758-dc9c-48b0-8a13-683cc3d91d97;disabled
+----
+
+Чтобы изменения сохранялись не на tmpfs, а в отдельный раздел, например,
+с меткой тома «*OVERLAY*», дописываем строку «*;LABEL=OVERLAY*» к параметру
+*overlayroot*=… в */etc/sysconfig/grub2*, запускаем *update-grub* и снова
+перезагружаемся. В результате в /proc/cmdine при каждой загрузке будет
+попадать что-то вроде:
+
+[,,subs="verbatim,quotes"]
+----
+root=bootchain bootchain=overlayroot \
+  overlayroot=UUID=83dc6758-dc9c-48b0-8a13-683cc3d91d97;LABEL=OVERLAY
+----
+

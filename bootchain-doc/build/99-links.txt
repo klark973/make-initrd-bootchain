@@ -1,0 +1,14 @@
+== Полезные ссылки
+
+* https://github.com/osboot/make-initrd
+* https://www.altlinux.org/Make-initrd
+* https://www.altlinux.org/Propagator
+* https://www.altlinux.org/Make-initrd-propagator
+* https://lists.altlinux.org/pipermail/make-initrd/
+* https://bugzilla.altlinux.org/30315#c29
+* https://lists.altlinux.org/pipermail/devel/2018-April/204192.html
+* https://packages.altlinux.org/ru/sisyphus/srpms/make-initrd-bootchain/
+* https://github.com/klark973/make-initrd-bootchain
+* https://youtu.be/C-NsPKvsCAw?t=6855
+* http://0x1.tv/20210418F
+
