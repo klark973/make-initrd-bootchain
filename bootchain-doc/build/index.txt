@@ -20,6 +20,7 @@ init-bottom на загрузку с использованием run-time make-
 систему загрузки altboot, обеспечивающую совместимость со старым подходом \
 к загрузке через propagator.
 
+include::00-about.txt[]
 include::00-glossary.txt[]
 include::01-advantages.txt[]
 include::02-disadvantages.txt[]
