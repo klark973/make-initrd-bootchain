@@ -9,22 +9,22 @@
 * поддержка read-only слоёв LiveCD всеми «монтируемыми» методами загрузки,
   а не только NFS;
 * расширены исходные возможности пропагатора по загрузке с сервера SAMBA;
-* появилась возможность создания R/W-хранилища сеансов LiveCD на MMC/NVME
-  накопителях;
+* появилась возможность создания R/W-хранилища сеансов LiveCD на NVME дисках
+  и высокоскоростных накопителях MMC;
 * возрождён и улучшен утраченный функционал для добавления «забытых» модулей
-  ядра при загрузке;
-* тихая загрузка, *chaind* запускается на tty2, переключение на который
-  происходит лишь спустя 8 секунд;
+  ядра или правил udev при загрузке;
+* тихая загрузка: интерактивная часть *chaind* работает на терминале tty2,
+  переключение на который происходит спустя 8 секунд бездействия;
 * в отличии от *pipelined*, демон *chaind* может перейти на «передний план»
   и работать на конкретном терминале;
 * в отличии от *pipelined*, демон *chaind* может менять логику «на лету»,
   поддерживает циклы и условные переходы;
-* *bootchain+interactive* вместе обеспечивают основу для построения «шагов»
+* вместе *bootchain+interactive* обеспечивают основу для построения «шагов»
   текстового инсталлятора в stage1;
 * полная обратная совместимость с ранее написанными «шагами» для демона
   *pipelined*;
 * обратная совместимость с текущим инструментарием создания дистрибутивов
-  Альт: mkimage-profiles, alterator-netinst и другими installer-фичами;
+  ОС Альт: mkimage-profiles, alterator-netinst, различными installer-фичами;
 * штатная поддержка закрытия на запись обычной rootfs «шагами» *liveboot*
   и *overlayroot*.
 
@@ -32,6 +32,9 @@
 
 * https://bugzilla.altlinux.org/30472
 * https://bugzilla.altlinux.org/30315
-* https://www.altlinux.org/Installer/common/propagator
+* https://www.altlinux.org/Propagator
+* https://www.altlinux.org/Make-initrd
 * https://www.altlinux.org/Make-initrd-propagator
+* https://www.altlinux.org/Alterator-netinst
+* https://www.altlinux.org/Mkimage-profiles
 
