@@ -1,4 +1,4 @@
-== Модули bootchain
+== Модули bootchain + altboot
 
 Разделение на модули (подпакеты) позволяет добиться оптимального наполнения
 initramfs только необходимым для загрузки содержимым. Так, для загрузки по
@@ -9,27 +9,38 @@ initramfs только необходимым для загрузки содер
 
 * *make-initrd-bootchain* — мета-пакет, собирающий воедино все существующие
   модули bootchain, он же исходный SRPM;
-* *make-initrd-bootchain-core* — базовый функционал, включая шаги debug, fg,
-  mountfs, noop, noretry, overlayfs, retry и rootfs;
+* *make-initrd-bootchain-core* — базовый функционал, включая «шаги» debug,
+  fg, mountfs, noop, noretry, overlayfs, retry, rootfs и wait-resume, т.е.
+  это расширение исходной фичи
+  link:https://github.com/osboot/make-initrd/tree/master/features/pipeline[pipeline];
 * *make-initrd-bootchain-getimage* — обеспечивает метод загрузки образов по
-  сети утилитой wget по протоколам HTTP и FTP;
+  сети утилитой wget по протоколам HTTP и FTP, отделён в подпакет из исходной фичи
+  link:https://github.com/osboot/make-initrd/tree/master/features/pipeline[pipeline];
 * *make-initrd-bootchain-waitdev* — обеспечивает метод ожидания локального
-  носителя по заданной спецификации;
-* *make-initrd-bootchain-interactive* — обеспечивает интерактивное
-  взаимодействие, предоставляет диалоговые виджеты;
+  носителя по заданной спецификации, немного расширен и отделён в подпакет
+  из исходной фичи
+  link:https://github.com/osboot/make-initrd/tree/master/features/pipeline[pipeline];
+* *make-initrd-bootchain-interactive* — обеспечивает
+  _<<_интерактивный_режим_работы,интерактивное взаимодействие>>_ и предоставляет
+  _<<_библиотека_виджетов_модуль_bootchain_interactive,диалоговые виджеты>>_;
 * *make-initrd-bootchain-waitnet* — обеспечивает ожидание сети и экспорт
-  сетевых настроек в stage2, используется всеми сетевыми методами загрузки
-  (ftp, http, nfs, cifs) и является временным кодом;
-* *make-initrd-bootchain-altboot* — весь общий функционал пропагатора и шаг,
-  транслирующий его аргументы;
-* *make-initrd-bootchain-localdev* — обеспечивает методы загрузки disk/cdrom,
-  установку дополнительных модулей ядра;
-* *make-initrd-bootchain-liverw* — обеспечивает дополнительный функционал для
-  работы с R/W-сеансами LiveCD и Rescue;
-* *make-initrd-bootchain-nfs* — обеспечивает метод загрузки с сервера NFS и
-  поддержку read-only слоёв LiveCD (сквошей);
-* *make-initrd-bootchain-cifs* — обеспечивает метод загрузки с сервера SAMBA
-  и поддержку read-only слоёв LiveCD (сквошей);
+  сетевых настроек в stage2, используется всеми сетевыми
+  _<<_методы_загрузки_altboot,методами загрузки altboot>>_ (ftp, http,
+  nfs, cifs) и является временным кодом;
+* *make-initrd-bootchain-altboot* — весь общий функционал пропагатора и
+  «шаг», транслирующий его аргументы;
+* *make-initrd-bootchain-localdev* — обеспечивает
+  _<<_методы_загрузки_altboot,методы загрузки>>_ disk/cdrom, попадание
+  в stage1 на этапе загрузки дополнительных модулей ядра и правил udev;
+* *make-initrd-bootchain-liverw* — обеспечивает дополнительный функционал
+  для работы с
+  _<<_постоянное_хранилище_сеансов_livecd,постоянным хранилищем сеансов LiveCD>>_;
+* *make-initrd-bootchain-nfs* — обеспечивает
+  _<<_методы_загрузки_altboot,метод загрузки>>_ с сервера NFS и поддержку
+  _<<_read_only_слои_livecd,read-only слоёв LiveCD>>_ (сквошей);
+* *make-initrd-bootchain-cifs* — обеспечивает
+  _<<_методы_загрузки_altboot,метод загрузки>>_ с сервера SAMBA и поддержку
+  _<<_read_only_слои_livecd,read-only слоёв LiveCD>>_ (сквошей);
 * *make-initrd-bootchain-doc* — документация и набор тестов.
 
 См. также:
