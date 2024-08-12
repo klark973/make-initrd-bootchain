@@ -1,4 +1,3 @@
-<<<
 === Pipeline ► bootchain
 
 Тем, кто уже пользовался фичей make-initrd «*pipeline*», достаточно подключить
