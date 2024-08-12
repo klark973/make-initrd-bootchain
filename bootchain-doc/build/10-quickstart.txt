@@ -22,8 +22,8 @@ _<<_методы_загрузки_altboot,методов загрузки>>_, т
 
 Для дистрибутивов ОС Альт лучше задавать через /proc/cmdline параметр
 *ip=dhcp4*, поскольку установщик не работает с IPv6, а отсутствие в сети
-двух типов DHCP-серверов увеличивает время настройки секунд на 20 для
-каждого интерфейса.
+двух разных типов DHCP-серверов увеличивает время настройки секунд на 20
+для каждого интерфейса.
 
 В конфигурациях с несколькими сетевыми интерфейсами можно задавать сразу два
 параметра: *ifname=bootif0:<macaddr> ip=bootif0:dhcp4* — это заставит фичу
@@ -46,7 +46,8 @@ echo "FEATURES += bootchain-nfs" >>/etc/initrd.mk
 make-initrd
 ----
 
-См. детали в подразделе _<<_создание_своего_initrd_img_c_bootchain>>_.
+Некоторые детали есть также в подразделе
+_<<_создание_своего_initrd_img_c_bootchain>>_.
 
 Параметр *automatic* обрёл несколько новых аргументов, утратив при этом
 аргументы, связанные с настройкой сети, типа «*network:…*» (они игнорируются,
@@ -87,7 +88,7 @@ link:https://www.altlinux.org/Realtime[Realtime-ядра] не создают.
 ==== Создание своего initrd.img c bootchain
 
 Для сборки универсального *initrd.img* требуется создать в пользовательском
-каталоге два конфига *bootchain* и *initrd.mk*, после чего выполнить команду:
+каталоге два конфига: *bootchain* и *initrd.mk*, после чего выполнить команду:
 
 [,,subs="verbatim,quotes"]
 ----
@@ -99,11 +100,9 @@ link:https://www.altlinux.org/Realtime[Realtime-ядра] не создают.
 
 В конфиге *initrd.mk* подключаются необходимые фичи и добавляются
 модули ядра либо каталоги с ними. В качестве примера смотрите
-link:https://github.com/altlinux/mkimage-profiles/blob/master/features.in/initrd-bootchain/stage1/scripts.d/80-make-initrd-for-bootchain[этот
-скрипт сборки универсального образа initramfs].
-
-Внутри каждого ISO-образа, собранного при помощи
-link:https://www.altlinux.org/Mkimage-profiles[mkimage-profiles],
+link:https://github.com/altlinux/mkimage-profiles/blob/master/features.in/initrd-bootchain/stage1/scripts.d/80-make-initrd-for-bootchain[дистрибутивный
+скрипт] сборки универсального образа initramfs. Внутри каждого ISO-образа,
+собранного при помощи link:https://www.altlinux.org/Mkimage-profiles[mkimage-profiles],
 в каталоге */.disk* находятся конфиги *bootchain* и *initrd.mk*, а также
-файл *mkinitrd* c командами для сборки initrd*.img из этого ISO-образа.
+скрипт *mkinitrd* c командами для сборки initrd*.img из этого ISO-образа.
 
