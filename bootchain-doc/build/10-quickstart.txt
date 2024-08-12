@@ -46,6 +46,8 @@ echo "FEATURES += bootchain-nfs" >>/etc/initrd.mk
 make-initrd
 ----
 
+См. детали в подразделе _<<_создание_своего_initrd_img_c_bootchain>>_.
+
 Параметр *automatic* обрёл несколько новых аргументов, утратив при этом
 аргументы, связанные с настройкой сети, типа «*network:…*» (они игнорируются,
 т.к. сеть теперь настраивает сам make-initrd). Например, можно задавать
@@ -81,4 +83,27 @@ ISO-образу, то сначала будет смонтирован этот
 с необходимым для загрузки сквоша. Даже при наличии данного параметра, ядро не
 всегда создаёт RAM-диски. Например, некоторые
 link:https://www.altlinux.org/Realtime[Realtime-ядра] не создают.
+
+==== Создание своего initrd.img c bootchain
+
+Для сборки универсального *initrd.img* требуется создать в пользовательском
+каталоге два конфига *bootchain* и *initrd.mk*, после чего выполнить команду:
+
+[,,subs="verbatim,quotes"]
+----
+`*make-initrd*` --no-checks AUTODETECT= \
+  -c <путь/до/каталога_с_конфигами>/initrd.mk \
+  BOOTCHAIN_PATH=<путь/до/каталога_с_конфигами> \
+  -v -k <версия_ядра>
+----
+
+В конфиге *initrd.mk* подключаются необходимые фичи и добавляются
+модули ядра либо каталоги с ними. В качестве примера смотрите
+link:https://github.com/altlinux/mkimage-profiles/blob/master/features.in/initrd-bootchain/stage1/scripts.d/80-make-initrd-for-bootchain[этот
+скрипт сборки универсального образа initramfs].
+
+Внутри каждого ISO-образа, собранного при помощи
+link:https://www.altlinux.org/Mkimage-profiles[mkimage-profiles],
+в каталоге */.disk* находятся конфиги *bootchain* и *initrd.mk*, а также
+файл *mkinitrd* c командами для сборки initrd*.img из этого ISO-образа.
 
