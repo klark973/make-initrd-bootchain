@@ -43,4 +43,5 @@
 * https://bugzilla.altlinux.org/50888#c15
 * https://bugzilla.altlinux.org/42966
 * https://www.altlinux.org/Propagator
+* https://www.altlinux.org/Realtime
 

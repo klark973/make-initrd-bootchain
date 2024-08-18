@@ -49,7 +49,7 @@ _gateway_, _netmask_, _hostname_ и _interface_), поскольку в make-ini
 
 [,,subs="verbatim,quotes"]
 ----
-root=bootchain bootchain=fg,`*altboot ip=dhcp*` \
+root=bootchain bootchain=fg,`*altboot ip=dhcp4*` \
     automatic=method:nfs,server:192.168.15.1,`*timeout*`:120,...
 ----
 

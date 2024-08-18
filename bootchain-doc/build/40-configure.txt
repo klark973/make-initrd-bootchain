@@ -68,7 +68,8 @@ link:https://git.altlinux.org/gears/m/make-initrd-bootchain.git?p=make-initrd-bo
   в диалогах altboot;
 * *OEM_CDROOT* — необязательный путь к корню ISO-образа внутри initramfs,
   в ОС Альт это /image;
-* *OEM_LIVE_STORAGE* — метка тома live_rw раздела, если указана;
+* *OEM_LIVE_STORAGE* — метка тома
+  _<<_постоянное_хранилище_сеансов_livecd,live_rw раздела>>_, если указана;
 * *OEM_BAD_STORAGE* — метка тома, чтобы не использовать
   _<<_постоянное_хранилище_сеансов_livecd,live_rw раздел>>_
   на плохом или слишком медленном устройстве;
