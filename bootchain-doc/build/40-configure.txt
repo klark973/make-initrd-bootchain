@@ -1,10 +1,12 @@
 == Конфигурирование bootchain и altboot
 
 В дистрибутивах ОС Альт необходимое конфигурирование для создания универсальных
-загрузочных носителей уже выполнено в mkimage-profiles. Здесь представлена
-информация для разработчиков других дистрибутивов и пользователей *altboot*,
-желающих работать с ним в установленной Linux-системе на обычной rootfs, либо
-использующих LiveCD-оверлеи для локальной и сетевой загрузки.
+загрузочных носителей уже _<<_создание_своего_initrd_img_c_bootchain,выполнено>>_
+в link:https://www.altlinux.org/Mkimage-profiles[mkimage-profiles]. Здесь
+представлена информация для разработчиков других дистрибутивов и пользователей
+*altboot*, желающих работать с ним в установленной Linux-системе на обычной
+rootfs, либо использующих _<<_read_only_слои_livecd,оверлеи LiveCD>>_ для
+локальной и сетевой загрузки.
 
 Можно поместить в образ initramfs свой файл с альтернативной цветовой палитрой
 и опциями диалогов: */etc/dialogrc*, программа *dialog* использует этот файл
@@ -18,15 +20,73 @@
 ----
 
 И *altboot*, и *bootchain* настраиваются через один файл конфигурации, который
-также должен попасть в образ initramfs: */etc/sysconfig/bootchain* (можно
-переопределить каталог, в котором она находится, переменной BOOTCHAIN_PATH
-при вызове make-initrd). В этом конфиге можно переопределить дефолты и задать
-параметры, которые изначально не определены. Детали см. в примере
-*bootchain-doc/samples/bootchain-alt.conf*. Для добавления
-перечисленных файлов используется директива в */etc/initrd.mk*:
+также должен попасть в образ initramfs: */etc/sysconfig/bootchain* (при запуске
+make-initrd переменной *$BOOTCHAIN_PATH* можно переопределить каталог, в котором
+находится конфигурация). В этом конфигурационном файле можно переопределить
+дефолты и задать параметры, которые изначально не определены. См. детали в примере
+link:https://git.altlinux.org/gears/m/make-initrd-bootchain.git?p=make-initrd-bootchain.git;a=blob;f=bootchain-doc/samples/bootchain-alt.conf[bootchain-doc/samples/bootchain-alt.conf].
+Для добавления произвольных файлов используется директива в */etc/initrd.mk*:
 
 [,,subs="verbatim,quotes"]
 ----
 **PUT_FILES** += __<файлы>__
 ----
+
+Про кофигурирование в link:https://www.altlinux.org/Mkimage-profiles[mkimage-profiles]
+смотрите link:https://nightly.altlinux.org/docs/mkimage-profiles.html#_features_in_initrd_bootchain[features.in/initrd-bootchain/README].
+Далее будет приведено описание известных конфигурационных переменных.
+
+См. также:
+
+* <<_создание_своего_initrd_img_c_bootchain>>
+* https://www.altlinux.org/Mkimage-profiles
+* link:https://git.altlinux.org/gears/m/make-initrd-bootchain.git?p=make-initrd-bootchain.git;a=blob;f=bootchain-doc/samples/bootchain-alt.conf[Пример конфигурации в пакете с документацией]
+* link:https://github.com/altlinux/mkimage-profiles/blob/master/features.in/initrd-bootchain/stage1/scripts.d/80-make-initrd-for-bootchain[Дистрибутивный скрипт для создания initrd.img]
+
+=== Модуль make-initrd-bootchain-core
+
+* *BC_DEBUG* — непустое значение, если включена расширенная отладка;
+* *BC_LOG_VT* — если непустое значение, то порядковый номер TTY для
+  вывода журнала;
+* *BC_LOGFILE* — путь к файлу журнала или устройство для вывода в него
+  сообщений отладки;
+* *BC_DEVICE_TIMEOUT* — глобальный дефолтный таймаут для любых «шагов»
+  altboot;
+* *BC_FGVT_ACTIVATE* — если непустое значение, то через сколько секунд
+  активировать интерактивный терминал.
+
+=== Модуль make-initrd-bootchain-waitdev
+
+* *WAITDEV_TIMEOUT* — глобальный дефолтный суммарный таймаут для всех
+  «шагов» waitdev.
+
+=== Модуль make-initrd-bootchain-altboot
+
+* *OEM_WELCOME_TEXT* — используется в качестве заголовка верхнего уровня
+  в диалогах altboot;
+* *OEM_DISTRIBUTION* — используется в качестве названия дистрибутива
+  в диалогах altboot;
+* *OEM_CDROOT* — необязательный путь к корню ISO-образа внутри initramfs,
+  в ОС Альт это /image;
+* *OEM_LIVE_STORAGE* — метка тома live_rw раздела, если указана;
+* *OEM_BAD_STORAGE* — метка тома, чтобы не использовать
+  _<<_постоянное_хранилище_сеансов_livecd,live_rw раздел>>_
+  на плохом или слишком медленном устройстве;
+* *OEM_SETUP_STORAGE* — метка тома раздела для обновления initramfs
+  «на лету»;
+* *OEM_IMAGES_BASE* — куда в stage2 монтировать каталог с образами
+  _<<_read_only_слои_livecd,слоёв LiveCD>>_;
+* *OEM_OVERLAYS_DIR* — куда в stage2 монтировать сами
+  _<<_read_only_слои_livecd,слои LiveCD>>_;
+* *OEM_URL_NETINST* — значение по умолчанию компоненты directory для
+  загрузки методами http и ftp;
+* *OEM_NFS_NETINST* — значение по умолчанию компоненты directory для
+  загрузки методом nfs;
+* *OEM_CIFS_NETINST* — значение по умолчанию компоненты directory для
+  загрузки методом cifs.
+
+=== Модуль make-initrd-bootchain-waitnet
+
+* *OEM_SRV_NETINST* — значение по умолчанию компоненты server для загрузки
+  методами http и ftp, определяет IP-адрес или имя сервера сетевой загрузки.
 
