@@ -16,7 +16,9 @@ title-page:
     top: 70%
     font_size: floor($base_font_size * 2.0)
   authors:
-    delimiter: '; '
+    delimiter: '
+
+'
     content:
       name_only: "{author}"
       with_email: "{author} <{email}>"
