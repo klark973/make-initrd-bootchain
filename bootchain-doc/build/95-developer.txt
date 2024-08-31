@@ -1,4 +1,4 @@
-== Разработчику bootchain/altboot
+== Разработчику bootchain + altboot
 
 === Общий вспомогательный код
 
