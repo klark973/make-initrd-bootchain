@@ -1,21 +1,22 @@
 === cifs
 
-Входит в подпакет *make-initrd-bootchain-cifs*, обеспечивает метод загрузки
-с сервера SAMBA по протоколу CIFS и поддержку read-only слоёв LiveCD (сквошей),
+Входит в подпакет *make-initrd-bootchain-cifs*, обеспечивает
+_<<_методы_загрузки_altboot,метод загрузки>>_ с сервера SAMBA по протоколу
+CIFS и поддержку _<<_read_only_слои_livecd,read-only слоёв LiveCD>>_ (сквошей),
 размещаемых также на сервере SAMBA. В процессе работы может вывести диалог
 ввода данных для соединения с сервером SAMBA (виджет *form*). При поиске
 сервера и ожидании установки соединения используется виджет *ponder*.
 
-image::../images/bc09.jpg[align="center",scaledwidth="75%"]
-
-image::../images/bc07.jpg[align="center",scaledwidth="75%"]
-
 Параметры загрузки:
 
 * *altboot_cifs* — набор поддерживаемых аргументов в виде «ключ=значение»,
-  перечисленных через «;» (см. ниже).
+  перечисленных через «;» (см. ниже);
 * `*cifsopts*` — дополнительные опции монтирования *mount.cifs* для всех
-  шагов cifs.
+  «шагов» cifs.
+
+image::../images/bc09.jpg[align="center",scaledwidth="75%"]
+
+image::../images/bc07.jpg[align="center",scaledwidth="75%"]
 
 Поддерживаемые аргументы, в том числе, через *automatic=…*:
 
@@ -33,8 +34,8 @@ image::../images/bc07.jpg[align="center",scaledwidth="75%"]
 * `*overlays*` — путь к каталогу с профилями оверлеев LiveCD, по умолчанию
   «/netinst/overlays-live».
 
-Для каждого шага *cifs* задаётся свой набор параметров в *altboot_cifs*.
-Параметр *cifsopts*, напротив, имеет глобальное значение для всех шагов
+Для каждого «шага» *cifs* задаётся свой набор параметров в *altboot_cifs*.
+Параметр *cifsopts*, напротив, имеет глобальное значение для всех «шагов»
 *cifs*. Если набор дополнительных опций монтирования разделяется пробелами,
 можно прописать их в *CIFSOPTS=…* в конфигурационном файле
 */etc/sysconfig/bootchain*. Имя пользователя, пароль и домен необязательны,
@@ -43,14 +44,15 @@ image::../images/bc07.jpg[align="center",scaledwidth="75%"]
 *server*, то на его поиск выделяется дополнительное время, равное половине
 *timeout*.
 
-В случае успеха загрузки в режиме совместимости с пропагатором шаг *cifs*
-экспортирует в stage2 переменные окружения:
+В случае успеха загрузки и только в
+_<<_совместимость_с_propagator_и_init_bottom,режиме совместимости с пропагатором>>_
+«шаг» *cifs* экспортирует в stage2 переменные окружения:
 
 * *METHOD*=cifs — название выбранного метода загрузки altboot;
 * *HOST* — имя или IP-адрес SAMBA сервера;
 * *PREFIX* —  путь к каталогу дистрибутива или ISO-образу;
-* `*SMBOPTS*` — все опции монтирования, включая данные аутентификации (новое
-  в altboot);
+* `*SMBOPTS*` — все опции монтирования, включая данные аутентификации
+  (_новое в altboot_);
 * `*DOMAIN*` — название домена SAMBA, если был указан domain;
 * `*LOGIN*` — имя авторизованного пользователя, если был указан user;
 * `*PASSWORD*` — пароль авторизованного пользователя, если был указан user;
@@ -61,7 +63,7 @@ image::../images/bc07.jpg[align="center",scaledwidth="75%"]
 [,,subs="verbatim,quotes"]
 ----
 root=bootchain bootchain=fg,`*altboot*` **ip=dhcp4** \
-  automatic=method:**cifs**,network:dhcp,server:192.168.15.1,directory:/netinst/current
+  automatic=method:**cifs**,server:192.168.15.1,directory:/netinst/current
 ----
 
 См. также:
