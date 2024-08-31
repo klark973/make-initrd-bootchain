@@ -2,26 +2,27 @@
 
 Базовый неинтерактивный «шаг», входящий в подпакет *make-initrd-bootchain-altboot*.
 Монтирует через lomount() указанный файл из каталога или устройство, полученное
-на предыдущем шаге, как сквош.
+на предыдущем «шаге», как сквош.
 
 Параметры загрузки:
 
-* *altboot_squashfs* — обязательный, если результат предыдущего шага —
+* *altboot_squashfs* — обязательный, если результат предыдущего «шага» —
   смонтированный каталог, то указывает путь к файлу со сквошом в этом каталоге.
   В терминах пропагатора — rootfs второй стадии загрузки (/$stagename). Если
-  результатом предыдущего шага является устройство, передаваемое через *dev*
+  результатом предыдущего «шага» является устройство, передаваемое через *dev*
   или *DEVNAME*, тогда этот параметр не используется, но он всё равно должен
-  содержать непустую строку (особенность регистрации массивов в make-initrd).
+  содержать непустую строку (такая особенность регистрации массивов
+  в link:https://www.altlinux.org/Make-initrd[make-initrd]).
 
 .Примеры использования:
 [,,subs="verbatim,quotes"]
 ----
-root=bootchain bootchain=fg,`*altboot*` ip=dhcp **stagename=rescue** \
+root=bootchain bootchain=fg,`*altboot*` ip=dhcp4 **stagename=rescue** \
   automatic=method:ftp,network:dhcp,server:192.168.15.1,directory:/netinst/alt.iso
 
-root=bootchain bootchain=fg,download,iso9660,`*squashfs*`,liveboot,rootfs ip=dhcp \
+root=bootchain bootchain=fg,download,iso9660,`*squashfs*`,liveboot,rootfs ip=dhcp4 \
   altboot_download=to=RD;method=http;server=192.168.15.1;directory=/netinst/alt.iso \
-  `*altboot_squashfs*`=/live \
+  `*altboot_squashfs*`=/live ramdisk_size=1081725 \
   altboot_liveboot=**stagename=live**;method=http;flags=live_ro,live_rw
 ----
 
