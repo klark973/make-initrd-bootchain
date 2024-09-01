@@ -19,35 +19,37 @@ bootchain=fg,download,liveboot,rootfs ...
 «*checksum*», «*oemsetup*», «*overlayroot*», связывающие «выход» предыдущего
 шага со «входом» следующего шага. Есть служебные и внутренние псевдо-шаги, на
 которые даже не тратится каталогов, они никакого влияния на сопряжение других
-шагов не оказывают и их можно даже не учитывать в нумерации шагов: «*debug*»,
+шагов не оказывают и их не следует учитывать в нумерации шагов: «*debug*»,
 «*fg*», «*noretry*» и «*retry*».
 
 .Таблица маркировки входов/выходов:
 [valign="top",options="header,compact,pgwide,unbreakable",cols="1,1,1"]
 |===========================================================================
-|Ожидает на «входе» |Название «шага» |Формирует на «выходе»
-|<bypass>           |altboot         |<bypass>
-|<multi-1>          |checksum        |<bypass>
-|—                  |cifs            |<mp>
-|<mp>               |copyfile        |DEVNAME+dev+FILESIZE
-|<bypass>           |debug           |<bypass>
-|[DEVNAME]          |download        |DEVNAME+dev+FILESIZE
-|<bypass>           |fg              |<bypass>
-|—                  |getimage        |<mp>
-|DEVNAME/dev        |iso9660         |<mp>
-|<mp>               |liveboot        |<bypass>
-|[DEVNAME/dev]      |localdev        |<mp>
-|[<resolve>]        |mountfs         |<mp>
-|—                  |nfs             |<mp>
-|—                  |noop            |<nothing>
-|<bypass>           |noretry         |<bypass>
-|<bypass>           |oemsetup        |<bypass>
-|[<mp>]             |overlayfs       |<mp>
-|<bypass>           |overlayroot     |<bypass>
-|<bypass>           |retry           |<bypass>
-|<mp>               |rootfs          |<nothing>
-|<mp>/DEVNAME/dev   |squashfs        |<mp>
-|—                  |waitdev         |DEVNAME+dev
+|Ожидает на «входе» |Название «шага»   |Формирует на «выходе»
+|<bypass>           |<<_altboot>>      |<bypass>
+|<multi-1>          |<<_checksum>>     |<bypass>
+|—                  |<<_cifs>>         |<mp>
+|<mp>               |<<_copyfile>>     |DEVNAME+dev+FILESIZE
+|<bypass>           |<<_debug>>        |<bypass>
+|[DEVNAME]          |<<_download>>     |DEVNAME+dev+FILESIZE
+|<bypass>           |<<_fg>>           |<bypass>
+|—                  |<<_getimage>>     |<mp>
+|DEVNAME/dev        |<<_iso9660>>      |<mp>
+|<mp>               |<<_liveboot>>     |<bypass>
+|[DEVNAME/dev]      |<<_localdev>>     |<mp>
+|[<resolve>]        |<<_mountfs>>      |<mp>
+|—                  |<<_nfs>>          |<mp>
+|—                  |<<_noop>>         |<nothing>
+|<bypass>           |<<_noretry>>      |<bypass>
+|<bypass>           |<<_oemsetup>>     |<bypass>
+|[<mp>]             |<<_overlayfs>>    |<mp>
+|<bypass>           |<<_overlayroot>>  |<bypass>
+|—                  |<<_ping>>         |<nothing>
+|<bypass>           |<<_retry>>        |<bypass>
+|<mp>               |<<_rootfs>>       |<nothing>
+|<mp>/DEVNAME/dev   |<<_squashfs>>     |<mp>
+|—                  |<<_wait_resume>>  |<nothing>
+|—                  |<<_waitdev>>      |DEVNAME+dev
 |===========================================================================
 
 Обозначения в таблице:
