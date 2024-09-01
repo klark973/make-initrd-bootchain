@@ -95,7 +95,7 @@ root=bootchain bootchain=waitdev,fg,`*download*`,... ip=dhcp4 \
 
 root=bootchain bootchain=fg,localdev,`*download*`,squashfs,liveboot,rootfs \
   altboot_localdev=method=cdrom;uuid=2021-05-31-01-09-58-00;directory=/rescue \
-  `*altboot_download*`=to=RD;method=**url**;**url**=file:///rescue \
+  `*altboot_download*`=to=RD;method=**url**;**url**=file:///rescue ramdisk_size=497773 \
   altboot_liveboot=stagename=rescue;method=cdrom;overlays=SLICES;flags=live_ro,rescue
 ----
 

@@ -162,7 +162,7 @@ done
 `*IM_ponder_start*` "[ Scanning disk... ]" \
     "Searching random bits on the disk for fill CRNG entropy..."
 ( find / -type f -print0 |
-  xargs -0 grep "Linus Torvalds" \
+  xargs -0 grep "Linus Torvalds"
 ) >/tmp/Linus.txt 2>/dev/null
 `*IM_ponder_stop*`
 ----

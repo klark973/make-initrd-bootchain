@@ -31,6 +31,6 @@
 ----
 root=bootchain bootchain=fg,localdev,`*copyfile*`,checksum,squashfs,liveboot,rootfs \
   altboot_localdev=method=cdrom;uuid=2021-05-31-01-09-58-00;directory=/rescue \
-  `*altboot_copyfile*`=dst=RD;src=rescue ...
+  `*altboot_copyfile*`=dst=RD;src=rescue ramdisk_size=497773 ...
 ----
 

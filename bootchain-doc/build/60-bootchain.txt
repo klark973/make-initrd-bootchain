@@ -12,7 +12,7 @@
 цепочке загрузки не следует. Он автоматически запускается при использовании
 параметра *bc_debug* в /proc/cmdline перед каждым «шагом» *bootchain* и перед
 переходом в stage2, оказывая влияние только на содержимое журнала
-*/var/log/chaind.log*.
+*/var/log/chaind.log* (или */var/log/pipelined.log*).
 
 === fg
 
@@ -120,8 +120,8 @@ make-initrd данный «шаг» появился сравнительно н
 .Пример использования:
 [,,subs="verbatim,quotes"]
 ----
-root=bootchain bootchain=noretry,`*ping*`,getimage,mountfs,overlayfs,rootfs \
-  **ip=dhcp4** `*ping*`=v4:iter=30:ftp.altlinux.org \
+root=bootchain bootchain=noretry,`*ping*`,getimage,mountfs,overlayfs,rootfs **ip=dhcp4** \
+  `*ping*`=v4:iter=30:ftp.altlinux.org \
   getimage=http://ftp.altlinux.org/pub/people/mike/iso/misc/vi-20140918-i586.iso \
   mountfs=rescue
 ----
@@ -200,6 +200,7 @@ root=bootchain bootchain=`*waitdev*`,fg,download,... ip=dhcp4 \
   altboot_download=method=url;url=http://192.168.15.1/images/alt-ws11.img
 ----
 
-На момент написания спецификация определения дисков в стиле *MODEL=…* пока не
-поддерживается в make-initrd, так что последний пример скорее гипотетический.
+На момент написания настоящей документации спецификация определения дисков
+в стиле *MODEL=…* не поддерживается make-initrd, так что третий пример здесь
+скорее гипотетический.
 

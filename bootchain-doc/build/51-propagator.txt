@@ -1,8 +1,8 @@
 == Совместимость с propagator и init-bottom
 
-Шаги *altboot* могут работать в одном из двух режимов: в «обычном» режиме,
-как шаги *bootchain* (но не *pipeline*), и в «режиме совместимости с
-пропагатором». Внутри исходников шагов это управляется переменной
+«Шаги» *altboot* могут работать в одном из двух режимов: в «обычном» режиме,
+как «шаги» *bootchain* (но не *pipeline*), и в «режиме совместимости с
+пропагатором». Внутри исходников «шагов» это управляется переменной
 *$ALBOOT_OLDROOT*. В «обычном» режиме «шаги» могут повторяться в цепочке,
 они конфигурируются по отдельности через /proc/cmdline, ничего не экспортируют
 в stage2, монтируют каталоги в стиле *pipeline*, по умолчанию через
@@ -12,19 +12,19 @@
 ----
 root=bootchain bootchain=fg,`*localdev,copyfile,checksum,squashfs,liveboot*`,rootfs \
   `*altboot_localdev*`=method=cdrom;uuid=2021-05-30-12-55-00-00;directory=/rescue \
-  `*altboot_copyfile*`=dst=RD;src=/rescue \
+  `*altboot_copyfile*`=dst=RD;src=/rescue ramdisk_size=497773 \
   `*altboot_checksum*`=613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec \
   `*altboot_liveboot*`=stagename=rescue;method=cdrom;flags=live_ro,rescue,live_rw
 ----
 
-Режим «совместимости с пропагатором» активируется шагом с именем «*altboot*».
-Он сам определяет и конфигурирует через внутренний конфиг все последующие шаги,
+Режим «совместимости с пропагатором» активируется «шагом» с именем «*altboot*».
+Он сам определяет и конфигурирует через внутренний конфиг все последующие «шаги»,
 ориентируясь на параметры, предназначенные пропагатору и скрипту *init-bootom*.
-В этом режиме *$ALBOOT_OLDROOT=1*, каждый шаг *altboot* может быть пройден
+В этом режиме *$ALBOOT_OLDROOT=1*, каждый «шаг» *altboot* может быть пройден
 только единожды, в stage2 экспортируются определённые данные, в зависимости от
-выбранного метода загрузки, каталог */dev/bootchain*, по возможности, очищается
-до перехода в stage2, монтирование выполняется «внахлёст» через каталоги
-*/root* (*$rootmnt*) и */image* (*$OEM_CDROOT*):
+выбранного _<<_методы_загрузки_altboot,метода загрузки>>_, каталог */dev/bootchain*,
+по возможности, очищается до перехода в stage2, монтирование выполняется «внахлёст»
+через каталоги */root* (*$rootmnt*) и */image* (*$OEM_CDROOT*):
 
 [,,subs="verbatim,quotes"]
 ----
@@ -32,7 +32,8 @@ root=bootchain bootchain=fg,`*localdev,copyfile,checksum,squashfs,liveboot*`,roo
   [lowmem] [ramdisk_size=...] [stagename={altinst|live|rescue}]
 ----
 
-Для полной совместимости с пропагатором в конфигурации следует прописать
+Для полной совместимости с link:https://www.altlinux.org/Propagator[пропагатором]
+в _<<_конфигурирование_bootchain_и_altboot,конфигурации>>_ следует прописать
 *OEM_DEFAULT_STAGE2=altinst*, этот дефолт был в пропагаторе, в коде *altboot*
 его нет. Иначе образ, собранный без параметра *stagename=…* загрузиться не
 сможет. В link:https://www.altlinux.org/Mkimage-profiles[mkimage-profiles]
