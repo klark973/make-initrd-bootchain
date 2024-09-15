@@ -1,5 +1,50 @@
 #!/bin/bash -efu
 
+check_pmbr_records()
+{
+	enter "check_pmbr_records"
+
+	# The disk should have a GUID/GPT label
+	partn="sfdisk -l"
+	debug "RUN: $partn -- $whole"
+	LC_ALL=C $partn -- "$whole" >"$tmpf" 2>&1 ||:
+	[ ! -s "$tmpf" ] ||
+		fdump "$tmpf"
+	if ! grep -qs 'Disklabel type: gpt' "$tmpf"; then
+		leave "check_pmbr_records"
+		return 1
+	fi
+
+	# The disk should have a Protective MBR
+	partn="sfdisk -l --label-nested=mbr"
+	debug "RUN: $partn -- $whole"
+	LC_ALL=C $partn -- "$whole" >"$tmpf" 2>/dev/null ||:
+	[ ! -s "$tmpf" ] ||
+		fdump "$tmpf"
+	if ! grep -qs 'Disklabel type: dos' "$tmpf"; then
+		leave "check_pmbr_records"
+		return 1
+	fi
+
+	# Create a second temporary file with only the list of partitions
+	cat -- "$tmpf" |sed '1,/^Device /d' |sed '/^$/,$d' >"$tmpf"_1
+
+	# PMBR should have only two specific records
+	partn="$(wc -l -- "$tmpf"_1 |sed 's/ .*$//')"
+	if [ "$partn" = 2 ] &&
+	   grep -qsE ' ee GPT$' "$tmpf"_1 &&
+	   grep -qsE ' 0 Empty$' "$tmpf"_1
+	then
+		run rm -f -- "$tmpf"_1
+		leave "check_pmbr_records"
+		return 0
+	fi
+
+	run rm -f -- "$tmpf"_1
+	leave "check_pmbr_records"
+	return 1
+}
+
 create_disk_slice()
 {
 	enter "create_disk_slice"
@@ -22,8 +67,7 @@ create_disk_slice()
 		return 0
 	fi
 
-	local minsize=$((1024 * 1024 * 1024))
-	local tmpf devpath start lenght partn whole=
+	local devpath partn whole=
 
 	# if DEVICE is a partition, search a parent whole disk drive
 	devpath="/sys/dev/block/$(mountpoint -x -- "/dev/$devname")"
@@ -68,6 +112,8 @@ create_disk_slice()
 	IM_start_output ponder errmsg
 	IM_ponder_start "[ Creating persistent storage... ]"
 
+	local tmpf
+
 	# Use for store output
 	tmpf="$(run mktemp -t ||:)"
 	if [ ! -f "$tmpf" ]; then
@@ -77,6 +123,11 @@ create_disk_slice()
 		return 0
 	fi
 	debug "writing tmpfile: '$tmpf'"
+
+	local fix_pmbr=1
+
+	# Check for having valid PMBR records
+	check_pmbr_records || fix_pmbr=
 
 	# Check for unpartitioned disk space
 	message "searching unpartitioned space on the drive $whole"
@@ -96,8 +147,11 @@ create_disk_slice()
 		[ ! -s "$tmpf" ] || fdump "$tmpf"
 	fi
 
+	local start lenght
+	local minsize=$((1024 * 1024 * 1024))
+
 	# Determinate free space
-	lenght="$(head -n1 "$tmpf" |
+	lenght="$(head -n1 -- "$tmpf" |
 			grep -sE '^Unpartitioned space ' |
 			cut -f6 -d' ')"
 	debug "unpartitioned space on the $whole: $lenght bytes"
@@ -145,6 +199,14 @@ create_disk_slice()
 			partn=$((1 + $partn))
 			sleep 1
 		done
+	fi
+
+	# Tricking old BIOS into booting from GUID/GPT
+	if [ -n "$fix_pmbr" ]; then
+		debug "adding a boot record to the PMBR table"
+		printf '\200\0\0\0\0\0\0\0\0\0\0\0\001\0\0\0' |
+			dd "of=$whole" bs=1 seek=462 2>/dev/null
+		sync
 	fi
 
 	# On fail only

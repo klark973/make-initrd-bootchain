@@ -37,4 +37,5 @@ root=bootchain bootchain=fg,`*altboot*` live stagename=live \
 * https://bugzilla.altlinux.org/32562
 * https://www.altlinux.org/Make-initrd-propagator
 * https://www.altlinux.org/Remount_rw
+* https://bugzilla.altlinux.org/51479
 
