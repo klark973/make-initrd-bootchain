@@ -299,31 +299,40 @@ check_avail_space()
 {
 	enter "check_avail_space"
 
-	local text avail rc=0 number sysfs
+	local text avail number sysfs mem=
 	local szkb="$(( $filesize / 1024 + 1 ))"
+	local regex="s/^MemAvailable:[[:space:]]+([0-9]+)[^0-9]*/\1/p"
 
-	if [ -n "$dstreg" ]; then
-		avail="$(grep -sE ^MemAvailable: /proc/meminfo |
-				sed 's/[^[:digit:]]//g')"
-	else
+	avail="$(sed -n -E "$regex" /proc/meminfo ||:)"
+	avail="$(( ${avail:-0} / 2 ))"
+
+	if [ -z "$dstreg" ]; then
 		number="$(mountpoint -x -- "$to")"
 		sysfs="/sys/dev/block/$number/size"
-		[ -r "$sysfs" ] && read -r avail <"$sysfs" || avail=
+		[ -r "$sysfs" ] && read -r mem <"$sysfs" ||:
+		mem="$(( ${mem:-0} / 2 ))"
+
+		if [ "${to:0:8}" != /dev/ram ]; then
+			avail="$mem"
+		elif [ "$avail" -gt "$mem" ] 2>/dev/null; then
+			avail="$mem"
+		fi
 	fi
 
-	avail="$(( ${avail:-0} / 2 ))"
 	message "available: $avail KiB, required: $szkb KiB"
 
 	if [ "$avail" -lt "$szkb" ]; then
 		text="not enough memory for download specified image"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$text, dialogs are disabled"
-		IM_errmsg "N${text:1}. Retry with ramdisk_size=$szkb after reboot. $IM_RBMSG"
+		text="N${text:1}. Available space: $avail KiB."
+		[ -n "$dstreg" ] || [ "${to:0:8}" != /dev/ram ] ||
+			text="$text Retry with ramdisk_size=$szkb after reboot."
+		IM_errmsg "$text $IM_RBMSG"
 		bc_reboot
 	fi
 
 	leave "check_avail_space"
-	return $rc
 }
 
 read_image()
