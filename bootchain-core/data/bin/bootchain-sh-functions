@@ -30,6 +30,7 @@ fi
 	BC_FGVT_ACTIVATE="${BC_FGVT_ACTIVATE:-7}"
 BC_NEXTCHAIN=/.initrd/bootchain/bootchain.next
 BC_PASSED=/.initrd/bootchain/passed
+BC_TMPFS_SIZE="${BC_TMPFS_SIZE-50%}"
 handlerdir=/lib/bootchain
 BC_ROOT=/bc-root
 

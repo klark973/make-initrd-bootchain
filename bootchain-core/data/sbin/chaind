@@ -75,7 +75,7 @@ else
 	run mkdir -p -- "$mntdir" "$BC_PASSED" "$BC_ROOT"
 
 	mountpoint -q -- "$mntdir" ||
-		run mount -t tmpfs tmpfs "$mntdir"
+		run mount -t tmpfs -o size="$BC_TMPFS_SIZE" tmpfs "$mntdir"
 
 	chainsteps="$BOOTCHAIN"
 fi

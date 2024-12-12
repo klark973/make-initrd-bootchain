@@ -53,7 +53,9 @@ link:https://git.altlinux.org/gears/m/make-initrd-bootchain.git?p=make-initrd-bo
 * *BC_DEVICE_TIMEOUT* — глобальный дефолтный таймаут для любых «шагов»
   altboot;
 * *BC_FGVT_ACTIVATE* — если непустое значение, то через сколько секунд
-  активировать интерактивный терминал.
+  активировать интерактивный терминал;
+* `*BC_TMPFS_SIZE*` — непустое значение размера TMPFS, если хотим поменять
+  дефолтное значение «50%» (начиная с версии *0.1.5-alt27*).
 
 === Модуль make-initrd-bootchain-waitdev
 
