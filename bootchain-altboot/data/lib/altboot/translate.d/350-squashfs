@@ -13,6 +13,7 @@ else
 	ALTBOOT_COPYFILE0="src=/$STAGENAME"
 	grep -qws ramdisk_size /proc/cmdline ||
 		ALTBOOT_COPYFILE0="dst=TMPFS;$ALTBOOT_COPYFILE0"
+	ALTBOOT_COPYFILE0="$ALTBOOT_COPYFILE0;reserve=$reserve"
 
 	if [ -n "${HASH-}" ]; then
 		ALTBOOT="$ALTBOOT,checksum"

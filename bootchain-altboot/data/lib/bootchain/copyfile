@@ -15,6 +15,7 @@ b_a()
 b_a src
 b_a dst
 b_a size
+b_a reserve
 
 # BOOTIMG used in propagator compatibility mode only
 BOOTIMG=/run/rootfs.squash
@@ -39,10 +40,11 @@ check_avail_space()
 
 	local text avail number sysfs mem=
 	local szkb="$(( $size / 1024 + 1 ))"
+	local sizemin="$(( $reserve * 1024 + $szkb ))"
 	local regex="s/^MemAvailable:[[:space:]]+([0-9]+)[^0-9]*/\1/p"
 
 	avail="$(sed -n -E "$regex" /proc/meminfo ||:)"
-	avail="$(( ${avail:-0} / 2 ))"
+	avail="${avail:-0}"
 
 	if [ -z "$regular" ]; then
 		number="$(mountpoint -x -- "$dst")"
@@ -50,16 +52,18 @@ check_avail_space()
 		[ -r "$sysfs" ] && read -r mem <"$sysfs" ||:
 		mem="$(( ${mem:-0} / 2 ))"
 
-		if [ "${dst:0:8}" != /dev/ram ]; then
+		if [ "${dst:0:8}" = /dev/ram ]; then
+			mem="$(( $reserve * 1024 + $mem ))"
+			[ "$avail" -le "$mem" ] || avail="$mem"
+		else
 			avail="$mem"
-		elif [ "$avail" -gt "$mem" ] 2>/dev/null; then
-			avail="$mem"
+			sizemin="$szkb"
 		fi
 	fi
 
-	message "available: $avail KiB, required: $szkb KiB"
+	message "available: $avail KiB, required: $sizemin KiB"
 
-	if [ "$avail" -lt "$szkb" ]; then
+	if [ "$avail" -lt "$sizemin" ]; then
 		text="not enough memory for copy specified file"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$text, dialogs are disabled"

@@ -1,0 +1,5 @@
+#!/bin/bash -efu
+
+VALUE=512
+reserve="${reserve:-$VALUE}"
+[ "$reserve" -ge "$VALUE" ] 2>/dev/null || reserve="$VALUE"

@@ -27,7 +27,7 @@ ftp|http|url)
 		VALUE="$VALUE;imgsize=$imgsize"
 	[ -z "$timeout" ] ||
 		VALUE="$VALUE;timeout=$timeout"
-	ALTBOOT_DOWNLOAD0="$VALUE"
+	ALTBOOT_DOWNLOAD0="$VALUE;reserve=$reserve"
 	overlays=
 	LOWMEM=1
 	VALUE=
