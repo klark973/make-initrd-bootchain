@@ -17,8 +17,8 @@ b_a dst
 b_a size
 b_a reserve
 
-# BOOTIMG used in propagator compatibility mode only
-BOOTIMG=/run/rootfs.squash
+# BOOTIMG is used only in propagator compatibility mode
+BOOTIMG="$mntdir/rootfs.squash"
 
 
 check_file_size()

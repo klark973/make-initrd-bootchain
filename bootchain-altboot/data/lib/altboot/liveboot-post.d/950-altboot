@@ -11,7 +11,11 @@ altboot_cleanup()
 			cut -f2 -d' ' |
 			sort -r |
 		while read -r mp; do
-			run umount -- "$mp" ||:
+			case "$mp" in
+			"$mntdir"/*)
+				run umount -- "$mp" ||:
+				;;
+			esac
 		done
 	fi
 
@@ -19,7 +23,7 @@ altboot_cleanup()
 }
 
 if [ -n "$ALTBOOT_OLDROOT" ]; then
-	[ -f "$mntdir"/DIRTY ] ||
+	[ -n "$BC_DEBUG" ] ||
 		altboot_cleanup
 	[ ! -s "$altboot_envfile" ] ||
 		cat "$altboot_envfile" >> /.initrd/kernenv

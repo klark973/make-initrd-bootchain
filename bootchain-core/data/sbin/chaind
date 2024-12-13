@@ -218,9 +218,11 @@ fi
 prevdir="$(readlink-e "$destdir" 2>/dev/null ||:)"
 
 if [ -z "$BC_DEBUG" ]; then
-	grep -qs " $mntdir/" /proc/mounts ||
-		run umount -- "$mntdir" &&
-		run rm -rf -- "$mntdir" ||:
+	if [ ! -f "$mntdir"/DIRTY ]; then
+		grep -qs " $mntdir/" /proc/mounts ||
+			run umount -- "$mntdir" &&
+			run rm -rf -- "$mntdir" ||:
+	fi
 else
 	datadir=
 	destdir=

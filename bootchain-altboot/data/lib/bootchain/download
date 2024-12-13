@@ -28,8 +28,8 @@ b_a imgsize
 b_a timeout
 b_a reserve
 
-# BOOTIMG used with FTP/HTTP methods in propagator compatibility mode only
-[ -z "$fuid" ] && BOOTIMG="/run/boot-image.iso" || BOOTIMG="/run/rootfs.squash"
+# BOOTIMG is only used with FTP/HTTP methods in propagator compatibility mode
+[ -z "$fuid" ] && BOOTIMG="$mntdir/boot-image.iso" || BOOTIMG="$mntdir/rootfs.squash"
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_URL_NETINST="${OEM_URL_NETINST:-/pub/netinst/current}"
