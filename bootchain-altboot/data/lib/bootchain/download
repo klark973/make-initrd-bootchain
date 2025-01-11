@@ -302,7 +302,7 @@ check_avail_space()
 
 	local text avail number sysfs mem=
 	local szkb="$(( $filesize / 1024 + 1 ))"
-	local sizemin="$(( $reserve * 1024 + $szkb ))"
+	local sizemin="$(( ${reserve:-512} * 1024 + $szkb ))"
 	local regex="s/^MemAvailable:[[:space:]]+([0-9]+)[^0-9]*/\1/p"
 
 	avail="$(sed -n -E "$regex" /proc/meminfo ||:)"
@@ -315,7 +315,7 @@ check_avail_space()
 		mem="$(( ${mem:-0} / 2 ))"
 
 		if [ "${to:0:8}" = /dev/ram ]; then
-			mem="$(( $reserve * 1024 + $mem ))"
+			mem="$(( ${reserve:-512} * 1024 + $mem ))"
 			[ "$avail" -le "$mem" ] || avail="$mem"
 		else
 			avail="$mem"
