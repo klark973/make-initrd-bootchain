@@ -25,7 +25,10 @@ altboot_cleanup()
 if [ -n "$ALTBOOT_OLDROOT" ]; then
 	[ -n "$BC_DEBUG" ] ||
 		altboot_cleanup
-	[ ! -s "$altboot_envfile" ] ||
+	if [ -s "$altboot_envfile" ]; then
 		cat "$altboot_envfile" >> /.initrd/kernenv
+		mkdir -p /run/stage1
+		cat "$altboot_envfile" >> /run/stage1/vars
+	fi
 	message "Spawning init..."
 fi
