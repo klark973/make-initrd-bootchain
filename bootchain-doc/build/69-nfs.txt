@@ -11,7 +11,6 @@ image::../images/bc08.jpg[align="center",scaledwidth="75%"]
 
 image::../images/bc-err4.jpg[align="center",scaledwidth="75%"]
 
-<<<
 Параметры загрузки:
 
 * *altboot_nfs* — набор поддерживаемых аргументов в виде «ключ=значение»,
@@ -43,6 +42,7 @@ image::../images/bc-err4.jpg[align="center",scaledwidth="75%"]
 _<<_совместимость_с_propagator_и_init_bottom,режиме совместимости с пропагатором>>_
 «шаг» *nfs* экспортирует в stage2 переменные окружения:
 
+<<<
 * *METHOD*=nfs — название выбранного
   _<<_методы_загрузки_altboot,метода загрузки>>_ altboot;
 * *HOST* — имя или IP-адрес NFS сервера;

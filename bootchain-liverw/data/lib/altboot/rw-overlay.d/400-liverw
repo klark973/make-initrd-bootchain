@@ -54,7 +54,7 @@ create_disk_slice()
 	# At first, use exported value
 	devname="$(stage2_getenv DEVICE)"
 
-	# Fallback: if DEVICE has not exported to the stage2
+	# Fallback: if DEVICE was not exported to the stage2
 	if [ -z "$devname" ] && [ -n "$OEM_CDROOT" ]; then
 		devname="$(mountpoint -d -- "$OEM_CDROOT" ||:)"
 		devname="/sys/dev/block/$devname/uevent"

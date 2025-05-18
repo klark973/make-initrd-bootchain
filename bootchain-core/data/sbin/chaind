@@ -102,7 +102,7 @@ while [ -n "$chainsteps" ]; do
 		chainsteps="${chainsteps#,}"
 
 		if IM_is_active; then
-			message "[$callnum] Step '$name' has ignored"
+			message "[$callnum] Step '$name' has been ignored"
 		else
 			message "[$callnum] Switching to foreground"
 

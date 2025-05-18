@@ -21,7 +21,7 @@ b_a method
 b_a url
 b_a server
 b_a directory
-b_a fuid
+b_a squash
 b_a user
 b_a pass
 b_a imgsize
@@ -29,7 +29,7 @@ b_a timeout
 b_a reserve
 
 # BOOTIMG is only used with FTP/HTTP methods in propagator compatibility mode
-[ -z "$fuid" ] && BOOTIMG="$mntdir/boot-image.iso" || BOOTIMG="$mntdir/rootfs.squash"
+[ -z "$squash" ] && BOOTIMG="$mntdir/boot-image.iso" || BOOTIMG="$mntdir/rootfs.squash"
 
 # You can change defaults in /etc/sysconfig/bootchain
 OEM_URL_NETINST="${OEM_URL_NETINST:-/pub/netinst/current}"
@@ -49,8 +49,8 @@ url_input_form()
 	local title="[ Enter the URL ]"
 
 	local text="Please enter "
-	if [ -n "$fuid" ]; then
-		text="$text the URL containing the squash $fuid."
+	if [ -n "$squash" ]; then
+		text="$text the URL containing the squash $squash."
 	else
 		text="$text full path to the file image."
 	fi
@@ -89,8 +89,8 @@ http_input_form()
 	local title="[ HTTP-server connection data ]"
 
 	local text="Please enter the name or IP address of the HTTP-server, and"
-	if [ -n "$fuid" ]; then
-		text="$text the directory containing the squash $fuid."
+	if [ -n "$squash" ]; then
+		text="$text the directory containing the squash $squash."
 	else
 		text="$text full path to the file image."
 	fi
@@ -134,8 +134,8 @@ ftp_input_form()
 	local title="[ FTP-server connection data ]"
 
 	local text="Please enter the name or IP address of the FTP-server, and"
-	if [ -n "$fuid" ]; then
-		text="$text the directory containing the squash $fuid"
+	if [ -n "$squash" ]; then
+		text="$text the directory containing the squash $squash"
 	else
 		text="$text full path to the file image"
 	fi
@@ -486,8 +486,8 @@ while :; do
 	elif [ "${url:0:1}" = "/" ]; then
 		srcreg=1
 	else
-		[ -z "$fuid" ] ||
-			url="$url/$fuid"
+		[ -z "$squash" ] ||
+			url="$url/$squash"
 		srcreg=
 	fi
 
@@ -552,7 +552,7 @@ if [ -z "$ALTBOOT_OLDROOT" ]; then
 	IM_update_bootsplash "found_media"
 elif [ -z "$(stage2_getenv METHOD)" ]; then
 	stage2_setenv METHOD "$method"
-	if [ "$method" = url ] || [ -z "$fuid" ]; then
+	if [ "$method" = url ] || [ -z "$squash" ]; then
 		stage2_setenv URL "$url"
 	else
 		stage2_setenv HOST "$server"

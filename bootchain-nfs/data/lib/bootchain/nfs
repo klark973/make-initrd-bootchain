@@ -114,7 +114,7 @@ is_server_online()
 		fi
 	fi
 
-	message "$server:$dirpart has mounted successfully"
+	message "$server:$dirpart has been mounted successfully"
 
 	if [ -z "$isofile" ]; then
 		run mount --move -- "$mp" "$image" || rc=1

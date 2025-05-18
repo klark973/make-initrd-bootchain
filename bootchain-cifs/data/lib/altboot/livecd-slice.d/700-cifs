@@ -40,7 +40,7 @@ cifs_slice()
 		run mkdir -p -- "$mp"
 
 		if run mount.cifs "$service" "$mp" -o "ro${opts:+,$opts}"; then
-			debug "$service has mounted to $mp"
+			debug "$service has been mounted to $mp"
 			mnt=1
 		else
 			message "CIFS mount failed"

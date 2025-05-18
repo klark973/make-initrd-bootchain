@@ -4,9 +4,9 @@ case "$method" in
 ftp|http|url)
 	ALTBOOT="waitnet,download"
 	if grep -qws ramdisk_size /proc/cmdline; then
-		VALUE="method=$method;to=RD;fuid=$STAGENAME"
+		VALUE="method=$method;to=RD;squash=$STAGENAME"
 	elif [ "$type" != iso ]; then
-		VALUE="method=$method;to=TMPFS;fuid=$STAGENAME"
+		VALUE="method=$method;to=TMPFS;squash=$STAGENAME"
 	else
 		if [ -n "${HASH-}" ]; then
 			ALTBOOT="$ALTBOOT,checksum"

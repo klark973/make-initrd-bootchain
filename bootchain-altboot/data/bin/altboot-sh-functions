@@ -77,7 +77,7 @@ lomount()
 
 	if [ -n "$imgdir" ]; then
 		if run mount -t iso9660 -o ro -- "${__loopdev}" "$imgdir"; then
-			debug "${__loopdev} has mounted to '$imgdir' as ISO-9660"
+			debug "${__loopdev} has been mounted to '$imgdir' as ISO-9660"
 		else
 			message "can't mount target ISO-image: '$backdev'"
 			run losetup -d -- "${__loopdev}" ||:

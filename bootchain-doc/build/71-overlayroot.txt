@@ -1,4 +1,3 @@
-<<<
 === overlayroot
 
 Неинтерактивный базовый «шаг», входящий в подпакет *make-initrd-bootchain-altboot*.

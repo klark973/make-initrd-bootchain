@@ -20,6 +20,7 @@ b_a part
 b_a fuid
 b_a uuid
 b_a label
+b_a squash
 b_a directory
 b_a timeout
 b_a options
@@ -32,20 +33,18 @@ reset_devspec()
 	uuid=
 	disk=
 	part=
-	fuid=
 }
 
 is_target_found()
 {
+	[ -n "$target" ] ||
+		return 1
 	enter "is_target_found"
 
-	if [ -z "$target" ]; then
-		leave "is_target_found"
-		return 1
-	fi
-
 	local rc=0 opts="${options-}"
-	local image partdev mp="$destdir"
+	local image newdev mp="$destdir"
+	local squash_err="however the specified squash file not found:"
+	local fuid_err="however the specified fuid file not found:"
 
 	[ -z "$ALTBOOT_OLDROOT" ] || [ -z "$OEM_CDROOT" ] ||
 		mp="$OEM_CDROOT"
@@ -55,13 +54,13 @@ is_target_found()
 		opts="-t iso9660 -o ro${opts:+,$opts}"
 
 		case "$target" in
-		*[0-9])	partdev="${target}p1";;
-		*)	partdev="${target}1";;
+		*[0-9])	newdev="${target}p1";;
+		*)	newdev="${target}1";;
 		esac
 
-		if [ -b "$partdev" ] && run mount $opts -- "$partdev" "$mp"; then
-			debug "CD-ROM target replaced to the first partition: $partdev"
-			target="$partdev"
+		if [ -b "$newdev" ] && run mount $opts -- "$newdev" "$mp"; then
+			debug "CD-ROM target replaced to the first partition: $newdev"
+			target="$newdev"
 		else
 			debug "mounting original target device as ISO-9660: $target"
 			run mount $opts -- "$target" "$mp" || rc=1
@@ -74,16 +73,18 @@ is_target_found()
 			return 1
 		fi
 
-		if [ -n "$directory" ] && [ ! -s "${mp}${directory}" ]; then
-			message "however specified squash file not found: '$directory'"
-			run umount -fl -- "$mp" ||:
-			leave "is_target_found"
-			target=
-			return 1
+		if [ -n "$squash" ] && [ ! -s "$mp/$squash" ]; then
+			message "$squash_err '/$squash'"
+			rc=1
 		fi
 
 		if [ -n "$fuid" ] && [ ! -f "$mp/$fuid" ]; then
-			message "however specified FUID-file not found: '$fuid'"
+			message "$fuid_err '/$fuid'"
+			rc=1
+		fi
+
+		if [ "$rc" != 0 ]; then
+			message "$target will be unmounted"
 			run umount -fl -- "$mp" ||:
 			leave "is_target_found"
 			target=
@@ -103,21 +104,32 @@ is_target_found()
 		return 0
 	fi
 
-	debug "mounting original disk target device: $target"
-	run mount -o "ro${opts:+,$opts}" -- "$target" "$mp" || rc=1
+	debug "mounting original target device as disk or partition: $target"
 
-	if [ "$rc" != 0 ]; then
+	if ! run mount -o "ro${opts:+,$opts}" -- "$target" "$mp"; then
 		message "can't mount target disk or partition: $target"
 		leave "is_target_found"
 		target=
 		return 1
 	fi
 
-	message "$target has mounted successfully"
+	message "$target has been mounted successfully"
 
 	if [ -z "$directory" ]; then
+		message "assuming disk or partition without a 'directory' component"
+
+		if [ -n "$squash" ] && [ ! -s "$mp/$squash" ]; then
+			message "$squash_err '/$squash'"
+			rc=1
+		fi
+
 		if [ -n "$fuid" ] && [ ! -f "$mp/$fuid" ]; then
-			message "however specified FUID-file not found: '$fuid'"
+			message "$fuid_err '/$fuid'"
+			rc=1
+		fi
+
+		if [ "$rc" != 0 ]; then
+			message "$target will be unmounted"
 			run umount -fl -- "$mp" ||:
 			leave "is_target_found"
 			target=
@@ -137,35 +149,99 @@ is_target_found()
 		return 0
 	fi
 
+	if [ -d "${mp}${directory}" ]; then
+		message "assuming a directory on disk, relative path: '$directory'"
+
+		if [ -n "$squash" ] && [ ! -s "${mp}${directory}/$squash" ]; then
+			message "$squash_err '$directory/$squash'"
+			rc=1
+		fi
+
+		if [ -n "$fuid" ] && [ ! -f "${mp}${directory}/$fuid" ]; then
+			message "$fuid_err '$directory/$fuid'"
+			rc=1
+		fi
+
+		if [ "$rc" != 0 ]; then
+			message "$target will be unmounted"
+			run umount -fl -- "$mp" ||:
+			leave "is_target_found"
+			target=
+			return 1
+		fi
+
+		image="$datadir"
+		[ -z "$ALTBOOT_OLDROOT" ] ||
+			image="$BC_ROOT"
+		run mkdir -p -- "$image"
+
+		if ! run mount --move -- "$mp" "$image"; then
+			message "$target will be unmounted"
+			run umount -fl -- "$mp" ||:
+			leave "is_target_found"
+			target=
+			return 1
+		elif ! run mount --bind -- "${image}${directory}" "$mp"; then
+			message "$target will be unmounted"
+			run umount -fl -- "$image" ||:
+			leave "is_target_found"
+			target=
+			return 1
+		fi
+
+		if [ -n "$ALTBOOT_OLDROOT" ]; then
+			stage2_setenv DEVICE "${target#/dev/}"
+			stage2_setenv METHOD "disk"
+			stage2_setenv PREFIX "$directory"
+			stage2_setenv PIGGYBACK 1
+			bypass_results "$mp"
+		fi
+
+		IM_update_bootsplash "found_media"
+
+		leave "is_target_found"
+		return 0
+	fi
+
 	if [ ! -s "${mp}${directory}" ]; then
-		message "however specified ISO-image not found: '$directory'"
+		message "however the specified ISO-image not found: '$directory'"
 		run umount -fl -- "$mp" ||:
 		leave "is_target_found"
 		target=
 		return 1
 	fi
 
-	message "assuming ISO-image, relative path: '$directory'"
+	message "assuming ISO-image on disk, relative path: '$directory'"
 
 	image="$datadir"
 	[ -z "$ALTBOOT_OLDROOT" ] ||
 		image="$BC_ROOT"
 	run mkdir -p -- "$image"
+	newdev=
 
 	if run mount --move -- "$mp" "$image"; then
-		lomount "" "${image}${directory}" "$mp" || rc=1
+		lomount newdev "${image}${directory}" "$mp" || rc=1
 	else
 		image="$mp"
 		rc=1
 	fi
 
+	if [ "$rc" = 0 ] && [ -n "$squash" ] && [ ! -s "$mp/$squash" ]; then
+		message "$squash_err '/$squash'"
+		rc=1
+	fi
+
 	if [ "$rc" = 0 ] && [ -n "$fuid" ] && [ ! -f "$mp/$fuid" ]; then
-		message "however specified FUID-file not found: '$fuid'"
+		message "$fuid_err '/$fuid'"
 		rc=1
 	fi
 
 	if [ "$rc" != 0 ]; then
 		message "$target will be unmounted"
+		[ "$mp" = "$image" ] ||
+			run umount -fl -- "$mp" ||:
+		[ -z "$newdev" ] ||
+			run losetup -d -- "$newdev" ||:
 		run umount -fl -- "$image" ||:
 		leave "is_target_found"
 		target=
@@ -211,7 +287,8 @@ boot_device_choice()
 	local title="[ Optional fields ]"
 
 	local text="Please enter the full path to an ISO-image"
-	text="$text${STAGENAME:+ containing the squash $STAGENAME}"
+	[ -z "$squash" ] ||
+		text="$text containing the squash $squash"
 	text="$text or leave this field blank to use mounted partition"
 	text="$text 'as is', or cancel to return step back."
 
@@ -300,6 +377,8 @@ debug "$PROG started ($(get_parameter ALTBOOT_LOCALDEV))"
 
 [ -z "${disk}${part}${uuid}${label}" ] ||
 	devspec=1
+[ "$directory" != / ] ||
+	directory=
 
 # At first, try to use previous step results
 if [ -z "$devspec" ] && [ -n "$prevdir" ] && [ ! -f "$altboot_auto" ]; then

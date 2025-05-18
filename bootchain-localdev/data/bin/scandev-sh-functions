@@ -5,8 +5,10 @@
 
 disk=
 part=
+fuid=
 uuid=
 label=
+squash=
 target=
 method=
 devices=
@@ -36,7 +38,7 @@ scan_devices()
 	_blkid_field()
 	{
 		blkid -c /dev/null -o value \
-			-s $1 -- "/dev/$devname" 2>/dev/null ||:
+			-s "$1" -- "/dev/$devname" 2>/dev/null ||:
 	}
 
 	_check_field()
@@ -134,6 +136,8 @@ scan_devices()
 				target="$saved"
 				continue
 			fi
+		elif [ -n "$fuid" ] && _check_field UUID "$fuid"; then
+			target="/dev/$devname"
 		fi
 
 		if [ -n "$label" ]; then
@@ -175,7 +179,7 @@ scan_devices()
 			;;
 		esac
 
-		message "specified target found: $target ($major:$minor)"
+		message "the specified target found: $target ($major:$minor)"
 	done < /proc/partitions
 
 	[ "$ntargets" = 1 ] ||
@@ -203,7 +207,7 @@ device_choice()
 	_blkid_field()
 	{
 		blkid -c /dev/null -o value \
-			-s $1 -- "/dev/$devname" 2>/dev/null ||:
+			-s "$1" -- "/dev/$devname" 2>/dev/null ||:
 	}
 
 	_get_field()
@@ -211,7 +215,7 @@ device_choice()
 		local __x __varname="$1" __key="$2"
 
 		__x="$(_udevd_field "ID_FS_${__key}")"
-		[ -n "$__x" ] ||
+		[ -n "${__x}" ] ||
 			__x="$(_blkid_field "${__key}")"
 		assign "${__varname}" "${__x}"
 	}
@@ -328,7 +332,7 @@ device_choice()
 	if [ "$method" = oem ]; then
 		text="$text containing the OEM Drivers Update"
 	else
-		text="$text${STAGENAME:+ containing the squash $STAGENAME} on the boot"
+		text="$text${squash:+ containing the squash $squash} on the boot"
 	fi
 	text="$text or cancel and try again."
 

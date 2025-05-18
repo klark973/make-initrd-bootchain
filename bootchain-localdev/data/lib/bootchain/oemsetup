@@ -21,7 +21,7 @@ try_with_partition()
 	debug "mounting target device: $target"
 
 	if run mount -o ro -- "$target" "$datadir"; then
-		message "$target has mounted successfully"
+		message "$target has been mounted successfully"
 	else
 		message "can't mount target device: $target"
 		leave "try_with_partition"
@@ -52,7 +52,7 @@ try_with_partition()
 	  fi
 	)
 
-	message "OEM drivers update was applied"
+	message "OEM drivers update has been applied"
 	run umount -fl -- "$datadir"
 	leave "try_with_partition"
 }
@@ -100,7 +100,7 @@ launch_step_once
 debug "$PROG started"
 
 case "$UPDATEMODULES" in
-1)	# Nothing
+1)	# Do nothing
 	;;
 ID)	profile="$(machine-info --drivers)"
 	;;

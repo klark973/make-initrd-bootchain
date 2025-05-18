@@ -41,7 +41,7 @@ localdev_slice()
 		run mkdir -p -- "$mp"
 
 		if run mount -o ro -- "$devname" "$mp"; then
-			debug "device $odev has mounted to $mp"
+			debug "device $odev has been mounted to $mp"
 			mnt=1
 		else
 			message "can't mount specified overlay device: $odev"

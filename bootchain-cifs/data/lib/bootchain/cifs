@@ -114,7 +114,7 @@ is_server_online()
 		return 1
 	fi
 
-	message "$service has mounted successfully"
+	message "$service has been mounted successfully"
 
 	if [ -z "$dirpart" ]; then
 		run mount --move -- "$mp" "$image" || rc=1

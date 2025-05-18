@@ -34,7 +34,11 @@ image::../images/bc-err5.jpg[align="center",scaledwidth="75%"]
 * *part* — название блочного устройства, ссылающегося на раздел,
   например: sdb1, c0d0p3, md0p1, nvme0n1p2;
 * *uuid* — UUID файловой системы раздела для поиска по UUID;
+* *fuid* — необязательный UUID файловой системы (при отсутсвии uuid)
+  и одновременно обязательный проверочный файл в корне раздела;
 * *label* — метка тома файловой системы раздела для поиска по LABEL;
+* *squash* — название файла сквоша второй стадии загрузки (начиная
+  с версии *0.1.5-alt30*);
 * *overlays* — определяет раздел, на котором находятся read-only слои
   LiveCD при локальной загрузке:
   - _метка тома_ (LABEL) — профили и слои будут искаться на устройстве
@@ -79,4 +83,5 @@ root=bootchain bootchain=fg,`*localdev*`,copyfile,checksum,squashfs,liveboot,roo
 
 * https://bugzilla.altlinux.org/33954
 * https://bugzilla.altlinux.org/31068
+* https://bugzilla.altlinux.org/54071
 

@@ -1,4 +1,3 @@
-<<<
 === oemsetup
 
 Интерактивный «шаг», входящий в подпакет *make-initrd-bootchain-localdev*,
