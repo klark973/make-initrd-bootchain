@@ -1,8 +1,8 @@
 %define parent make-initrd
 %define child  bootchain
 
-%ifarch %e2k %mips riscv64
-# shellcheck is not available on these architectures
+%ifarch %ix86 %e2k %mips riscv64
+# shellcheck is not available on these architectures or it is slow
 %def_disable check
 %endif
 
