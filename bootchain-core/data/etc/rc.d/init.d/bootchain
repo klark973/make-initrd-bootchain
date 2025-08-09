@@ -17,6 +17,7 @@ NAME=chaind
 PIDFILE="/var/run/$NAME.pid"
 ARGS="--lockfile $LOCKFILE --pidfile $PIDFILE --name $NAME --displayname $NAME"
 
+# shellcheck disable=SC2329
 start() {
 	local RETVAL=0
 
@@ -28,6 +29,7 @@ start() {
 	return $RETVAL
 }
 
+# shellcheck disable=SC2329
 stop() {
 	local PID RETVAL=0
 

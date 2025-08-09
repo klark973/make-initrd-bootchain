@@ -237,6 +237,7 @@ device_choice()
 		assign "${__varname}" "${__r//\"/\'}"
 	}
 
+	# shellcheck disable=SC2329
 	_get_lbsize()
 	{
 		local __varname="$1"
