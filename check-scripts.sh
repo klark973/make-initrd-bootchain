@@ -37,9 +37,9 @@ do_check()
 		[ -z "${ftype##*shell script*}" ] ||
 			continue
 		for nc in $skip_check _; do
-			[ "x$nc" != x_ ] ||
+			[ "$nc" != _ ] ||
 				continue
-			[ "x$nc" != "x$fname" ] ||
+			[ "$nc" != "$fname" ] ||
 				continue 2
 		done
 		shellcheck --norc -s bash -P "$bindirs" "$@" -x "$fname" || :> ERROR
