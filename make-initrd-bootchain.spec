@@ -8,7 +8,7 @@
 
 Name: %parent-%child
 Version: 0.1.5
-Release: alt31
+Release: alt32
 
 Summary: %child modules set for %parent
 License: GPL-3.0
@@ -223,6 +223,9 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 %_docdir/%name
 
 %changelog
+* Fri Oct 02 2026 Leonid Krivoshein <klark@altlinux.org> 0.1.5-alt32
+- Add a new feature 'mediacheck' (ALT #60692)
+
 * Sun Aug 10 2025 Leonid Krivoshein <klark@altlinux.org> 0.1.5-alt31
 - rebuilt with shellcheck 0.11.0
 
