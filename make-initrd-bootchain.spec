@@ -25,6 +25,7 @@ Requires: %name-waitdev     = %version-%release
 Requires: %name-interactive = %version-%release
 Requires: %name-altboot     = %version-%release
 Requires: %name-localdev    = %version-%release
+Requires: %name-mediacheck  = %version-%release
 Requires: %name-liverw      = %version-%release
 Requires: %name-waitnet     = %version-%release
 Requires: %name-nfs         = %version-%release
@@ -103,6 +104,17 @@ AutoReq: noshell, noshebang
 
 %description localdev
 localdev sub-module for %name
+
+%package mediacheck
+Summary: mediacheck sub-module for %name
+Group: System/Base
+BuildArch: noarch
+Requires: %name-altboot = %version-%release
+Requires: isomd5sum
+AutoReq: noshell, noshebang
+
+%description mediacheck
+mediacheck sub-module for %name
 
 %package liverw
 Summary: liverw sub-module for %name
@@ -191,6 +203,9 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 
 %files localdev
 %_datadir/%parent/features/%child-localdev
+
+%files mediacheck
+%_datadir/%parent/features/%child-mediacheck
 
 %files liverw
 %_datadir/%parent/features/%child-liverw

@@ -7,6 +7,7 @@ MODULES="
 	interactive
 	altboot
 	localdev
+	mediacheck
 	liverw
 	waitnet
 	nfs

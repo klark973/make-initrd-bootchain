@@ -57,6 +57,17 @@ check_prevstep_results()
 get_bootarg CHECKSUM
 debug "$PROG started ($CHECKSUM)"
 
+# Skip this step if media check has already been passed
+if [ -r "$mntdir/MEDIACHECK" ]; then
+	message "the whole media check has already been passed"
+
+	# shellcheck disable=SC2119
+	bypass_results
+
+	debug "$PROG finished"
+	exit 0
+fi
+
 if [ "$CHECKSUM" != "${CHECKSUM#*:}" ]; then
 	hashprog="${CHECKSUM%%:*}"
 	CHECKSUM="${CHECKSUM#*:}"

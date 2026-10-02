@@ -12,6 +12,7 @@ squash=
 target=
 method=
 devices=
+remount_cdrom=
 
 
 start_scan()
@@ -88,6 +89,7 @@ scan_devices()
 
 	[ -d "$udevdata" ] ||
 		udevdata=
+	remount_cdrom=
 	devices=
 	target=
 
@@ -171,11 +173,29 @@ scan_devices()
 		case "$saved" in
 		'')	ntargets=$((1 + $ntargets))
 			;;
-		*[0-9])	[ "${saved}p1" = "$target" ] ||
+
+		*[0-9])	# Ignore the first partition for ISO Hybrid only
+			if [ "${saved}p1" = "$target" ] &&
+			   [ "$(_blkid_field TYPE)" = iso9660 ]
+			then
+				remount_cdrom=1
+				target="$saved"
+				continue
+			else
 				ntargets=$((1 + $ntargets))
+			fi
 			;;
-		*)	[ "${saved}1" = "$target" ] ||
+
+		*)	# Ignore the first partition for ISO Hybrid only
+			if [ "${saved}1" = "$target" ] &&
+			   [ "$(_blkid_field TYPE)" = iso9660 ]
+			then
+				remount_cdrom=1
+				target="$saved"
+				continue
+			else
 				ntargets=$((1 + $ntargets))
+			fi
 			;;
 		esac
 
