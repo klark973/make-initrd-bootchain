@@ -184,7 +184,7 @@ addressing, as if they are hidden.
   `altboot`.
 - `noop` - does not perform any actions and is designed to pull off the results
   on the <OUT> of the previous step from the <IN> of the next step, which can
-  be useful, for example, when we don`t want the results of the `waitdev` step
+  be useful, for example, when we don't want the results of the `waitdev` step
   to be used in the next step, `localdev`, which primarily looks at them.
 - `noretry` - prohibits the following steps from ending with a non-zero return
   code, what will lead to the immediate shutdown of the daemon in case of a
@@ -221,41 +221,41 @@ addressing, as if they are hidden.
 
 ## bootchain-sh-functions extended API
 
-- check_parameter() - checks that the required parameter is not empty, otherwise
+- `check_parameter()` - checks that the required parameter is not empty, otherwise
   it exits via fatal().
-- get_parameter() - outputs the value of the parameter of the current step by
+- `get_parameter()` - outputs the value of the parameter of the current step by
   the index $callnum.
-- resolve_target() - output the path to a file, directory or device, depending
+- `resolve_target()` - output the path to a file, directory or device, depending
   on from the parameter.
-- resolve_devname() - output the path to a special device file at the specified
+- `resolve_devname()` - output the path to a special device file at the specified
   directory. Usually the step directory contains a DEVNAME or dev file if the
   device was the result of a step, then the function will return a readable
   `/dev/node`.
-- debug() - text message output during extended debugging.
-- enter() - tracing during extended debugging: entering the specified function.
-- leave() - tracing during extended debugging: exit from the specified function.
-- run() - run an external command. With extended debugging, the executed command
+- `debug()` - text message output during extended debugging.
+- `enter()` - tracing during extended debugging: entering the specified function.
+- `leave()` - tracing during extended debugging: exit from the specified function.
+- `run()` - run an external command. With extended debugging, the executed command
   will be logged.
-- fdump() - output of the contents of the specified file during extended
+- `fdump()` - output of the contents of the specified file during extended
   debugging.
-- assign() - assignment of the specified value to a variable that gets into
+- `assign()` - assignment of the specified value to a variable that gets into
   the log with advanced debugging. The left-hand expression is also computable.
-- next_bootchain() - command to the daemon to change the sequence of the
+- `next_bootchain()` - command to the daemon to change the sequence of the
   following steps.
-- is_step_passed() - returns 0 if the current step has been passed at
+- `is_step_passed()` - returns 0 if the current step has been passed at
   least once.
-- launch_step_once() - if the current step has already been completed,
+- `launch_step_once()` - if the current step has already been completed,
   it completes the work through the fatal() call.
-- break_bc_loop() - informs the daemon that the current step is the last and
+- `break_bc_loop()` - informs the daemon that the current step is the last and
   after after its successful completion, you can switch to stage2. The script
   of this step, however, must work to the end and end with a zero status code
   in order for the daemon to process the received signal.
-- bc_reboot() - performs a logged restart of the computer.
-- bypass_results() - asks the daemon to associate the <OUT> of the previous
+- `bc_reboot()` - performs a logged restart of the computer.
+- `bypass_results()` - asks the daemon to associate the <OUT> of the previous
   step with the <IN> the next step. It is also used to inform the daemon about
   the result (mounted directory) inside the current initramfs root, outside the
   $mntdir tree.
-- initrd_version() - output of the current version of make-initrd. It is proposed
+- `initrd_version()` - output of the current version of make-initrd. It is proposed
   to move to make-initrd/data/bin/initrd-sh-functions after has_module().
 
 ## Examples
