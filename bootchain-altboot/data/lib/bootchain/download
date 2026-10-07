@@ -538,6 +538,8 @@ done
 
 [ -z "$dstreg" ] ||
 	run chmod -- 0600 "$to"
+[ -f "$mntdir"/DIRTY ] || [ -n "$squash" ] ||
+	mediacheck "$to"
 lomount devname "$to"
 [ -z "$dstreg" ] || [ "$to" = "$BOOTIMG" ] ||
 	:>"$mntdir"/DIRTY

@@ -57,6 +57,62 @@ get_bootarg()
 	leave "get_bootarg"
 }
 
+mediacheck()
+{
+	local number rc=1 image="$1"
+
+	enter "mediacheck"
+
+	if [ -z "$ALTBOOT_OLDROOT" ] || [ -z "${MEDIACHECK-}" ]; then
+		debug "the media check has been skipped"
+		leave "mediacheck"
+		return 0
+	fi
+
+	if ! checkisomd5 --md5sumonly -- "$image" >/dev/null 2>&1; then
+		message "no checksum information available, unable to verify media"
+		leave "mediacheck"
+		return 0
+	fi
+
+	message "the media check for $image has been started"
+
+	IM_start_output gauge ponder
+
+	# We should stop the background process before
+	# display a gauge to avoid on-screen artefacts
+	IM_ponder_stop
+
+	:> /.initrd/rootdelay/addtime
+	rootdelay_pause
+
+	checkisomd5 --gauge -- "$image" 2>"$mntdir/MEDIACHECK" |
+	while read -r number; do
+		case "$number" in
+		[1-9]|[1-9][0-9]|100)
+			printf '%s\n' "$number"
+			;;
+		esac
+	done |
+	IM_gauge "[ Validating image... ]" "Press Esc to abort this check..."
+	fdump "$mntdir/MEDIACHECK"
+
+	if grep -qs -- "The media check was aborted" "$mntdir/MEDIACHECK"; then
+		message "the media check has been aborted"
+		rc=2
+	elif grep -qs -- ": PASS." "$mntdir/MEDIACHECK"; then
+		message "the media check has been passed successfully"
+		rc=0
+	fi
+
+	[ "$rc" = 0 ] ||
+		run rm -f -- "$mntdir/MEDIACHECK"
+	[ "$rc" != 1 ] ||
+		IM_fatal "check failed: it is not recommended to use this media"
+
+	leave "mediacheck"
+}
+
 lomount()
 {
 	enter "lomount"

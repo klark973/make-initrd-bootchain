@@ -126,6 +126,7 @@ is_server_online()
 		rc=1
 	else
 		message "assuming ISO-image, CIFS-path: '$dirpart'"
+		mediacheck "${mp}${dirpart}"
 		lomount "" "${mp}${dirpart}" "$image" || rc=1
 	fi
 

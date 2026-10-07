@@ -75,6 +75,8 @@ is_target_found()
 
 	_check_cdrom()
 	{
+		mediacheck "$target"
+
 		[ -n "$remount_cdrom" ] ||
 			return 0
 		message "$target will be remounted as $newdev"
@@ -219,6 +221,7 @@ is_target_found()
 
 	message "assuming ISO-image on disk, relative path: '$directory'"
 
+	mediacheck "${mp}${directory}"
 	image="$datadir"
 	[ -z "$ALTBOOT_OLDROOT" ] ||
 		image="$BC_ROOT"
