@@ -1,4 +1,4 @@
-$(call feature-requires,bootchain-local)
+$(call feature-requires,bootchain-localdev)
 
 BOOTCHAIN_LIVERW_DATADIR = $(FEATURESDIR)/bootchain-liverw/data
 
