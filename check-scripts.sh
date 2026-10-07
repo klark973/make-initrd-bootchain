@@ -22,7 +22,7 @@ sclist="
 "
 
 skip_check="
-	bootchain-doc/samples/80-make-initrd-for-pipeline
+	bootchain-doc/samples/80-make-initrd-for-bootchain
 "
 
 do_check()

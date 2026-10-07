@@ -1,0 +1,106 @@
+#!/bin/sh -efux
+# NB: /etc/initrd.mk carefully prepared by earlier scripts
+
+# See also: m-p:/features.in/initrd-bootchain/stage1/scripts.d/80-make-initrd-for-bootchain
+
+fatal() { echo "** error: $@" >&1; exit 1; }
+
+kver=
+for KFLAVOUR in $GLOBAL_STAGE1_KFLAVOURS; do
+	kver+=" $(rpm -qa 'kernel-image*' \
+		--qf '%{version}-%{name}-%{release}\n' \
+	| grep "$KFLAVOUR" \
+	| sed 's/kernel-image-//')"
+done
+
+[ -n "$kver" ] ||
+	fatal "no kernel version identified"
+
+[ -s /.in/modules ] ||
+	fatal "kernel modules set not found"
+
+cd /.image
+
+cp /etc/initrd.mk .disk/
+cat >>.disk/initrd.mk <<EOF
+FEATURES += add-modules compress cleanup rdshell
+FEATURES += bootchain-mediacheck
+FEATURES += bootchain-liverw
+FEATURES += bootchain-waitdev
+FEATURES += bootchain-getimage
+FEATURES += bootchain-nfs
+FEATURES += bootchain-cifs
+
+PUT_FILES += /etc/dialogrc.error
+EOF
+
+for module in $(grep -v ^# /.in/modules | sort -u | tr -s '\n' ' '); do
+	echo "MODULES_TRY_ADD += $module" >> .disk/initrd.mk
+done
+
+cat >.disk/bootchain <<-EOF
+# bootchain: ALT Linux specific values
+
+# altboot back title
+OEM_WELCOME_TEXT="Welcome to ALT!"
+
+# Distribution name, for example
+OEM_DISTRIBUTION="ALT Workstation 11"
+
+# ISO-image mount point (required for ALT)
+OEM_CDROOT=/image
+
+# Default stage2 filename for boot from ISO-9660
+OEM_DEFAULT_STAGE2=altinst
+
+# Persistent storage device LABEL for Live-RW sessions
+OEM_LIVE_STORAGE=alt-live-storage
+
+# Live storage device LABEL for mark non-usable devices
+OEM_BAD_STORAGE=alt-slow-storage
+
+# Local storage device LABEL with the OEM drivers update
+OEM_SETUP_STORAGE=alt-drivers-update
+EOF
+
+if [ ! -f /etc/dialogrc.error ]; then
+	dialog --create-rc /tmp/dialogrc.tmp
+	cat /tmp/dialogrc.tmp |sed -E \
+		-e 's/^(use_colors).*/\1 = ON/' \
+		-e 's/^(use_shadow).*/\1 = ON/' \
+		-e 's/^(screen_color).*/\1 = \(WHITE,RED,ON\)/' \
+			> /etc/dialogrc.error
+	rm -vf /tmp/dialogrc.tmp
+fi
+
+# FIXME: large storage systems can get that tmpfs filled up
+# with debug data as of make-initrd 2.2.12
+rm -vf  /usr/share/make-initrd/data/etc/udev/rules.d/00-debug.rules \
+	/usr/share/make-initrd/data/lib/uevent/filters/debug
+
+MAKE_INITRD_OPTS="--no-checks AUTODETECT= -c .disk/initrd.mk BOOTCHAIN_PATH=.disk"
+MAKE_INITRD_VER="`make-initrd -V \
+	| sed -rn 's/^make-initrd version ([0-9.]+)/\1/p'`"
+
+[ -z "$GLOBAL_VERBOSE" ] ||
+	MAKE_INITRD_OPTS="$MAKE_INITRD_OPTS -v"
+
+for KVER in $kver; do
+	echo make-initrd $MAKE_INITRD_OPTS -k "$KVER" >> /.image/.disk/mkinitrd
+	make-initrd $MAKE_INITRD_OPTS -k "$KVER" ||
+		fatal "make-initrd failed"
+done
+
+cd /boot
+case `arch` in
+e2k)
+	kname=image;;
+*)
+	kname=vmlinuz;;
+esac
+
+rm -f $kname initrd.img
+ln -s $kname-$KVER $kname
+ln -s initrd-$KVER.img initrd.img
+
+:
