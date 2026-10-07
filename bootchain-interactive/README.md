@@ -151,9 +151,6 @@ Display gauge (progress bar). Integer value from 0 to 100 must be sent
 via stdin to specify displayed percent of the process passed. This is work
 in conjuction with pv command. Always returns 0. Based on `dialog --gauge`.
 
-Note for `netconsole` usage: after process will finish, don't forget reset
-the terminal, otherwise keyboard input will be lost.
-
 Syntax:
 ```
 echo <integer> | IM_gauge <title> [<text>]
@@ -166,9 +163,6 @@ Example:
     sleep 1
   done
 ) | IM_gauge "[ Loading... ]"
-
-[ -z "$CONSOLE" ] ||
-    reset
 ```
 
 ### ponder (output)

@@ -96,8 +96,6 @@ copy_file_dialog()
 		IM_fatal "copy operation failed"
 	fi
 
-	[ -z "$CONSOLE" ] ||
-		reset
 	leave "copy_file_dialog"
 }
 

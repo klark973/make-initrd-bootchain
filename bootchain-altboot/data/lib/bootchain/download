@@ -379,8 +379,7 @@ download_image()
 	local text="Downloading ${url##*/} into $target..."
 	message "downloading image: '$url'"
 	(read_image |save_image) 2>&1 |
-		IM_gauge "[ Downloading image... ]" "$text"
-	[ -z "$CONSOLE" ] || reset
+	IM_gauge "[ Downloading image... ]" "$text"
 
 	leave "download_image"
 }
