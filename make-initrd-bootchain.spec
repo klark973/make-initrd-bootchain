@@ -12,7 +12,7 @@ Release: alt31
 
 Summary: %child modules set for %parent
 License: GPL-3.0
-Group: System/Base
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 
 Packager: Leonid Krivoshein <klark@altlinux.org>
@@ -35,42 +35,42 @@ AutoReq: noshell, noshebang
 Source0: %name-%version.tar
 
 %description
-Meta-package with the full set of the %child modules for %parent
+Meta-package with the full set of the %child modules for %parent.
 
 %package core
-Summary: %child-core module for %parent
-Group: System/Base
+Summary: The module %child-core for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %parent >= 2.9
 AutoReq: noshell, noshebang
 
 %description core
-%child-core module for %parent
+%summary.
 
 %package getimage
-Summary: getimage sub-module for %name
-Group: System/Base
+Summary: The module %child-getimage for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-core = %version-%release
 Requires: wget
 AutoReq: noshell, noshebang
 
 %description getimage
-getimage sub-module for %name
+%summary.
 
 %package waitdev
-Summary: waitdev sub-module for %name
-Group: System/Base
+Summary: The module %child-waitdev for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-core = %version-%release
 AutoReq: noshell, noshebang
 
 %description waitdev
-waitdev sub-module for %name
+%summary.
 
 %package interactive
-Summary: interactive sub-module for %name
-Group: System/Base
+Summary: The module %child-interactive for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-core = %version-%release
 Requires: console-vt-tools
@@ -80,11 +80,11 @@ Requires: pv
 AutoReq: noshell, noshebang
 
 %description interactive
-interactive sub-module for %name
+%summary.
 
 %package altboot
-Summary: altboot sub-module for %name
-Group: System/Base
+Summary: The module %child-altboot for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-interactive = %version-%release
 Requires: curl
@@ -92,21 +92,21 @@ Requires: losetup
 AutoReq: noshell, noshebang
 
 %description altboot
-altboot sub-module for %name
+%summary.
 
 %package localdev
-Summary: localdev sub-module for %name
-Group: System/Base
+Summary: The module %child-localdev for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-altboot = %version-%release
 AutoReq: noshell, noshebang
 
 %description localdev
-localdev sub-module for %name
+%summary.
 
 %package liverw
-Summary: liverw sub-module for %name
-Group: System/Base
+Summary: The module %child-liverw for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-localdev = %version-%release
 Requires: e2fsprogs
@@ -115,21 +115,21 @@ Requires: sfdisk
 AutoReq: noshell, noshebang
 
 %description liverw
-liverw sub-module for %name
+%summary.
 
 %package waitnet
-Summary: waitnet sub-module for %name
-Group: System/Base
+Summary: The module %child-waitnet for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-altboot = %version-%release
 AutoReq: noshell, noshebang
 
 %description waitnet
-waitnet sub-module for %name
+%summary.
 
 %package nfs
-Summary: nfs sub-module for %name
-Group: System/Base
+Summary: The module %child-nfs for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-waitnet = %version-%release
 Requires: nfs-utils
@@ -137,11 +137,11 @@ Requires: iproute2
 AutoReq: noshell, noshebang
 
 %description nfs
-nfs sub-module for %name
+%summary.
 
 %package cifs
-Summary: cifs sub-module for %name
-Group: System/Base
+Summary: The module %child-cifs for %parent
+Group: System/Configuration/Boot and Init
 BuildArch: noarch
 Requires: %name-waitnet = %version-%release
 Requires: cifs-utils
@@ -149,16 +149,16 @@ Requires: hostinfo
 AutoReq: noshell, noshebang
 
 %description cifs
-cifs sub-module for %name
+%summary.
 
 %package doc
 Summary: %parent-%child documentation
-Group: Documentation
+Group: Development/Documentation
 BuildArch: noarch
 AutoReq: noshell, noshebang
 
 %description doc
-Documentation, testing and development files for %parent-%child
+Documentation, testing and development files for %parent-%child.
 
 %prep
 %setup -q
@@ -262,7 +262,7 @@ mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%
 - bootchain/copyfile: fix unbound variable
 
 * Wed Jul 12 2023 Anton Midyukov <antohami@altlinux.org> 0.1.5-alt18
-- bootchain-altboot: do'nt unset STAGENAME
+- bootchain-altboot: don't unset STAGENAME
 - Display distribution independent dialogs
 - bootchain-core: Pack config 'bootchain' from $(BOOTCHAIN_PATH)
 
