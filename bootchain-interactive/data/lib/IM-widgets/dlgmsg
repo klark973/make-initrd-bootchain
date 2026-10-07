@@ -14,6 +14,7 @@ IM_dlgmsg()
 		width=${_IM_max_width}
 	fi
 
+	longtermop_start
 	dialog	$IM_WIDGET_ARGS					\
 		${NOLINES:+--ascii-lines}			\
 		${IM_BACKTITLE:+--backtitle "$IM_BACKTITLE"}	\
@@ -22,4 +23,5 @@ IM_dlgmsg()
 		$((4 + $height)) $width ||:
 	[ -z "$CONSOLE" ] ||
 		reset
+	longtermop_end
 }

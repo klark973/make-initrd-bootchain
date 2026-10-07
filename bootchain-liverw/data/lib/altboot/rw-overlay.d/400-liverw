@@ -79,6 +79,15 @@ create_disk_slice()
 {
 	enter "create_disk_slice"
 
+	longtermop_start
+	create_disk_slice_inner
+	longtermop_end
+
+	leave "create_disk_slice"
+}
+
+create_disk_slice_inner()
+{
 	local devname
 
 	# At first, use exported value
@@ -93,7 +102,6 @@ create_disk_slice()
 	fi
 	if [ -z "$devname" ] || [ ! -b "/dev/$devname" ]; then
 		message "stage2-compatible live-rw boot media not found"
-		leave "create_disk_slice"
 		return 0
 	fi
 
@@ -124,7 +132,6 @@ create_disk_slice()
 		debug "whole disk drive: '$whole'"
 	else
 		message "/dev/$devname is a whole disk, partitions appending is inpossible"
-		leave "create_disk_slice"
 		return 0
 	fi
 
@@ -134,7 +141,6 @@ create_disk_slice()
 		partn=0
 	if [ "$partn" != 0 ]; then
 		message "$whole is read-only, partitions appending is inpossible"
-		leave "create_disk_slice"
 		return 0
 	fi
 
@@ -149,7 +155,6 @@ create_disk_slice()
 	if [ ! -f "$tmpf" ]; then
 		message "mktemp failed"
 		IM_ponder_stop
-		leave "create_disk_slice"
 		return 0
 	fi
 	debug "writing tmpfile: '$tmpf'"
@@ -201,7 +206,6 @@ create_disk_slice()
 		IM_ponder_stop
 		[ -n "$NOASKUSER" ] ||
 			IM_errmsg "N${partn:1}! Don't use sessions with this boot media."
-		leave "create_disk_slice"
 		return 0
 	fi
 
@@ -256,7 +260,6 @@ create_disk_slice()
 		IM_ponder_stop
 		[ -n "$NOASKUSER" ] ||
 			IM_errmsg "C${partn:1}! Don't use sessions with this boot media."
-		leave "create_disk_slice"
 		return 0
 	fi
 
@@ -301,8 +304,6 @@ create_disk_slice()
 			IM_errmsg "$partn"
 		run rm -f -- "/dev/disk/by-label/$OEM_LIVE_STORAGE"
 	fi
-
-	leave "create_disk_slice"
 }
 
 mount_disk_slice()

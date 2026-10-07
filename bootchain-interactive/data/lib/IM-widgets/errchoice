@@ -14,6 +14,7 @@ IM_errchoice()
 		width=${_IM_max_width}
 	fi
 
+	longtermop_start
 	[ ! -s /etc/dialogrc.error ] ||
 		export DIALOGRC=/etc/dialogrc.error
 	dialog	$IM_WIDGET_ARGS					\
@@ -26,6 +27,7 @@ IM_errchoice()
 		reset
 	[ ! -s /etc/dialogrc.error ] ||
 		export DIALOGRC=
+	longtermop_end
 
 	return $ret
 }

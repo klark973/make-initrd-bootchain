@@ -23,5 +23,4 @@ if [ ! -f "${_IM_activated}" ] && IM_is_active; then
 	IM_hide_bootsplash
 	[ -n "$CONSOLE" ] ||
 		chvt "${_IM_VT_number}"
-	rootdelay_pause
 fi

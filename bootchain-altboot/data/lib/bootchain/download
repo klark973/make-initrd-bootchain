@@ -374,12 +374,17 @@ save_image()
 
 download_image()
 {
+	local text
+
 	enter "download_image"
 
-	local text="Downloading ${url##*/} into $target..."
-	message "downloading image: '$url'"
+	message "downloading the image: '$url'..."
+
+	longtermop_start
+	text="Downloading ${url##*/} into $target..."
 	(read_image |save_image) 2>&1 |
 	IM_gauge "[ Downloading image... ]" "$text"
+	longtermop_end
 
 	leave "download_image"
 }
@@ -398,6 +403,7 @@ step[0-9]*|pipe[0-9]*)
 	[ -s "$target" ] && read -r to <"$target" && [ -n "$to" ] ||
 		fatal "invalid step# specified, can't resolve the device name"
 	;;
+
 RD)
 	if ! get_free_ramdisk to; then
 		[ ! -b /dev/ram0 ] || [ ! -r /sys/block/ram0/size ] ||
@@ -406,8 +412,10 @@ RD)
 		dstreg=1
 	fi
 	;;
+
 /dev/?*)
 	;;
+
 *)
 	to="$datadir/image"
 	dstreg=1
@@ -423,12 +431,14 @@ timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 if [ -z "$dstreg" ]; then
 	[ -b "$to" ] ||
 		IM_fatal "specified target block device not found: $to"
+
 	case "$to" in
 	/dev/ram[0-9]*)
 		mark_used_ramdisk "$to"
 		target="the RAM-disk"
 		free_rd="$to"
 		;;
+
 	*)
 		target="device $to"
 		;;
@@ -440,6 +450,7 @@ if [ -f "$altboot_auto" ]; then
 		imgsize=
 		url=
 	fi
+
 	directory=
 	server=
 	user=
@@ -496,9 +507,6 @@ while :; do
 		url="${prevdir}${url}"
 	fi
 
-	:> /.initrd/rootdelay/addtime
-	rootdelay_pause
-
 	get_file_size ||
 		printf '%s, determinate file size\n' "$?" >"$datadir/ERROR"
 	[ -z "$filesize" ] || check_avail_space ||
@@ -553,16 +561,19 @@ if [ -z "$ALTBOOT_OLDROOT" ]; then
 	IM_update_bootsplash "found_media"
 elif [ -z "$(stage2_getenv METHOD)" ]; then
 	stage2_setenv METHOD "$method"
+
 	if [ "$method" = url ] || [ -z "$squash" ]; then
 		stage2_setenv URL "$url"
 	else
 		stage2_setenv HOST "$server"
 		stage2_setenv PREFIX "$directory"
+
 		if [ "$method" = ftp ] && [ -n "$user" ]; then
 			stage2_setenv LOGIN "$user"
 			stage2_setenv PASSWORD "$pass"
 		fi
 	fi
+
 	IM_update_bootsplash "found_media"
 fi
 

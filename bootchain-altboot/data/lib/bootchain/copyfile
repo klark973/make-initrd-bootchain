@@ -83,15 +83,18 @@ copy_file_dialog()
 
 	local text="Copying the ${src##*/} into $devname..."
 
-	message "copying '$src' to '$dst'"
+	message "copying '$src' to '$dst'..."
 
+	longtermop_start
 	{ pv -n -W -i 1 -S -s "$size" -- "$src" >"$dst" ||
 		:>"$datadir/ERROR"
 	} 2>&1 |IM_gauge "[ Copying file... ]" "$text"
 
 	if [ ! -f "$datadir/ERROR" ]; then
 		run sync
+		longtermop_end
 	else
+		longtermop_end
 		rm -f -- "$datadir/ERROR"
 		IM_fatal "copy operation failed"
 	fi
@@ -109,7 +112,6 @@ debug "$PROG started ($(get_parameter ALTBOOT_COPYFILE))"
 	fatal "no previous step results to copy file"
 [ -n "$src" ] && [ -r "${prevdir}${src}" ] ||
 	fatal "specified source file is not accessible: $src"
-IM_start_output errmsg gauge
 
 case "$dst" in
 step-[1-9]*|pipe[0-9]*)
@@ -118,6 +120,7 @@ step-[1-9]*|pipe[0-9]*)
 	[ -d "$devname" ] && [ -n "$dst" ] ||
 		fatal "invalid step# specified, can't resolve the device name"
 	;;
+
 ''|RD)
 	if ! get_free_ramdisk dst; then
 		[ ! -b /dev/ram0 ] || [ ! -r /sys/block/ram0/size ] ||
@@ -126,8 +129,10 @@ step-[1-9]*|pipe[0-9]*)
 		regular=1
 	fi
 	;;
+
 /dev/?*)
 	;;
+
 *)
 	dst="$datadir/image"
 	regular=1
@@ -141,20 +146,21 @@ devname="the RAM"
 if [ -z "$regular" ]; then
 	[ -b "$dst" ] ||
 		IM_fatal "specified target block device not found: $dst"
+
 	case "$dst" in
 	/dev/ram[0-9]*)
 		mark_used_ramdisk "$dst"
 		devname="the RAM-disk"
 		;;
+
 	*)
 		devname="device $dst"
 		;;
 	esac
 fi
 
+IM_start_output errmsg gauge
 src="${prevdir}${src}"
-:> /.initrd/rootdelay/addtime
-rootdelay_pause
 check_file_size
 check_avail_space
 copy_file_dialog

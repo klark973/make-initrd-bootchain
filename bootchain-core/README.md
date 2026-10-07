@@ -251,6 +251,12 @@ addressing, as if they are hidden.
   of this step, however, must work to the end and end with a zero status code
   in order for the daemon to process the received signal.
 - `bc_reboot()` - performs a logged restart of the computer.
+- `longtermop_start()` - suspends the restrictive boot process timer while
+  performing a long-term operation or working with the data input dialog;
+  nested calls are allowed and accounted for.
+- `longtermop_end()` - resumes the restrictive boot process timer after
+  working with the data input dialog or performing a long-term operation;
+  nested calls are allowed and accounted for.
 - `bypass_results()` - asks the daemon to associate the <OUT> of the previous
   step with the <IN> the next step. It is also used to inform the daemon about
   the result (mounted directory) inside the current initramfs root, outside the

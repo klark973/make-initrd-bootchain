@@ -83,7 +83,7 @@ hashprog="${hashprog:-sha256sum}"
 command -v "$hashprog" >/dev/null ||
 	IM_fatal "hash program not found: $hashprog"
 [ -n "$CHECKSUM" ] ||
-	IM_fatal "hash summa not specified"
+	IM_fatal "hash summa is not specified"
 check_prevstep_results ||
 	fatal "no previous step results to use with $PROG"
 [ "$datasize" -gt 0 ] 2>/dev/null ||
@@ -95,14 +95,13 @@ debug "hash check program: $hashprog"
 
 message "calculating image checksum for '$filename'..."
 
-:> /.initrd/rootdelay/addtime
-rootdelay_pause
-
+longtermop_start
 { head -c "$datasize" -- "$fullpath" |
   pv -n -i 0.5 -s $datasize |
   "$hashprog" |
   cut -f1 -d' ' >"$datadir/CHECKSUM"
 } 2>&1 |IM_gauge "[ Validating image... ]"
+longtermop_end
 
 [ -r "$datadir/CHECKSUM" ] &&
 	read -r check <"$datadir/CHECKSUM" ||
@@ -112,7 +111,7 @@ debug "calculated hash: $check"
 
 [ "$CHECKSUM" = "$check" ] ||
 	IM_fatal "image file checksum mismatch"
-message "checksum verified successfully"
+message "checksum has been verified successfully"
 
 # shellcheck disable=SC2119
 bypass_results

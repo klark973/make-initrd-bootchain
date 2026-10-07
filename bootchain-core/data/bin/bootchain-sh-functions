@@ -197,6 +197,66 @@ bc_reboot()
 	run reboot -f -d
 }
 
+longtermop_start()
+{
+	# I hope this will break when the internal implementation
+	# of make-initrd changes and I will know about it
+	local filename="${_rootdelay_pause}/bc-counter"
+	local counter=0
+
+	enter "longtermop_start"
+
+	# If timeout is enabled
+	if ! rootdelay_paused; then
+		# disable timeout
+		rootdelay_pause
+	elif [ -s "$filename" ]; then
+		# increment the counter
+		readline counter "$filename"
+		[ -z "$counter" ] && counter=0 ||
+			counter="$((1 + $counter))"
+	fi
+
+	# Save a counter value
+	debug "COUNTER=$counter"
+	printf '%s\n' "$counter" >"$filename"
+
+	leave "longtermop_start"
+}
+
+longtermop_end()
+{
+	# I hope this will break when the internal implementation
+	# of make-initrd changes and I will know about it
+	local filename="${_rootdelay_pause}/bc-counter"
+	local counter=0
+
+	enter "longtermop_end"
+
+	# Decrement the counter
+	if [ -s "$filename" ]; then
+		readline counter "$filename"
+
+		if [ -z "$counter" ]; then
+			counter=0
+		elif [ "$counter" != 0 ]; then
+			# save a counter value
+			counter="$(( $counter - 1 ))"
+			printf '%s\n' "$counter" >"$filename"
+		fi
+	fi
+
+	debug "COUNTER=$counter"
+
+	# Reset the timer and enable timeout
+	if [ "$counter" = 0 ]; then
+		rootdelay_reset_timer
+		rootdelay_unpause
+	fi
+
+	leave "longtermop_end"
+}
+
 bypass_results()
 {
 	enter "bypass_results"

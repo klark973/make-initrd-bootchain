@@ -83,9 +83,7 @@ mediacheck()
 	# display a gauge to avoid on-screen artefacts
 	IM_ponder_stop
 
-	:> /.initrd/rootdelay/addtime
-	rootdelay_pause
-
+	longtermop_start
 	checkisomd5 --gauge -- "$image" 2>"$mntdir/MEDIACHECK" |
 	while read -r number; do
 		case "$number" in
@@ -95,7 +93,9 @@ mediacheck()
 		esac
 	done |
 	IM_gauge "[ Validating image... ]" "Press Esc to abort this check..."
-	fdump "$mntdir/MEDIACHECK"
+	[ ! -s "$mntdir/MEDIACHECK" ] ||
+		fdump "$mntdir/MEDIACHECK"
+	longtermop_end
 
 	if grep -qs -- "The media check was aborted" "$mntdir/MEDIACHECK"; then
 		message "the media check has been aborted"
