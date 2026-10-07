@@ -45,6 +45,36 @@ check_pmbr_records()
 	return 1
 }
 
+remove_isomd5sum()
+{
+	local i rc=0 image="$1"
+
+	checkisomd5 --md5sumonly -- "$image" >/dev/null 2>&1 ||
+		return 0
+	message "isomd5sum signature has been found, it will be removed"
+
+	# FIXME: The block 'volume_info' really starts with 0x8373 (33651), it is
+	#        filled with spaces and has length of 512 bytes, but as I see it,
+	#        only the first 206 bytes actually changing with the implantisomd5
+	#        utility. At the same time APPDATA_SIZE is 512 bytes, APPDATA_OFFSET
+	#        is 883 bytes (and 32768 + 883 = 33651), it is defined in this file:
+	#        https://github.com/rhinstaller/isomd5sum/blob/master/utilities.h
+	#        So, the next snippet filled the whole field by the default value.
+	#        See also ECMA-119, the section 8.4.32, it is about APPDATA usage.
+	for i in $(seq 1 16); do
+		# 16*32 = 512 spaces
+		printf '                                '
+	done |
+	dd "of=$image" bs=1 seek=33651 conv=notrunc 2>/dev/null || rc="$?"
+	run sync
+
+	if [ "$rc" != 0 ] ||
+	   checkisomd5 --md5sumonly -- "$image" >/dev/null 2>&1
+	then
+		message "unable to remove an isomd5sum signature"
+	fi
+}
+
 create_disk_slice()
 {
 	enter "create_disk_slice"
@@ -124,6 +154,7 @@ create_disk_slice()
 	fi
 	debug "writing tmpfile: '$tmpf'"
 
+	local size_fixed=
 	local fix_pmbr=1
 
 	# Check for having valid PMBR records
@@ -135,7 +166,7 @@ create_disk_slice()
 	LC_ALL=C sfdisk -F -- "$whole" >"$tmpf" 2>&1 ||:
 	[ ! -s "$tmpf" ] || fdump "$tmpf"
 
-	# At first, try to fix backup GPT PMBR problem
+	# Try to fix backup GPT PMBR problem, if it exists
 	partn="The backup GPT table is not on the end of the device"
 	if grep -qs "$partn" "$tmpf"; then
 		partn="sfdisk -f --relocate gpt-bak-std"
@@ -145,6 +176,7 @@ create_disk_slice()
 		debug "RUN: sfdisk -F -- $whole"
 		LC_ALL=C sfdisk -F -- "$whole" >"$tmpf" 2>&1 ||:
 		[ ! -s "$tmpf" ] || fdump "$tmpf"
+		size_fixed=1
 	fi
 
 	local start lenght
@@ -161,6 +193,11 @@ create_disk_slice()
 		partn="not enough space to create new R/W-partition"
 		run rm -f -- "$tmpf"
 		message "$partn"
+
+		# Remove an isomd5sum signature if an original image changed
+		[ -z "$size_fixed" ] ||
+			remove_isomd5sum "$whole"
+
 		IM_ponder_stop
 		[ -n "$NOASKUSER" ] ||
 			IM_errmsg "N${partn:1}! Don't use sessions with this boot media."
@@ -205,9 +242,12 @@ create_disk_slice()
 	if [ -n "$fix_pmbr" ]; then
 		debug "adding a boot record to the PMBR table"
 		printf '\200\0\0\0\0\0\0\0\0\0\0\0\001\0\0\0' |
-			dd "of=$whole" bs=1 seek=462 2>/dev/null
-		sync
+		dd "of=$whole" bs=1 seek=462 conv=notrunc 2>/dev/null
+		run sync
 	fi
+
+	# Remove an isomd5sum signature if it exists
+	remove_isomd5sum "$whole"
 
 	# On fail only
 	if [ ! -b "$devname" ]; then

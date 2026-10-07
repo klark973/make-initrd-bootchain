@@ -124,6 +124,7 @@ Requires: %name-localdev = %version-%release
 Requires: e2fsprogs
 Requires: fdisk
 Requires: sfdisk
+Requires: isomd5sum
 AutoReq: noshell, noshebang
 
 %description liverw
