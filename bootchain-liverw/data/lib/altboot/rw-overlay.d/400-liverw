@@ -310,8 +310,8 @@ mount_disk_slice()
 {
 	enter "mount_disk_slice"
 
-	local dev opts="noatime,nodiratime,barrier=0"
-	opts="$opts,delalloc,nobh,errors=remount-ro"
+	local dev
+	local opts="noatime,nodiratime,barrier=0,delalloc,errors=remount-ro"
 
 	dev="$(readlink-e "$1" 2>/dev/null ||:)"
 	[ ! -b "$dev" ] || mountpoint -q -- "$prevdir.rw" ||
