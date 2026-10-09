@@ -90,10 +90,10 @@ create_disk_slice_inner()
 {
 	local devname
 
-	# At first, use exported value
+	# First, use the exported value
 	devname="$(stage2_getenv DEVICE)"
 
-	# Fallback: if DEVICE was not exported to the stage2
+	# Fallback: use if DEVICE not exported to stage2
 	if [ -z "$devname" ] && [ -n "$OEM_CDROOT" ]; then
 		devname="$(mountpoint -d -- "$OEM_CDROOT" ||:)"
 		devname="/sys/dev/block/$devname/uevent"
@@ -144,20 +144,19 @@ create_disk_slice_inner()
 		return 0
 	fi
 
-	# Prepare to dialog
-	IM_start_output ponder errmsg
-	IM_ponder_start "[ Creating persistent storage... ]"
-
 	local tmpf
 
 	# Use for store output
 	tmpf="$(run mktemp -t ||:)"
 	if [ ! -f "$tmpf" ]; then
 		message "mktemp failed"
-		IM_ponder_stop
 		return 0
 	fi
 	debug "writing the temporary file: '$tmpf'"
+
+	# Prepare for the dialogs
+	IM_start_output ponder errmsg
+	IM_ponder_start "[ Creating the persistent storage... ]"
 
 	local size_fixed=
 	local fix_pmbr=1
@@ -195,7 +194,7 @@ create_disk_slice_inner()
 
 	# Free space must be at least 1 GiB
 	if [ "$lenght" -lt "$minsize" ]; then
-		partn="not enough space to create new R/W-partition"
+		partn="not enough free space to create a new R/W-partition"
 		run rm -f -- "$tmpf"
 		message "$partn"
 
@@ -229,11 +228,11 @@ create_disk_slice_inner()
 		partn="${devname#"$whole"}"
 		partn="${partn#p}"
 
-		# Tell kernel about changes
+		# Tell the kernel about the changes
 		run addpart "$whole" "$partn" "$start" "$lenght" 1>&2 ||:
 		partn=0
 
-		# Wait until kernel re-reads partitions table
+		# Wait until the kernel re-reads the partition table
 		while [ "$partn" -lt "$timeout" ]; do
 			[ ! -b "$devname" ] ||
 				break
@@ -267,7 +266,7 @@ create_disk_slice_inner()
 	fi
 
 	# Format a new partition
-	message "creating filesystem on $devname"
+	message "creating the filesystem on $devname"
 
 	local opts="-t ext4 -O ^has_journal,sparse_super2"
 	opts="$opts -E packed_meta_blocks=1,num_backup_sb=1"
@@ -275,12 +274,12 @@ create_disk_slice_inner()
 	if run mke2fs $opts -L "$OEM_LIVE_STORAGE" -- "$devname" 1>&2; then
 		debug "in create_disk_slice(): mke2fs success"
 
-		# Tell udevd about changes
+		# Tell udevd about the changes
 		run udevadm trigger -- "$devname" 1>&2 ||:
 		run udevadm settle -t5 -- "$devname" 1>&2 ||:
 		partn=0
 
-		# Wait until udevd create the symlink
+		# Wait until udevd creates the symlink
 		while [ "$partn" -lt "$timeout" ]; do
 			[ ! -L "/dev/disk/by-label/$OEM_LIVE_STORAGE" ] ||
 				break
@@ -292,15 +291,15 @@ create_disk_slice_inner()
 	else
 		debug "in create_disk_slice(): mke2fs failed (rc=$?)"
 
-		# Try to mark new partition as _BAD_ storage
+		# Try to mark the new partition as a _BAD_ storage
 		run e2label "$devname" "$OEM_BAD_STORAGE" 1>&2 ||
 			run wipefs -q -a -- "$devname" 1>&2 ||:
 
-		# Tell udevd about changes, but not wait
+		# Just tell udevd about the changes
 		run udevadm trigger -- "$devname" 1>&2 ||:
 		run udevadm settle -t5 -- "$devname" 1>&2 ||:
 
-		partn="Can't create filesystem on the partition $devname"
+		partn="Can't create the filesystem on the partition $devname"
 		partn="$partn! Don't use sessions with this boot media."
 		IM_ponder_stop
 		[ -n "$NOASKUSER" ] ||
@@ -330,7 +329,7 @@ check_disk_slice()
 	IM_ponder_start "[ Checking the persistent storage... ]"
 
 	longtermop_start
-	message "checking the partition '$1'..."
+	message "checking the partition '$1'"
 	debug "RUN: e2fsck -p -y -E discard -- $1"
 	e2fsck -p -y -E discard -- "$1" >"$tmpf" 2>&1 || rc="$?"
 	[ ! -s "$tmpf" ] ||
@@ -344,12 +343,12 @@ check_disk_slice()
 		;;
 
 	1)	# No errors for now: just a message
-		message "file system errors have been corrected (rc=1)"
+		message "all file system errors corrected (rc=1)"
 		rc=0
 		;;
 
 	2)	# This is the kernel requirements
-		tmpf="file system errors have been corrected (rc=2)"
+		tmpf="all file system errors corrected (rc=2)"
 		IM_fatal "$tmpf, but the system must be rebooted"
 		;;
 
