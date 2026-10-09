@@ -157,7 +157,7 @@ create_disk_slice_inner()
 		IM_ponder_stop
 		return 0
 	fi
-	debug "writing tmpfile: '$tmpf'"
+	debug "writing the temporary file: '$tmpf'"
 
 	local size_fixed=
 	local fix_pmbr=1
@@ -253,6 +253,9 @@ create_disk_slice_inner()
 	# Remove an isomd5sum signature if it exists
 	remove_isomd5sum "$whole"
 
+	# The device check should be skipped during this boot
+	rw_slice_created=1
+
 	# On fail only
 	if [ ! -b "$devname" ]; then
 		partn="can't create a new partition on the drive $whole"
@@ -306,6 +309,67 @@ create_disk_slice_inner()
 	fi
 }
 
+check_disk_slice()
+{
+	[ -z "$rw_slice_created" ] ||
+		return 0
+	enter "check_disk_slice"
+
+	local tmpf rc=0
+
+	# Use for store output
+	tmpf="$(run mktemp -t ||:)"
+	if [ ! -f "$tmpf" ]; then
+		message "mktemp failed"
+		return 1
+	fi
+	debug "writing the temporary file: '$tmpf'"
+
+	# Prepare for the dialogs
+	IM_start_output ponder errmsg
+	IM_ponder_start "[ Checking the persistent storage... ]"
+
+	longtermop_start
+	message "checking the partition '$1'..."
+	debug "RUN: e2fsck -p -y -E discard -- $1"
+	e2fsck -p -y -E discard -- "$1" >"$tmpf" 2>&1 || rc="$?"
+	[ ! -s "$tmpf" ] ||
+		fdump "$tmpf"
+	run rm -f -- "$tmpf"
+	longtermop_end
+	IM_ponder_stop
+
+	case "$rc" in
+	0)	# No errors detected: do nothing
+		;;
+
+	1)	# No errors for now: just a message
+		message "file system errors have been corrected (rc=1)"
+		rc=0
+		;;
+
+	2)	# This is the kernel requirements
+		tmpf="file system errors have been corrected (rc=2)"
+		IM_fatal "$tmpf, but the system must be rebooted"
+		;;
+
+	*)	# Obviously, there are more serious problems
+		tmpf="file system errors left uncorrected (rc=$rc)"
+
+		message "$tmpf"
+
+		tmpf="F${tmpf:1}! You have to repair the partition $1"
+		tmpf="$tmpf before using this boot media for LiveCD sessions."
+		[ -n "$NOASKUSER" ] ||
+			IM_errmsg "$tmpf"
+		;;
+	esac
+
+	leave "check_disk_slice"
+
+	return $rc
+}
+
 mount_disk_slice()
 {
 	enter "mount_disk_slice"
@@ -314,7 +378,7 @@ mount_disk_slice()
 	local opts="noatime,nodiratime,barrier=0,delalloc,errors=remount-ro"
 
 	dev="$(readlink-e "$1" 2>/dev/null ||:)"
-	[ ! -b "$dev" ] || mountpoint -q -- "$prevdir.rw" ||
+	[ ! -b "$dev" ] || mountpoint -q -- "$prevdir.rw" || ! check_disk_slice "$dev" ||
 		run mount -o "$opts" -- "$dev" "$prevdir.rw"
 
 	leave "mount_disk_slice"
