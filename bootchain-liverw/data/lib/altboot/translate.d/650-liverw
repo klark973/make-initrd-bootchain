@@ -1,4 +1,8 @@
 #!/bin/bash -efu
 
-[ -z "${LIVE_RW-}" ] ||
-	VALUE="${VALUE:+$VALUE,}live_rw"
+case "$method" in
+cdrom|disk)
+	[ -z "$LIVE" ] || [ -z "${LIVE_RW-}" ] || [ -n "${FORENSIC-}" ] ||
+		VALUE="${VALUE:+$VALUE,}live_rw"
+	;;
+esac

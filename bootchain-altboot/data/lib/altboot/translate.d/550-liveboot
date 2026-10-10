@@ -1,15 +1,32 @@
 #!/bin/bash -efu
 
-if [ "$STAGENAME" != rescue ] && [ "$STAGENAME" != live ]; then
+# ALT-specific
+case "$STAGENAME" in
+altinst)
+	# ALT Linux Installer
 	RESCUE=
 	LIVE=
-fi
+	;;
+
+rescue)	# ALT Rescue LiveCD
+	RESCUE=1
+	LIVE=1
+	;;
+
+live)	# ALT Linux LiveCD
+	RESCUE=
+	LIVE=1
+	;;
+
+*)	# For other stage names, just add the appropriate flags
+	RESCUE="${RESCUE-}"
+	LIVE="${LIVE-}"
+	;;
+esac
 
 VALUE=
-ALTBOOT_LIVEBOOT0="stagename=$STAGENAME;method=$method"
-[ "$STAGENAME" != live ] && [ -z "${LIVE-}" ] ||
+[ -z "$LIVE" ] ||
 	VALUE=live_ro
-[ "$STAGENAME" != rescue ] && [ -z "${RESCUE-}" ] ||
+[ -z "$RESCUE" ] ||
 	VALUE="${VALUE:+$VALUE,}rescue"
-[ -z "$overlays" ] ||
-	ALTBOOT_LIVEBOOT0="$ALTBOOT_LIVEBOOT0;$overlays"
+ALTBOOT_LIVEBOOT0="method=${method};squash=${STAGENAME}${overlays:+;$overlays}"

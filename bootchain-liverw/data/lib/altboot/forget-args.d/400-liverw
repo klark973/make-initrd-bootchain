@@ -1,0 +1,5 @@
+#!/bin/bash -efu
+
+cat <<EOF
+unset LIVE_RW
+EOF

@@ -15,7 +15,7 @@ nfs_slice()
 	local mp="$prevdir.rw/rw$OEM_IMAGES_BASE"
 
 	if [ -z "$server" ]; then
-		# Fallback: if HOST was not exported to the stage2
+		# Fallback: use if HOST not exported to stage2
 		message "detecting IP-address of the connected NFS server"
 		server="$(run ss -n -o state established '( dport = :2049 )' |
 				sed '2!d;s/  */ /g' |
@@ -49,7 +49,7 @@ nfs_slice()
 	if [ -d "$mp/$profile" ]; then
 		mount_overlays "$mp"
 	else
-		message "however specified profile not found: '$profile'"
+		message "however the specified profile not found: '$profile'"
 
 		if [ -n "$mnt" ]; then
 			run umount -fl -- "$mp" ||:

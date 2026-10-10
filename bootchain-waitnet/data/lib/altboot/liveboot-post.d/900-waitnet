@@ -8,7 +8,7 @@ export_netconf()
 	local proto addr mask network bcast netbits
 
 	if [ -n "$(stage2_getenv DEVICE)" ]; then
-		message "DEVICE already exported to the stage2"
+		message "DEVICE already exported to stage2"
 		leave "export_netconf"
 		return 0
 	fi
@@ -90,6 +90,7 @@ export_netconf()
 	leave "export_netconf"
 }
 
+# Only for propagator-compatibility mode with networking
 if [ -n "$ALTBOOT_OLDROOT" ] && [ -s "$NETBOOT_IFNAME" ]; then
 	if [ -n "$prevdir" ] && [ -s /etc/resolv.conf ]; then
 		if [ -d "$prevdir/etc" ] && [ ! -L "$prevdir/etc/resolv.conf" ]; then

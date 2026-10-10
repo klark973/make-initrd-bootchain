@@ -5,7 +5,7 @@ register_parameter string STAGENAME
 register_parameter bool RESCUE
 register_parameter bool LIVE
 register_parameter bool LOWMEM
-register_parameter bool LIVE_RW
+register_parameter bool FORENSIC
 register_array string OVERLAYROOT
 register_array string ALTBOOT_COPYFILE
 register_array string ALTBOOT_DOWNLOAD

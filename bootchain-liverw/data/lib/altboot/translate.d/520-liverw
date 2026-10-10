@@ -1,3 +1,0 @@
-#!/bin/bash -efu
-
-[ "$STAGENAME" = rescue ] || [ "$STAGENAME" = live ] || LIVE_RW=

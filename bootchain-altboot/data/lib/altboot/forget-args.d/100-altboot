@@ -7,5 +7,5 @@ unset HASH
 unset RESCUE
 unset LIVE
 unset LOWMEM
-unset LIVE_RW
+unset FORENSIC
 EOF

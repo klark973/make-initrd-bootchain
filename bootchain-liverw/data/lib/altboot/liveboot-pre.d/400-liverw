@@ -1,10 +1,25 @@
 #!/bin/bash -efu
 
-case "$stagename" in
-live|rescue)
+# Reset the default value: only for boot media, not for a regular rootfs
+case "$method" in
+cdrom|disk)
+	# Don't use a R/W partition if the required configuration is not defined
 	[ -n "$OEM_LIVE_STORAGE" ] && [ -n "$OEM_BAD_STORAGE" ] ||
 		live_rw=
-	[ "$flags" != "${flags//*live_rw*/}" ] ||
+
+	# Don't use a R/W partition if the corresponding flag is not set
+	[ -n "$flags" ] && [ -z "${flags##*live_rw*}" ] ||
 		live_rw=
+
+	# Don't use a R/W partition with any ALT Linux Installer
+	[ -z "$ALTBOOT_OLDROOT" ] || [ "$squash" != altinst ] ||
+		live_rw=
+	;;
+
+'')	# Don't change anything with a regular rootfs
+	;;
+
+*)	# Don't use a R/W partition with other boot methods
+	live_rw=
 	;;
 esac

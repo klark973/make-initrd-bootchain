@@ -17,8 +17,8 @@ b_a()
 	get_bootarg LIVEBOOT "$1"
 }
 
-b_a stagename
 b_a method
+b_a squash
 b_a directory
 b_a overlayroot
 b_a profile
@@ -37,6 +37,8 @@ mount_overlays()
 	run ls -l -- "$dirp/" >/dev/null 2>&1 ||:
 	images="$(run find "$dirp/$profile" -maxdepth 1 -type f \
 			-name '*.iso' -o -name '*.squashfs' |sort)"
+	[ -z "$images" ] ||
+		run modprobe -q 'devname:loop-control' ||:
 
 	for img in $images _; do
 		[ -r "$img" ] ||
@@ -44,7 +46,6 @@ mount_overlays()
 		imgdir="$prevdir.rw/rw$OEM_OVERLAYS_DIR/${img##*/}"
 
 		run mkdir -p -- "$imgdir"
-		run modprobe -q 'devname:loop-control' ||:
 
 		if run mount -o ro,loop -- "$img" "$imgdir"; then
 			livecd_overlays="$imgdir:$livecd_overlays"
@@ -53,7 +54,7 @@ mount_overlays()
 	done
 
 	[ -n "$msg" ] && msg="overlays found: $msg" ||
-		msg="no overlays found for profile '$profile'"
+		msg="overlays for the profile '$profile' not found"
 	message "$msg"
 
 	leave "mount_overlays"
@@ -76,7 +77,7 @@ do_overlay()
 		run mount -t tmpfs -o mode=755 -- none "$prevdir.rw"
 	run mkdir -p -- "$prevdir.rw/rw" "$prevdir.rw/wk"
 	run mount --move -- "$prevdir" "$prevdir.ro"
-	[ "$stagename" != live ] && [ "$flags" = "${flags//*live_ro*/}" ] ||
+	[ -z "$flags" ] || [ -n "${flags##*live_ro*}" ] ||
 		use_hooks livecd-slice.d
 	opts="lowerdir=${livecd_overlays}${opts}"
 	run mount -t overlay -o "$opts" -- overlay "$prevdir"
@@ -85,14 +86,12 @@ do_overlay()
 	run mount --move -- "$prevdir.rw" "$prevdir/.rw"
 	run rmdir -- "$prevdir.rw" "$prevdir.ro"
 
-	message "rootfs overlayed with overlayfs"
-
-	if [ -n "$OEM_CDROOT" ] &&
-		mountpoint -q -- "$OEM_CDROOT"
-	then
+	if [ -n "$OEM_CDROOT" ] && mountpoint -q -- "$OEM_CDROOT"; then
 		run mkdir -p -- "${prevdir}${OEM_CDROOT}"
 		run mount --move -- "$OEM_CDROOT" "${prevdir}${OEM_CDROOT}"
 	fi
+
+	message "rootfs is covered by overlayfs"
 
 	use_hooks liveboot-post.d
 
@@ -116,34 +115,26 @@ debug "$PROG started ($(get_parameter ALTBOOT_LIVEBOOT))"
 profile="${profile:-default}"
 timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 
-# Check for init inside stage2
-if [ -n "$ALTBOOT_OLDROOT" ] && [ -z "$NOASKUSER" ]; then
-	if [ ! -x "$prevdir${INIT:-/sbin/init}" ]; then
-		text="Specified INIT not found inside stage2 rootfs."
-		text="$text Retry with other init=... after reboot."
-		IM_start_output errmsg
-		IM_errmsg "$text $IM_RBMSG"
-		bc_reboot
-	fi
-fi
-
 use_hooks liveboot-init.d
 
 if [ "$overlayroot" = disabled ]; then
-	message "rootfs has return back to the read/write mode"
+	message "switching rootfs to read/write mode"
 	need_overlay=
 elif [ "$overlayroot" = tmpfs ]; then
-	message "rootfs switched to the read-only mode, using tmpfs as overlay"
+	message "switching rootfs to read-only mode using tmpfs"
 elif [ -n "$overlayroot" ] && [ -n "$live_rw" ]; then
-	message "rootfs switched to the read-only mode, using $live_rw as overlay"
-elif [ "$stagename" = rescue ]; then
-	message "running rescue"
-elif [ "$stagename" = live ]; then
-	message "running live"
-elif [ -n "$stagename" ] && [ "$flags" != "${flags//*live_ro*/}" ]; then
-	message "running live '$stagename'"
-	stagename=live
-elif grep -qs " $prevdir squashfs " /proc/mounts; then
+	message "switching rootfs to read-only mode using $live_rw"
+elif [ -n "$ALTBOOT_OLDROOT" ] && [ "$squash" = altinst ]; then
+	message "running ALT Linux Installer"
+elif [ -n "$ALTBOOT_OLDROOT" ] && [ "$squash" = rescue ]; then
+	message "running ALT Rescue LiveCD"
+elif [ -n "$ALTBOOT_OLDROOT" ] && [ "$squash" = live ]; then
+	message "running ALT Linux LiveCD"
+elif [ -n "$squash" ] && [ -n "$flags" ] && [ -z "${flags##*rescue*}" ]; then
+	message "running the rescue '$squash'"
+elif [ -n "$squash" ] && [ -n "$flags" ] && [ -z "${flags##*live_ro*}" ]; then
+	message "running the live '$squash'"
+elif grep -qs -- " $prevdir squashfs " /proc/mounts; then
 	message "running unknown rootfs from squashfs"
 	live_rw=
 else

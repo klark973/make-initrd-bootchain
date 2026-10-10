@@ -1,0 +1,8 @@
+#!/bin/bash -efu
+
+case "$method" in
+cdrom|disk)
+	[ -z "${LIVE_RW-}" ] ||
+		LIVE=1
+	;;
+esac

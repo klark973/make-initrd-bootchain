@@ -3,6 +3,7 @@
 case "$method" in
 ftp|http|url)
 	ALTBOOT="waitnet,download"
+
 	if grep -qws ramdisk_size /proc/cmdline; then
 		VALUE="method=$method;to=RD;squash=$STAGENAME"
 	elif [ "$type" != iso ]; then
@@ -16,6 +17,7 @@ ftp|http|url)
 		VALUE="method=$method;to=TMPFS"
 		ALTBOOT="$ALTBOOT,iso9660"
 	fi
+
 	if [ "$method" = url ]; then
 		VALUE="$VALUE;url=$url"
 	elif [ -n "$server" ] || [ -n "$directory" ]; then
@@ -23,6 +25,7 @@ ftp|http|url)
 		[ -z "$user" ] || [ "$method" = http ] ||
 			VALUE="$VALUE;user=$user;pass=$pass"
 	fi
+
 	[ -z "$imgsize" ] ||
 		VALUE="$VALUE;imgsize=$imgsize"
 	[ -z "$timeout" ] ||

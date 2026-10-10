@@ -25,12 +25,12 @@ localdev_slice()
 		leave "localdev_slice"
 		return 0
 	elif [ ! -b "$devname" ]; then
-		message "specified overlay device not found: $odev"
+		message "the specified overlay device not found: $odev"
 		leave "localdev_slice"
 		return 0
 	fi
 
-	message "mounting local overlays for profile '$profile'"
+	message "mounting local overlays for the profile '$profile'"
 	mp="$(grep -s "$devname /" /proc/mounts |cut -f2 -d' ')"
 
 	if [ -n "$mp" ]; then
@@ -41,10 +41,10 @@ localdev_slice()
 		run mkdir -p -- "$mp"
 
 		if run mount -o ro -- "$devname" "$mp"; then
-			debug "device $odev has been mounted to $mp"
+			debug "device $odev mounted to $mp"
 			mnt=1
 		else
-			message "can't mount specified overlay device: $odev"
+			message "can't mount the specified overlay device: $odev"
 			run rmdir -- "$mp" ||:
 			leave "localdev_slice"
 			return 0
@@ -54,7 +54,7 @@ localdev_slice()
 	if [ -d "$mp/$profile" ]; then
 		mount_overlays "$mp"
 	else
-		message "however specified profile not found: '$profile'"
+		message "however the specified profile not found: '$profile'"
 
 		if [ -n "$mnt" ]; then
 			run umount -fl -- "$mp" ||:

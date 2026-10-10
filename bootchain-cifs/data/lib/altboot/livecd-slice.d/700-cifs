@@ -53,7 +53,7 @@ cifs_slice()
 	if [ -d "${mp}${dirpart}/$profile" ]; then
 		mount_overlays "${mp}${dirpart}"
 	else
-		message "however specified profile not found: '$profile'"
+		message "however the specified profile not found: '$profile'"
 
 		if [ -n "$mnt" ]; then
 			run umount -fl -- "$mp" ||:

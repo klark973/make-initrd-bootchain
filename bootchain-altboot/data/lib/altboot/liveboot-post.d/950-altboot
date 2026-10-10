@@ -22,17 +22,41 @@ altboot_cleanup()
 	leave "altboot_cleanup"
 }
 
-if [ -n "$ALTBOOT_OLDROOT" ]; then
+altboot_finalize()
+{
+	local text
+
+	enter "altboot_finalize"
+
+	# Check for INIT inside the stage2 rootfs
+	if [ -z "$NOASKUSER" ] && [ ! -x "${prevdir}${INIT:-/sbin/init}" ]; then
+		text="The specified INIT not found inside the stage2 rootfs."
+		text="$text Retry with another init=... after the reboot."
+		IM_start_output errmsg
+		IM_errmsg "$text $IM_RBMSG"
+		bc_reboot
+	fi
+
 	[ -n "$BC_DEBUG" ] ||
 		altboot_cleanup
+
 	if [ -s "$altboot_envfile" ]; then
 		cat "$altboot_envfile" >> /.initrd/kernenv
-		mkdir -p /run/stage1
-		cat "$altboot_envfile" >> /run/stage1/vars
+		run mkdir -p /run/stage1
+		run cp -Lf -- "$altboot_envfile" /run/stage1/vars
+		debug "altboot environment saved"
 	fi
+
 	if [ -d /etc/network ]; then
-		mkdir -p /run/stage1
-		cp -r /etc/network /run/stage1
+		run mkdir -p /run/stage1
+		run cp -aRf /etc/network /run/stage1/
+		debug "/etc/network copyed"
 	fi
+
 	message "Spawning init..."
-fi
+
+	leave "altboot_finalize"
+}
+
+# For propagator-compatibility mode only
+[ -z "$ALTBOOT_OLDROOT" ] || altboot_finalize
