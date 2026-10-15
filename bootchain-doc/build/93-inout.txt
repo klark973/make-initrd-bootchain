@@ -23,7 +23,7 @@ bootchain=fg,download,liveboot,rootfs ...
 «*fg*», «*noretry*» и «*retry*».
 
 .Таблица маркировки входов/выходов:
-[valign="top",options="header,compact,pgwide,unbreakable",cols="1,1,1"]
+[valign="top",options="header,compact,pgwide,breakable",cols="1,1,1"]
 |===========================================================================
 |Ожидает на «входе» |Название «шага»   |Формирует на «выходе»
 |<bypass>           |<<_altboot>>      |<bypass>
