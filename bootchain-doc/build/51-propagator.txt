@@ -14,7 +14,7 @@ root=bootchain bootchain=fg,`*localdev,copyfile,checksum,squashfs,liveboot*`,roo
   `*altboot_localdev*`=method=cdrom;uuid=2021-05-30-12-55-00-00;directory=/rescue \
   `*altboot_copyfile*`=dst=RD;src=/rescue ramdisk_size=497773 \
   `*altboot_checksum*`=613bf1a12803b448682d0c6d628400d2a52f38b61e6815af34f364cf71ad65ec \
-  `*altboot_liveboot*`=stagename=rescue;method=cdrom;flags=live_ro,rescue,live_rw
+  `*altboot_liveboot*`=method=cdrom;squash=rescue;flags=live_ro,rescue,live_rw
 ----
 
 Режим «совместимости с пропагатором» активируется «шагом» с именем «*altboot*».
@@ -29,7 +29,7 @@ root=bootchain bootchain=fg,`*localdev,copyfile,checksum,squashfs,liveboot*`,roo
 [,,subs="verbatim,quotes"]
 ----
 `root=bootchain bootchain=fg,*altboot*` **automatic**=... \
-  [lowmem] [ramdisk_size=...] [stagename={altinst|live|rescue}]
+  [lowmem] [ramdisk_size=...] [stagename={altinst|live|rescue|...}]
 ----
 
 Для полной совместимости с link:https://www.altlinux.org/Propagator[пропагатором]

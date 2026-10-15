@@ -24,25 +24,27 @@ rootfs, либо использующих _<<_read_only_слои_livecd,овер
 make-initrd переменной *$BOOTCHAIN_PATH* можно переопределить каталог, в котором
 находится конфигурация). В этом конфигурационном файле можно переопределить
 дефолты и задать параметры, которые изначально не определены. См. детали в примере
-link:https://git.altlinux.org/gears/m/make-initrd-bootchain.git?p=make-initrd-bootchain.git;a=blob;f=bootchain-doc/samples/bootchain-alt.conf[bootchain-doc/samples/bootchain-alt.conf].
-Для добавления произвольных файлов используется директива в */etc/initrd.mk*:
+link:https://github.com/klark973/make-initrd-bootchain/blob/sisyphus/bootchain-doc/samples/bootchain-alt.conf[bootchain-doc/samples/bootchain-alt.conf].
+Для добавления произвольных файлов или программ в */etc/initrd.mk* используются директивы:
 
 [,,subs="verbatim,quotes"]
 ----
-**PUT_FILES** += __<файлы>__
+**PUT_FILES** += __<пути_к_файлам_через_пробел>__
+**PUT_PROGS** += __<программы_через_пробел>__
 ----
 
 Про кофигурирование в link:https://www.altlinux.org/Mkimage-profiles[mkimage-profiles]
 смотрите link:https://nightly.altlinux.org/docs/mkimage-profiles.html#_features_in_initrd_bootchain[features.in/initrd-bootchain/README].
-Далее будет приведено описание известных конфигурационных переменных.
+Ниже приведено описание заведомо известных конфигурационных переменных.
 
 См. также:
 
 * <<_создание_своего_initrd_img_c_bootchain>>
 * https://www.altlinux.org/Mkimage-profiles
-* link:https://git.altlinux.org/gears/m/make-initrd-bootchain.git?p=make-initrd-bootchain.git;a=blob;f=bootchain-doc/samples/bootchain-alt.conf[Пример конфигурации в пакете с документацией]
+* link:https://github.com/klark973/make-initrd-bootchain/blob/sisyphus/bootchain-doc/samples/bootchain-alt.conf[Пример конфигурации в пакете с документацией]
 * link:https://github.com/altlinux/mkimage-profiles/blob/master/features.in/initrd-bootchain/stage1/scripts.d/80-make-initrd-for-bootchain[Дистрибутивный скрипт для создания initrd.img]
 
+<<<
 === Модуль make-initrd-bootchain-core
 
 * *BC_DEBUG* — непустое значение, если включена расширенная отладка;
@@ -50,8 +52,8 @@ link:https://git.altlinux.org/gears/m/make-initrd-bootchain.git?p=make-initrd-bo
   вывода журнала;
 * *BC_LOGFILE* — путь к файлу журнала или устройство для вывода в него
   сообщений отладки;
-* *BC_DEVICE_TIMEOUT* — глобальный дефолтный таймаут для любых «шагов»
-  altboot;
+* `*BC_DEVICE_TIMEOUT*` — глобальный дефолтный таймаут (60 секунд) для
+  любых «шагов» altboot (начиная с версии *0.1.5-alt20*);
 * *BC_FGVT_ACTIVATE* — если непустое значение, то через сколько секунд
   активировать интерактивный терминал;
 * `*BC_TMPFS_SIZE*` — непустое значение размера TMPFS, если хотим поменять

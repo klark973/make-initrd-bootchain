@@ -46,12 +46,13 @@ _gateway_, _netmask_, _hostname_ и _interface_), поскольку в make-ini
 «link:https://github.com/osboot/make-initrd/tree/master/features/network[network]».
 
 Например, в link:https://www.altlinux.org/Propagator[пропагаторе] таймауты в
-каждом методе загрузки задавались жёстко прямо в коде, но в *altboot* через
-/proc/cmdline дефолтный таймаут для любого метода загрузки можно переопределить:
+каждом методе загрузки задавались жёстко прямо в коде, тогда как в *altboot*
+через /proc/cmdline дефолтный таймаут *$BC_DEVICE_TIMEOUT* можно переопределить
+для любого метода загрузки:
 
 [,,subs="verbatim,quotes"]
 ----
-root=bootchain bootchain=fg,`*altboot ip=dhcp4*` \
+root=bootchain bootchain=fg,`*altboot ip=dhcp4*` stagename=live \
     automatic=method:nfs,server:192.168.15.1,`*timeout*`:120,...
 ----
 
