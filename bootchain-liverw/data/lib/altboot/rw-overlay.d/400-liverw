@@ -8,8 +8,8 @@ check_pmbr_records()
 	partn="sfdisk -l"
 	debug "RUN: $partn -- $whole"
 	LC_ALL=C $partn -- "$whole" >"$tmpf" 2>&1 ||:
-	[ ! -s "$tmpf" ] ||
-		fdump "$tmpf"
+	fdump "$tmpf"
+	#
 	if ! grep -qs 'Disklabel type: gpt' "$tmpf"; then
 		leave "check_pmbr_records"
 		return 1
@@ -19,8 +19,8 @@ check_pmbr_records()
 	partn="sfdisk -l --label-nested=mbr"
 	debug "RUN: $partn -- $whole"
 	LC_ALL=C $partn -- "$whole" >"$tmpf" 2>/dev/null ||:
-	[ ! -s "$tmpf" ] ||
-		fdump "$tmpf"
+	fdump "$tmpf"
+	#
 	if ! grep -qs 'Disklabel type: dos' "$tmpf"; then
 		leave "check_pmbr_records"
 		return 1
@@ -168,7 +168,7 @@ create_disk_slice_inner()
 	message "searching unpartitioned space on the drive $whole"
 	debug "RUN: sfdisk -F -- $whole"
 	LC_ALL=C sfdisk -F -- "$whole" >"$tmpf" 2>&1 ||:
-	[ ! -s "$tmpf" ] || fdump "$tmpf"
+	fdump "$tmpf"
 
 	# Try to fix backup GPT PMBR problem, if it exists
 	partn="The backup GPT table is not on the end of the device"
@@ -176,10 +176,10 @@ create_disk_slice_inner()
 		partn="sfdisk -f --relocate gpt-bak-std"
 		debug "RUN: $partn -- $whole"
 		LC_ALL=C $partn -- "$whole" >"$tmpf" 2>&1 ||:
-		[ ! -s "$tmpf" ] || fdump "$tmpf"
+		fdump "$tmpf"
 		debug "RUN: sfdisk -F -- $whole"
 		LC_ALL=C sfdisk -F -- "$whole" >"$tmpf" 2>&1 ||:
-		[ ! -s "$tmpf" ] || fdump "$tmpf"
+		fdump "$tmpf"
 		size_fixed=1
 	fi
 
@@ -213,7 +213,7 @@ create_disk_slice_inner()
 	partn="sfdisk -f -a --no-reread --no-tell-kernel"
 	debug "RUN: echo ',' |$partn -- $whole"
 	echo "," |LC_ALL=C $partn -- "$whole" >"$tmpf" 2>&1 ||:
-	[ ! -s "$tmpf" ] || fdump "$tmpf"
+	fdump "$tmpf"
 	devname="$(grep -s ": Created a new partition " "$tmpf" |cut -f1 -d:)"
 	message "new partition device: '$devname'"
 	run rm -f -- "$tmpf"
@@ -332,8 +332,7 @@ check_disk_slice()
 	message "checking the partition '$1'"
 	debug "RUN: e2fsck -p -y -E discard -- $1"
 	e2fsck -p -y -E discard -- "$1" >"$tmpf" 2>&1 || rc="$?"
-	[ ! -s "$tmpf" ] ||
-		fdump "$tmpf"
+	fdump "$tmpf"
 	run rm -f -- "$tmpf"
 	longtermop_end
 	IM_ponder_stop
