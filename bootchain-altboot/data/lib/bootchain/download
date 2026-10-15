@@ -239,8 +239,7 @@ get_file_size()
 			rc=0; run rm -f -- "$tmpf"
 			status="$(run curl ${opts}${auth:+ -u "$auth"} \
 					--output "$tmpf" --url "$url")" || rc=$?
-			[ ! -s "$tmpf" ] ||
-				fdump "$tmpf"
+			fdump "$tmpf"
 			debug "curl status: $rc, protocol status: $status"
 
 			if [ "$rc" = 0 ] && [ "$method" = http ]; then
