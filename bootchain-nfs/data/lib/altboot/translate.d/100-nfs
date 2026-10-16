@@ -1,7 +1,7 @@
 #!/bin/bash -efu
 
 if [ "$method" = nfs ]; then
-	VALUE="server=$server"
+	VALUE="server=$server;squash=$STAGENAME"
 	[ -z "$directory" ] ||
 		VALUE="$VALUE;directory=$directory"
 	[ -z "$timeout" ] ||

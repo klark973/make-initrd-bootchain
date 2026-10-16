@@ -15,6 +15,7 @@ b_a directory
 b_a domain
 b_a user
 b_a pass
+b_a squash
 b_a timeout
 b_a options
 
@@ -32,7 +33,7 @@ samba_input_form()
 
 	local text="Please enter the name or IP address of the"
 	text="$text SAMBA-server, and the directory (or ISO image"
-	text="$text file)${STAGENAME:+ containing the squash $STAGENAME}"
+	text="$text file)${squash:+ containing the squash $squash}"
 	text="$text, and the Domain/Login/Password if necessary"
 	text="$text (leave Login blank for guest logon)."
 
@@ -122,7 +123,7 @@ is_server_online()
 	elif [ -d "${mp}${dirpart}" ]; then
 		run mount --bind -- "${mp}${dirpart}" "$image" || rc=1
 	elif [ ! -s "${mp}${dirpart}" ]; then
-		message "however specified ISO-image or directory not found: '$dirpart'"
+		message "however the specified ISO-image or directory not found: '$dirpart'"
 		rc=1
 	else
 		message "assuming ISO-image, CIFS-path: '$dirpart'"
@@ -188,7 +189,7 @@ connection_loop()
 			else
 				[ "$i" -lt "$timeout" ] ||
 					message "connection timeout, dialogs are disabled"
-				fatal "specified SAMBA-server does not responds"
+				fatal "the specified SAMBA-server does not responds"
 			fi
 
 			i=0
