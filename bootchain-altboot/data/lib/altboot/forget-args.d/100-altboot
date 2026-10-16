@@ -2,6 +2,7 @@
 
 cat <<EOF
 unset AUTOMATIC
+unset STAGENAME
 unset PROFILE
 unset HASH
 unset RESCUE

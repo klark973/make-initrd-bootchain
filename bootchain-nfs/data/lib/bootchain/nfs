@@ -12,6 +12,7 @@ b_a()
 
 b_a server
 b_a directory
+b_a squash
 b_a timeout
 b_a options
 
@@ -29,7 +30,7 @@ nfs_input_form()
 
 	local text="Please enter the name or IP address of the"
 	text="$text NFS-server, and the directory (or ISO image"
-	text="$text file)${STAGENAME:+ containing the squash $STAGENAME}."
+	text="$text file)${squash:+ containing the squash $squash}."
 
 	while :; do
 		[ -n "$server" ] ||
@@ -119,7 +120,7 @@ is_server_online()
 	if [ -z "$isofile" ]; then
 		run mount --move -- "$mp" "$image" || rc=1
 	elif [ ! -s "${mp}/${isofile}" ]; then
-		message "however specified ISO-image not found: '$isofile'"
+		message "however the specified ISO-image not found: '$isofile'"
 		rc=1
 	else
 		mediacheck "$mp/$isofile"
@@ -178,7 +179,7 @@ connection_loop()
 			else
 				[ "$i" -lt "$timeout" ] ||
 					message "connection timeout, dialogs are disabled"
-				fatal "specified NFS-server does not responds"
+				fatal "the specified NFS-server does not responds"
 			fi
 
 			i=0
