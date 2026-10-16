@@ -19,10 +19,12 @@ overlayroot_config()
 
 	[ "$overlay" != "$OVERLAYROOT" ] ||
 		overlay=tmpfs
+
 	case "$overlay" in
 	'')	overlay=tmpfs
 		usepart=
 		;;
+
 	tmpfs|disabled)
 		usepart=
 		;;

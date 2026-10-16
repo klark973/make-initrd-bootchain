@@ -47,12 +47,12 @@ url_input_form()
 	enter "url_input_form"
 
 	local title="[ Enter the URL ]"
-
 	local text="Please enter "
+
 	if [ -n "$squash" ]; then
 		text="$text the URL containing the squash $squash."
 	else
-		text="$text full path to the file image."
+		text="$text the full path to the file image."
 	fi
 
 	while :; do
@@ -60,16 +60,18 @@ url_input_form()
 			url 200 "URL or filename"	\
 			||
 			back_to_main_menu
+
 		case "$url" in
-		'')
-			IM_errmsg "Valid URL/filename required!"
+		'')	IM_errmsg "Valid URL/filename required!"
 			continue
 			;;
+
 		http://*|ftp://*|file:///*|/*)
 			[ -n "${url//[^[:space:]]/}" ] ||
 				break
 			;;
 		esac
+
 		IM_errmsg "Invalid URL/filename: '$url'!"
 	done
 
@@ -87,12 +89,12 @@ http_input_form()
 	enter "http_input_form"
 
 	local title="[ HTTP-server connection data ]"
-
 	local text="Please enter the name or IP address of the HTTP-server, and"
+
 	if [ -n "$squash" ]; then
 		text="$text the directory containing the squash $squash."
 	else
-		text="$text full path to the file image."
+		text="$text the full path to the file image."
 	fi
 
 	while :; do
@@ -103,6 +105,7 @@ http_input_form()
 			directory 128 "Directory"	\
 			||
 			back_to_main_menu
+
 		if [ -z "$server" ]; then
 			IM_errmsg "Valid HTTP-server required!"
 		elif [ -z "$directory" ]; then
@@ -132,13 +135,14 @@ ftp_input_form()
 	enter "ftp_input_form"
 
 	local title="[ FTP-server connection data ]"
-
 	local text="Please enter the name or IP address of the FTP-server, and"
+
 	if [ -n "$squash" ]; then
 		text="$text the directory containing the squash $squash"
 	else
-		text="$text full path to the file image"
+		text="$text the full path to the file image"
 	fi
+
 	text="$text, and the Login/Password if necessary"
 	text="$text (leave Login blank for anonymous)."
 
@@ -152,6 +156,7 @@ ftp_input_form()
 			pass       32 "Password"	\
 			||
 			back_to_main_menu
+
 		if [ -z "$server" ]; then
 			IM_errmsg "Valid FTP-server required!"
 		elif [ -z "$directory" ]; then
@@ -210,7 +215,7 @@ get_file_size()
 		filesize="$(run stat -L -c%s -- "$url")"
 
 		if [ -n "$imgsize" ] && [ "$filesize" != "$imgsize" ]; then
-			local msg="real and specified image file size mismatch"
+			local msg="the real and specified image file sizes don't match"
 
 			[ -n "$NOASKUSER" ] ||
 				IM_errmsg "R${msg:1}!"
@@ -250,8 +255,10 @@ get_file_size()
 					message "unrecoverable http error"
 					break
 					;;
+
 				200)	# OK
 					;;
+
 				*)	rc=1
 					;;
 				esac
@@ -263,9 +270,11 @@ get_file_size()
 					message "unrecoverable ftp error"
 					break
 					;;
+
 				200|226|350)
 					# OK
 					;;
+
 				*)	rc=1
 				esac
 			fi
@@ -287,7 +296,7 @@ get_file_size()
 	fi
 
 	if [ -z "$filesize" ]; then
-		message "can't retrieve image/file size by specified URL"
+		message "can't retrieve image/file size by the specified URL"
 		leave "get_file_size"
 		return 1
 	fi
@@ -325,12 +334,12 @@ check_avail_space()
 	message "available: $avail KiB, required: $sizemin KiB"
 
 	if [ "$avail" -lt "$sizemin" ]; then
-		text="not enough memory for download specified image"
+		text="not enough memory for download the specified image"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$text, dialogs are disabled"
 		text="N${text:1}. Available space: $avail KiB."
 		[ -n "$dstreg" ] || [ "${to:0:8}" != /dev/ram ] ||
-			text="$text Retry with ramdisk_size=$szkb after reboot."
+			text="$text Retry with ramdisk_size=$szkb after the reboot."
 		IM_errmsg "$text $IM_RBMSG"
 		bc_reboot
 	fi
@@ -429,7 +438,7 @@ timeout="${timeout:-$BC_DEVICE_TIMEOUT}"
 
 if [ -z "$dstreg" ]; then
 	[ -b "$to" ] ||
-		IM_fatal "specified target block device not found: $to"
+		IM_fatal "the specified target block device not found: $to"
 
 	case "$to" in
 	/dev/ram[0-9]*)
@@ -482,7 +491,7 @@ fi
 
 if [ -z "$url" ]; then
 	[ -z "$NOASKUSER" ] ||
-		fatal "URL for boot from not specified, dialogs are disabled"
+		fatal "URL for boot from is not specified, dialogs are disabled"
 	download_input_form
 fi
 
@@ -512,6 +521,7 @@ while :; do
 		printf '%s, check available space\n' "$?" >"$datadir/ERROR"
 	[ -z "$filesize" ] ||
 		download_image
+
 	if [ "$method" = ftp ] && [ -s "$datadir/ERROR" ] &&
 	   [ "$(head -n1 -- "$datadir/ERROR" ||:)" = "7, curl" ]
 	then
@@ -521,6 +531,7 @@ while :; do
 		sleep 2
 		download_image
 	fi
+
 	url="$saved_url"
 	unset saved_url
 
@@ -538,7 +549,7 @@ while :; do
 	[ -z "$NOASKUSER" ] ||
 		fatal "$text, dialogs are disabled"
 	[ -z "$entered" ] ||
-		IM_errmsg "Connection error or specified URL unavailable now!"
+		IM_errmsg "Connection error or the specified URL unavailable now!"
 	message "$text, go to the next ring"
 	download_input_form
 done

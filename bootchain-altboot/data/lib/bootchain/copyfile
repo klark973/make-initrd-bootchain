@@ -28,7 +28,7 @@ check_file_size()
 	if [ -z "$size" ]; then
 		debug "retrieving file size: '$src'"
 		size="$(run stat -L -c%s -- "$src")" && [ -n "$size" ] ||
-			IM_fatal "can't determinate file size by specified path"
+			IM_fatal "can't determinate file size by the specified path"
 	fi
 
 	leave "check_file_size"
@@ -64,12 +64,12 @@ check_avail_space()
 	message "available: $avail KiB, required: $sizemin KiB"
 
 	if [ "$avail" -lt "$sizemin" ]; then
-		text="not enough memory for copy specified file"
+		text="not enough memory for copy the specified file"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$text, dialogs are disabled"
 		text="N${text:1}. Available space: $avail KiB."
 		[ -n "$regular" ] || [ "${dst:0:8}" != /dev/ram ] ||
-			text="$text Retry with ramdisk_size=$szkb after reboot."
+			text="$text Retry with ramdisk_size=$szkb after the reboot."
 		IM_errmsg "$text $IM_RBMSG"
 		bc_reboot
 	fi
@@ -111,7 +111,7 @@ debug "$PROG started ($(get_parameter ALTBOOT_COPYFILE))"
 [ -n "$prevdir" ] && mountpoint -q -- "$prevdir" ||
 	fatal "no previous step results to copy file"
 [ -n "$src" ] && [ -r "${prevdir}${src}" ] ||
-	fatal "specified source file is not accessible: $src"
+	fatal "the specified source file is not accessible: $src"
 
 case "$dst" in
 step-[1-9]*|pipe[0-9]*)
@@ -145,7 +145,7 @@ devname="the RAM"
 
 if [ -z "$regular" ]; then
 	[ -b "$dst" ] ||
-		IM_fatal "specified target block device not found: $dst"
+		IM_fatal "the specified target block device not found: $dst"
 
 	case "$dst" in
 	/dev/ram[0-9]*)
