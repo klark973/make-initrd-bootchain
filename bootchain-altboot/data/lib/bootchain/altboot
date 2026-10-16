@@ -33,7 +33,7 @@ altboot_config()
 			fatal "$text"
 		IM_start_input choice
 
-		if [ -n "${RDSHELL-}" ]; then
+		if has_feature rdshell; then
 			METHODS_LIST="$METHODS_LIST shell"
 			METHODS_MENU="$METHODS_MENU shell \"Exit from altboot\""
 		fi
