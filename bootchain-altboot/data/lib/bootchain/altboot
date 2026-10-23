@@ -149,7 +149,7 @@ altboot_config()
 	use_hooks translate.d
 
 	# Replace bootchain by altboot steps
-	next_bootchain "noretry,$ALTBOOT,rootfs"
+	next_bootchain "$ALTBOOT,rootfs"
 
 	{ printf 'ALTBOOT_OLDROOT=1\n'
 	  printf 'ALTBOOT_STEPS="%s"\n' "${ALTBOOT//,/ }"
