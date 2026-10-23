@@ -15,6 +15,7 @@ altboot_config()
 	local DIRP="$altboot_hooksdir/automatic.d"
 	local METHODS_LIST="" METHODS_MENU=""
 
+	# shellcheck disable=SC2329
 	altboot_add_method()
 	{
 		METHODS_LIST="$METHODS_LIST $1"
