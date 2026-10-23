@@ -271,7 +271,7 @@ altboot_restart()
 		run rm -f -- "$BC_PASSED/$step"
 	done >>"$BC_NEXTCHAIN"
 
-	next_bootchain "retry,altboot"
+	next_bootchain "altboot"
 	leave "altboot_restart"
 
 	debug "$PROG finished"

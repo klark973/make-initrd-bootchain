@@ -118,6 +118,9 @@ while [ -n "$chainsteps" ]; do
 		else
 			message "[$callnum] Switching to foreground"
 
+			[ -z "$chainsteps" ] ||
+			[ -n "${chainsteps##*altboot*}" ] ||
+				chainsteps="noretry,$chainsteps"
 			callnum=$((1 + $callnum))
 			assign "callnum_$name" "\$callnum"
 
