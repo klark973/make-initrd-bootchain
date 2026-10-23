@@ -6,6 +6,7 @@
 # You can change defaults in /etc/sysconfig/bootchain
 label="${OEM_SETUP_STORAGE:-OEMSETUP}"
 
+U="the OEM Drivers Update"
 UPDATEMODULES="${UPDATEMODULES:-1}"
 update=initrd-update.img
 method=oem
@@ -18,32 +19,35 @@ try_with_partition()
 	[ -n "$target" ] ||
 		return 1
 	enter "try_with_partition"
-	debug "mounting target device: $target"
+	debug "mounting the target device: $target"
 
 	if run mount -o ro -- "$target" "$datadir"; then
 		message "$target has been mounted successfully"
 	else
-		message "can't mount target device: $target"
+		message "can't mount the target device: $target"
 		leave "try_with_partition"
 		target=
+		whole=
 		return 1
 	fi
 
 	local dirp="${datadir}/OEM-setup/$profile"
 
 	if [ ! -s "$dirp/$update" ]; then
-		message "however OEM drivers update not found on the $target"
+		message "however $U not found on $target"
 		run umount -fl -- "$datadir"
 		leave "try_with_partition"
 		target=
+		whole=
 		return 1
 	fi
 
-	message "OEM drivers update found: $dirp/$update"
+	message "$U found: $dirp/$update"
 
 	( cd /
 	  run gunzip -qnc -- "$dirp/$update" |
 		run cpio -idmu -H newc --quiet
+
 	  if [ ! -x "$rootmnt/update.sh" ]; then
 		run depmod -a ||:
 	  else
@@ -52,44 +56,43 @@ try_with_partition()
 	  fi
 	)
 
-	message "OEM drivers update has been applied"
+	message "$U has been applied"
 	run umount -fl -- "$datadir"
 	leave "try_with_partition"
 }
 
 main_loop()
 {
-	enter "main_loop"
-
 	local nsec=0
 
+	enter "main_loop"
+
 	IM_start_output choice errmsg ponder
-	start_scan
+	longtermop_start
+	start_dev_scan
 
 	while :; do
-		debug "Idle before scan devices"
-		sleep 1
 		scan_devices
 
-		if try_with_partition; then
-			IM_ponder_stop
-			break
-		fi
+		try_with_partition && break ||:
 
 		nsec=$((1 + $nsec))
 		[ "$nsec" -ge "$timeout" ] ||
 			continue
-		IM_ponder_stop
+		stop_dev_scan
 		[ -z "$NOASKUSER" ] ||
-			fatal "OEM drivers update not found, dialogs are disabled"
+			fatal "$U not found, dialogs are disabled"
 		device_choice && try_with_partition && break ||:
 
-		IM_errmsg "Device with OEM Drivers Update not found, try again!"
+		IM_errmsg "The media with $U not found, try again!"
 		debug "the device is not ready, move on to the next iteration"
-		start_scan
+		start_dev_scan
 		timeout=20
 		nsec=0
 	done
+
+	stop_dev_scan
+	longtermop_end
 
 	leave "main_loop"
 }
@@ -112,8 +115,7 @@ esac
 
 printf "unset UPDATEMODULES\n" >>"$altboot_parsed"
 
-profile="${profile:-default}"
-debug "profile: $profile"
+assign profile "${profile:-default}"
 
 main_loop
 
