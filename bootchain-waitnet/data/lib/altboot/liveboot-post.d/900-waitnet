@@ -25,7 +25,7 @@ export_netconf()
 		grep -s '    inet ' |
 		head -n1)"
 	if [ -z "$addr" ]; then
-		message "network interface not ready: $netdev"
+		message "the network interface is not ready: $netdev"
 		leave "export_netconf"
 		return 0
 	fi
@@ -90,7 +90,7 @@ export_netconf()
 	leave "export_netconf"
 }
 
-# Only for propagator-compatibility mode with networking
+# Only for propagator compatibility mode with networking
 if [ -n "$ALTBOOT_OLDROOT" ] && [ -s "$NETBOOT_IFNAME" ]; then
 	if [ -n "$prevdir" ] && [ -s /etc/resolv.conf ]; then
 		if [ -d "$prevdir/etc" ] && [ ! -L "$prevdir/etc/resolv.conf" ]; then

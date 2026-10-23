@@ -12,11 +12,11 @@ IM_start_output ponder errmsg
 
 # Feature 'network' absent
 if ! has_feature network; then
-	message "feature 'network' absent inside initramfs"
+	message "the feature 'network' is missing inside initramfs"
 
 	if [ -z "$NOASKUSER" ]; then
-		msg="This disk builded without networking support."
-		msg="$msg Booting by any network protocol is inpossible."
+		msg="This boot disk was created without network support."
+		msg="$msg Booting using any network protocol is not possible."
 		IM_errmsg "$msg $IM_RBMSG"
 	fi
 
@@ -29,14 +29,14 @@ if [ "${IP:-0}" = 0 ] &&
 	[ "${IFNAME:-0}" = 0 ] &&
 	[ "${NAMESERVER:-0}" = 0 ]
 then
-	msg="network settings not defined in /proc/cmdline"
+	msg="network settings are not defined in /proc/cmdline"
 
 	if [ ! -d /proc/sys/net/ipv4 ]; then
-		msg="IPv4 not available, $msg"
+		msg="IPv4 protocol is not available, $msg"
 		[ -z "$NOASKUSER" ] ||
 			fatal "$msg, dialogs are disabled"
 		message "$msg"
-		msg="$msg. Try with the option 'ip=dhcp4' after reboot."
+		msg="$msg. Try with the option 'ip=dhcp4' after the reboot."
 		IM_errmsg "$msg $IM_RBMSG"
 		bc_reboot
 	fi
@@ -57,7 +57,7 @@ fi
 
 # Wait network only once
 if [ ! -s "$NETBOOT_IFNAME" ]; then
-	IM_ponder_start "[ Bringing up network... ]"
+	IM_ponder_start "[ Connecting the network... ]"
 
 	n=240
 	netdev=
@@ -86,13 +86,13 @@ if [ ! -s "$NETBOOT_IFNAME" ]; then
 	IM_ponder_stop
 
 	if [ -n "$netdev" ]; then
-		message "network device $netdev ready to connection"
+		message "the network device '$netdev' is ready to connect"
 		echo "$netdev" >"$NETBOOT_IFNAME"
 	else
 		message "connection timeout"
 
 		if [ -z "$NOASKUSER" ]; then
-			msg="Couldn't bring up network interface. Try with other"
+			msg="Couldn't bring up the network interface. Try with other"
 			msg="$msg network settings, wired connection and/or cable."
 			IM_errmsg "$msg"
 		fi
