@@ -1,0 +1,96 @@
+#!/bin/bash -efu
+
+if [ -z "${__localdev_sh_functions-}" ]; then
+__localdev_sh_functions=1
+
+. bootchain-sh-functions
+
+
+read_udev_field()
+{
+	run udevadm info -q property --property="$1" --value -- "$2" ||:
+}
+
+read_blkid_field()
+{
+	debug "RUN: blkid -c /dev/null -o value -s $1 -- $2"
+	blkid -c /dev/null -o value -s "$1" -- "$2" 2>/dev/null ||:
+}
+
+read_fstype()
+{
+	local fs
+
+	fs="$(read_udev_field ID_FS_TYPE "$1")"
+	[ -n "$fs" ] ||
+		fs="$(read_blkid_field TYPE "$1")"
+	printf '%s' "$fs"
+}
+
+devname2sysfs()
+{
+	# Ex: nvme0n1p1
+	local devname="$1"
+	local sysfs
+
+	# The sysfs path for the specified device name
+	sysfs="$(run mountpoint -x -- "/dev/$devname")"
+	sysfs="$(run readlink-e "/sys/dev/block/$sysfs")"
+
+	printf '%s' "$sysfs"
+}
+
+parent_disk()
+{
+	# Ex.: /dev/nvme0n1p1 -> nvme0n1p1
+	local r="" devname="${1#/dev/}"
+	local partn sysfs="${2-}"
+
+	enter "parent_disk"
+
+	# The sysfs path of the specified device, for example it can be resolved to:
+	# /sys/devices/pci0000:00/0000:00:06.0/0000:01:00.0/nvme/nvme0/nvme0n1/nvme0n1p1
+	#
+	[ -n "$sysfs" ] || assign sysfs "$(devname2sysfs "$devname")"
+
+	# Only a partition can have a parent disk
+	if [ -z "$sysfs" ] || [ ! -r "$sysfs/partition" ]; then
+		leave "parent_disk"
+		return 0
+	fi
+
+	# If the device is a partition, looking for a parent disk
+	read -r partn <"$sysfs/partition" || partn=
+
+	# /sys/devices/pci0000:00/0000:00:06.0/0000:01:00.0/nvme/nvme0/nvme0n1
+	sysfs="${sysfs%%/"$devname"}"
+
+	# nvme0n1 <-- this is a parent disk
+	sysfs="${sysfs##*/}"
+
+	# Double check in the reverse direction
+	if [ -n "$partn" ] && [ -b "/dev/$sysfs" ] &&
+	   [ -r "/sys/block/$sysfs/$devname/dev" ]
+	then
+		case "$sysfs" in
+		*[0-9])	# nvme0n1, c0d0, mmcblk0, etc...
+			[ "$devname" != "${sysfs}p${partn}" ] ||
+				r=1
+			;;
+
+		*)	# sdb, vda, hdc, etc...
+			[ "$devname" != "${sysfs}${partn}" ] ||
+				r=1
+			;;
+		esac
+
+		if [ -n "$r" ]; then
+			debug "parent disk: /dev/$sysfs"
+			printf '/dev/%s' "$sysfs"
+		fi
+	fi
+
+	leave "parent_disk"
+}
+
+fi # __localdev_sh_functions
