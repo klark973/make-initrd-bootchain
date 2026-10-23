@@ -105,38 +105,22 @@ create_disk_slice_inner()
 		return 0
 	fi
 
-	local devpath partn whole=
+	local whole
 
-	# if DEVICE is a partition, search a parent whole disk drive
-	devpath="/sys/dev/block/$(mountpoint -x -- "/dev/$devname")"
+	# if DEVICE is a partition, try to find the appropriate parent disk
+	whole="$(parent_disk "$devname")"
 
-	if [ -r "$devpath/partition" ]; then
-		read -r partn <"$devpath/partition" ||
-			partn=
-		if [ -n "$partn" ]; then
-			case "$devname" in
-			*[0-9]p$partn)
-				whole="${devname%%p"$partn"}"
-				;;
-			*$partn)
-				whole="${devname%%"$partn"}"
-				;;
-			esac
-		fi
-	fi
-
-	if [ -n "$whole" ] && [ -b "/dev/$whole" ] &&
-		[ -r "/sys/block/$whole/$devname/dev" ]
-	then
-		whole="/dev/$whole"
+	if [ -n "$whole" ]; then
 		debug "whole disk drive: '$whole'"
 	else
 		message "/dev/$devname is a whole disk, partitions appending is inpossible"
 		return 0
 	fi
 
+	local devpath partn
+
 	# Check for DEVICE is not read-only
-	devpath="/sys/dev/block/$(mountpoint -x -- "$whole")"
+	devpath="$(devname2sysfs "${whole#/dev/}")"
 	[ -r "$devpath/ro" ] && read -r partn <"$devpath/ro" ||
 		partn=0
 	if [ "$partn" != 0 ]; then
