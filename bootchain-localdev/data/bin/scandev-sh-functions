@@ -39,11 +39,19 @@ devname2target()
 
 	enter "devname2target"
 
-	# The sysfs path of the specified device
-	[ -n "$sysfs" ] || assign sysfs "$(devname2sysfs "$devname")"
-
 	# By default, there is no parent disk
 	whole=
+
+	# Nothing special for the "oem" boot method
+	if [ "$method" = oem ]; then
+		target="/dev/$devname"
+
+		leave "devname2target"
+		return 0
+	fi
+
+	# The sysfs path of the specified device
+	[ -n "$sysfs" ] || assign sysfs "$(devname2sysfs "$devname")"
 
 	# If the device is not a partition
 	if [ -z "$sysfs" ] || [ ! -r "$sysfs/partition" ]; then
