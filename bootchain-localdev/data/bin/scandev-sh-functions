@@ -380,30 +380,6 @@ device_choice()
 		assign "${__varname}" "${__r//\"/\'}"
 	}
 
-	# shellcheck disable=SC2329
-	_get_lbsize()
-	{
-		local __varname="$1"
-		local __bs __whole devpath="$sysfs"
-		local lbs="queue/logical_block_size"
-
-		if [ -z "$sysfs" ]; then
-			assign "${__varname}" 512
-			return 0
-		fi
-
-		if [ ! -r "$sysfs/$lbs" ]; then
-			__whole="$(parent_disk "$devname" "$sysfs")"
-			[ -z "${__whole}" ] ||
-				devpath="/sys/block/${__whole#/dev/}"
-		fi
-
-		[ -r "$devpath/$lbs" ] &&
-		read -r __bs <"$devpath/$lbs" ||
-			__bs=512
-		assign "${__varname}" "${__bs}"
-	}
-
 	_fill_item_description()
 	{
 		local bs fssize fstype title=
@@ -510,7 +486,6 @@ device_choice()
 	fi
 
 	unset _fill_item_description
-	unset _get_lbsize
 	unset _get_model
 	unset _get_field
 
