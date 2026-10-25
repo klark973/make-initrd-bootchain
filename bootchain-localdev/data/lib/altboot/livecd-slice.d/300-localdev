@@ -21,7 +21,7 @@ localdev_slice()
 	odev="${devname}${overlays:+ (\"$overlays\")}"
 
 	if [ -z "$overlays" ] || [ -z "$devname" ]; then
-		debug "overlay device not defined"
+		debug "the overlay device is not defined"
 		leave "localdev_slice"
 		return 0
 	elif [ ! -b "$devname" ]; then
@@ -34,14 +34,14 @@ localdev_slice()
 	mp="$(grep -s "$devname /" /proc/mounts |cut -f2 -d' ')"
 
 	if [ -n "$mp" ]; then
-		debug "device $odev already mounted to $mp"
+		debug "the device $odev has already been mounted to $mp"
 	else
 		mp="$prevdir.rw/rw$OEM_IMAGES_BASE"
 
 		run mkdir -p -- "$mp"
 
 		if run mount -o ro -- "$devname" "$mp"; then
-			debug "device $odev mounted to $mp"
+			message "the device $odev has been mounted to $mp"
 			mnt=1
 		else
 			message "can't mount the specified overlay device: $odev"

@@ -1,6 +1,9 @@
 #!/bin/bash -efu
 
-. bootchain-sh-functions
+if [ -z "${__scandev_sh_functions-}" ]; then
+__scandev_sh_functions=1
+
+. localdev-sh-functions
 . interactive-sh-functions
 
 disk=
@@ -8,78 +11,142 @@ part=
 fuid=
 uuid=
 label=
+whole=
 squash=
 target=
 method=
 devices=
-remount_cdrom=
 
 
-start_scan()
+start_dev_scan()
 {
 	IM_ponder_start "[ Scanning devices... ]"
+}
+
+stop_dev_scan()
+{
+	IM_ponder_stop
+}
+
+devname2target()
+{
+	# Ex.: nvme0n1 (whole disk) or sdb2 (partition)
+	local devname="${1#/dev/}"
+	local sysfs="${2-}"
+	local firstpart
+
+	enter "devname2target"
+
+	# The sysfs path of the specified device
+	[ -n "$sysfs" ] || assign sysfs "$(devname2sysfs "$devname")"
+
+	# By default, there is no parent disk
+	whole=
+
+	# If the device is not a partition
+	if [ -z "$sysfs" ] || [ ! -r "$sysfs/partition" ]; then
+		if [ "$(read_fstype "/dev/$devname")" = iso9660 ]; then
+			whole="/dev/$devname"
+
+			# If the device has an ISO-9660 filesystem,
+			# try using the first partition of this disk
+			#
+			case "$devname" in
+			*[0-9])	firstpart="${devname}p1";;
+			*)	firstpart="${devname}1";;
+			esac
+
+			# Check for the first partition
+			if [ -b "/dev/$firstpart" ] &&
+			   [ -r "/sys/block/$devname/$firstpart/dev" ]
+			then
+				# This is an ISO Hybrid image
+				devname="$firstpart"
+			fi
+		fi
+
+		target="/dev/$devname"
+
+		leave "devname2target"
+		return 0
+	fi
+
+	# If the specified device is a partition,
+	# try to find the appropriate parent disk
+	#
+	sysfs="$(parent_disk "$devname" "$sysfs")"
+
+	# Check the whole disk
+	if [ -n "$sysfs" ] && [ "$(read_fstype "$sysfs")" = iso9660 ]; then
+		sysfs="${sysfs#/dev/}"
+
+		# If the parent disk has an ISO-9660 filesystem,
+		# try using the first partition of this disk
+		#
+		case "$sysfs" in
+		*[0-9])	firstpart="${sysfs}p1";;
+		*)	firstpart="${sysfs}1";;
+		esac
+
+		# Check for the first partition
+		if [ -b "/dev/$firstpart" ] &&
+		   [ -r "/sys/block/$sysfs/$firstpart/dev" ]
+		then
+			# This is an ISO Hybrid image
+			devname="$firstpart"
+			whole="/dev/$sysfs"
+		fi
+	fi
+
+	target="/dev/$devname"
+
+	leave "devname2target"
+}
+
+debug_found_target()
+{
+	if [ -z "$whole" ]; then
+		debug "TARGET: '$target'"
+	else
+		debug "TARGET: '$target' (whole disk: '$whole')"
+	fi
 }
 
 scan_devices()
 {
 	enter "scan_devices"
 
-	local udevdata="/run/udev/data"
-	local major minor nblocks devname
+	local major minor n_blocks devname
 	local x f excludes="0 1 2 7 35 37"
-	local ntargets=0 saved=
-
-	_udevd_field()
-	{
-		f="$udevdata/b$major:$minor"
-		[ -z "$udevdata" ] || [ ! -r "$f" ] ||
-			grep -sE "^E:$1=" "$f" |cut -f2- -d=
-	}
-
-	_blkid_field()
-	{
-		blkid -c /dev/null -o value \
-			-s "$1" -- "/dev/$devname" 2>/dev/null ||:
-	}
+	local n_targets=0 saved=
 
 	_check_field()
 	{
 		local key="$1" value="$2"
 
-		x="$(_udevd_field "ID_FS_$key")"
+		x="$(read_udev_field "ID_FS_$key" "/dev/$devname")"
 		[ -n "$x" ] ||
-			x="$(_blkid_field "$key")"
+			x="$(read_blkid_field "$key" "/dev/$devname")"
+
 		if [ "$key" != LABEL ]; then
 			[ "$x" = "$value" ] ||
 				return 1
 		else
 			# shellcheck disable=SC2254
 			case "$x" in
-			$value) return 0
-				;;
+			$value)	;;
+			*)	return 1;;
 			esac
-			return 1
 		fi
-	}
-
-	_check_cdrom()
-	{
-		[ -r "/sys/block/$devname/dev" ] ||
-			return 1
-		[ -z "$(_udevd_field ID_CDROM)" ] ||
-			return 0
-		_check_field TYPE "iso9660" ||
-			return 1
 	}
 
 	_check_volume()
 	{
-		x="$(_udevd_field ID_FS_USAGE)"
+		x="$(read_udev_field ID_FS_USAGE "/dev/$devname")"
 		[ -z "$x" ] || [ "$x" = filesystem ] ||
 			return 1
-		x="$(_udevd_field ID_FS_TYPE)"
-		[ -n "$x" ] ||
-			x="$(_blkid_field TYPE)"
+		x="$(read_fstype "/dev/$devname")"
+
 		case "$x" in
 		''|swap|*_member)
 			return 1
@@ -87,120 +154,189 @@ scan_devices()
 		esac
 	}
 
-	[ -d "$udevdata" ] ||
-		udevdata=
-	remount_cdrom=
+	_add_device()
+	{
+		target="$1"
+		[ -n "$target" ] ||
+			whole=
+		devices="${devices:+$devices }$devname"
+	}
+
+	_in_array()
+	{
+		local needle="$1"; shift
+
+		while [ "$#" -gt 0 ]; do
+			[ "$needle" != "$1" ] ||
+				return 0
+			shift
+		done
+
+		return 1
+	}
+
 	devices=
 	target=
+	whole=
 
+	# Check for procfs
 	if [ ! -r /proc/partitions ]; then
-		message "could not read partitions information"
-		message "may be /proc filesystem not mounted?"
+		message "can't read the information about the partitions"
+		message "may be the /proc filesystem is not mounted?"
 		leave "scan_devices"
 		return 0
 	fi
 
-	while read -r major minor nblocks devname; do
+	debug "Idle before scan devices"
+	sleep 1
+
+	# Read the /proc/partitions file
+	while read -r major minor n_blocks devname; do
 		[ -n "$major" ] && [ "$major" != major ] ||
+			continue
+		[ "$n_blocks" -ge 32 ] ||
 			continue
 		[ -b "/dev/$devname" ] ||
 			continue
-		[ "$nblocks" -gt 1 ] ||
-			continue
 		f=0
+
+		# Skip these block devices:
+		#
+		#   0: Unnamed devices (e.g. non-device mounts)
+		#   1: RAM disk
+		#   2: Floppy disks
+		#   7: Loopback devices
+		#  35: Slow memory ramdisk
+		#  37: Zorro II ramdisk
+		#
+		# See also:
+		# https://docs.kernel.org/admin-guide/devices.html
+		#
 		for x in $excludes; do
 			if [ "$x" = "$major" ]; then
 				f=1
 				break
 			fi
 		done
+
 		[ "$f" = 0 ] ||
 			continue
 		saved="$target"
 
-		if [ "$method" = cdrom ]; then
-			_check_cdrom ||
-				continue
-			target="/dev/$devname"
-		else
+		# Use the specification to find the target device
+		debug "probing the device: /dev/$devname ($major:$minor)"
+
+		if [ "$method" != cdrom ]; then
 			_check_volume ||
 				continue
 			target=
+		else
+			# This is required for the "cdrom" boot method
+			_check_field TYPE iso9660 ||
+				continue
+			f="/proc/sys/dev/cdrom/info"
+			target=
+
+			# For the "cdrom" boot method, if we boot
+			# the system from a single CD/DVD drive, this
+			# is enough to consider the bootable media found.
+			# This means that "automatic=method:cdrom" may
+			# work without additional specification if
+			# there is no the second optical drive.
+			#
+			if [ -r "$f" ] && [ -r "/sys/block/$devname/dev" ]; then
+				x="$(sed -n -E 's/^drive name:\s+//p' "$f")"
+				[ "$x" != "$devname" ] || target=1
+			fi
 		fi
 
-		debug "probing device: /dev/$devname ($major:$minor)"
-		devices="${devices:+$devices }$major:$minor:$devname"
+		# Save the current values
+		minor="$target"
+		f="$whole"
+
+		# Determine the target devices and save them
+		devname2target "$devname"
+		n_blocks="$target"
+		major="$whole"
+
+		# Skip devices that have already been added
+		# and all partitions of the ISO Hybrid disk
+		#
+		[ -n "$whole" ] && devname="${whole#/dev/}" ||
+			devname="${target#/dev/}"
+		if _in_array "$devname" $devices; then
+			target="$saved"
+			whole="$f"
+			continue
+		fi
+
+		# Restore the saved values
+		target="$minor"
+		whole="$f"
 
 		if [ -n "$uuid" ]; then
 			if _check_field UUID "$uuid"; then
-				target="/dev/$devname"
+				target=1
 			else
-				target="$saved"
+				_add_device "$saved"
 				continue
 			fi
 		elif [ -n "$fuid" ] && _check_field UUID "$fuid"; then
-			target="/dev/$devname"
+			target=1
 		fi
 
 		if [ -n "$label" ]; then
 			if _check_field LABEL "$label"; then
-				target="/dev/$devname"
+				target=1
 			else
-				target="$saved"
+				_add_device "$saved"
 				continue
 			fi
 		fi
 
 		if [ -n "$part" ]; then
 			if [ "$part" = "$devname" ]; then
-				target="/dev/$devname"
+				target=1
 			else
-				target="$saved"
+				_add_device "$saved"
 				continue
 			fi
 		fi
 
 		if [ "$disk" = "$devname" ]; then
-			target="/dev/$devname"
+			target=1
 		elif [ -n "$disk" ] && [ -z "$part" ]; then
-			target="$saved"
+			_add_device "$saved"
 			continue
 		fi
 
-		[ -n "$target" ] ||
+		if [ -z "$target" ]; then
+			_add_device "$saved"
 			continue
+		fi
 
-		case "$saved" in
-		'')	# Skip this check if $target is the first device found
-			;;
-
-		*[0-9])	# Ignore the first partition for ISO Hybrid only
-			if [ "${saved}p1" = "$target" ] &&
-			   [ "$(_blkid_field TYPE)" = iso9660 ]
-			then
-				remount_cdrom=1
-				target="$saved"
-				continue
-			fi
-			;;
-
-		*)	# Ignore the first partition for ISO Hybrid only
-			if [ "${saved}1" = "$target" ] &&
-			   [ "$(_blkid_field TYPE)" = iso9660 ]
-			then
-				remount_cdrom=1
-				target="$saved"
-				continue
-			fi
-			;;
-		esac
-
-		message "the specified target found: $target ($major:$minor)"
-		ntargets=$((1 + $ntargets))
+		# Add a device
+		whole="$major"
+		_add_device "$n_blocks"
+		n_targets=$((1 + $n_targets))
+		x="$(mountpoint -x -- "$target")"
+		message "a suitable device was found: $target ($x)"
 	done < /proc/partitions
 
-	[ "$ntargets" = 1 ] ||
+	debug "DEVICES: $devices"
+
+	if [ "$n_targets" = 1 ]; then
+		debug_found_target
+	else
 		target=
+		whole=
+	fi
+
+	unset _in_array
+	unset _add_device
+	unset _check_volume
+	unset _check_field
+
 	leave "scan_devices"
 }
 
@@ -210,30 +346,15 @@ device_choice()
 		return 0
 	enter "device_choice"
 
-	local rc=0 udevdata="/run/udev/data"
-	local sysfs number devname text dlgcmd
-
-	_udevd_field()
-	{
-		local f="$udevdata/b$number"
-
-		[ -z "$udevdata" ] || [ ! -r "$f" ] ||
-			grep -sE "^E:$1=" "$f" |cut -f2- -d=
-	}
-
-	_blkid_field()
-	{
-		blkid -c /dev/null -o value \
-			-s "$1" -- "/dev/$devname" 2>/dev/null ||:
-	}
+	local sysfs devname text dlgcmd rc=0
 
 	_get_field()
 	{
 		local __x __varname="$1" __key="$2"
 
-		__x="$(_udevd_field "ID_FS_${__key}")"
+		__x="$(read_udev_field "ID_FS_${__key}" "/dev/$devname")"
 		[ -n "${__x}" ] ||
-			__x="$(_blkid_field "${__key}")"
+			__x="$(read_blkid_field "${__key}" "/dev/$devname")"
 		assign "${__varname}" "${__x}"
 	}
 
@@ -241,16 +362,21 @@ device_choice()
 	{
 		local __x __r="" __varname="$1"
 
+		[ -n "$sysfs" ] ||
+			return 0
 		[ ! -r "$sysfs/device/vendor" ] ||
-			read -r __r <"$sysfs/device/vendor"
+			read -r __r <"$sysfs/device/vendor" ||:
+
 		if [ -r "$sysfs/device/model" ]; then
-			read -r __x <"$sysfs/device/model"
-			__r="${__r:+$__r }${__x}"
+			read -r __x <"$sysfs/device/model" || __x=
+			[ -z "${__x}" ] || __r="${__r:+$__r }${__x}"
 		fi
+
 		if [ -r "$sysfs/device/serial" ]; then
-			read -r __x <"$sysfs/device/serial"
-			__r="${__r:+$__r }${__x}"
+			read -r __x <"$sysfs/device/serial" || __x=
+			[ -z "${__x}" ] || __r="${__r:+$__r }${__x}"
 		fi
+
 		assign "${__varname}" "${__r//\"/\'}"
 	}
 
@@ -258,31 +384,22 @@ device_choice()
 	_get_lbsize()
 	{
 		local __varname="$1"
+		local __bs __whole devpath="$sysfs"
 		local lbs="queue/logical_block_size"
-		local __bs partn whole="" path="$sysfs"
 
-		if [ ! -r "$path/$lbs" ]; then
-			if [ -r "$path/partition" ]; then
-				read -r partn <"$path/partition" ||
-					partn=
-				if [ -n "$partn" ]; then
-					case "$devname" in
-					*[0-9]p$partn)
-						whole="${devname%%p"$partn"}"
-						;;
-					*$partn)
-						whole="${devname%%"$partn"}"
-						;;
-					esac
-				fi
-			fi
-			[ -z "$whole" ] || [ ! -b "$whole" ] ||
-			[ ! -r "/sys/block/$whole/$devname/dev" ] ||
-				path="/sys/block/$whole"
+		if [ -z "$sysfs" ]; then
+			assign "${__varname}" 512
+			return 0
 		fi
 
-		[ -r "$path/$lbs" ] &&
-		read -r __bs <"$path/$lbs" ||
+		if [ ! -r "$sysfs/$lbs" ]; then
+			__whole="$(parent_disk "$devname" "$sysfs")"
+			[ -z "${__whole}" ] ||
+				devpath="/sys/block/${__whole#/dev/}"
+		fi
+
+		[ -r "$devpath/$lbs" ] &&
+		read -r __bs <"$devpath/$lbs" ||
 			__bs=512
 		assign "${__varname}" "${__bs}"
 	}
@@ -292,26 +409,31 @@ device_choice()
 		local bs fssize fstype title=
 		local mul=1024 ms="KiB MiB GiB TiB"
 
-		if [ "$method" = "cdrom" ]; then
-			sysfs="/sys/block/$devname"
+		# Device sysfs path
+		sysfs="$(devname2sysfs "$devname")"
+
+		# Fill in the optional title and use a
+		# different multiplexer for whole disks
+		#
+		if [ -d "/sys/block/$devname" ]; then
 			_get_model title
-		elif [ ! -r "/sys/block/$devname/size" ] ||
-			[ -r "/sys/block/$devname/dm/name" ] ||
-			[ "${devname:0:2}" = "md" ]
-		then
-			sysfs="$(readlink-e "/sys/dev/block/$number")"
-		else
-			sysfs="/sys/block/$devname"
 			ms="KB MB GB TB"
 			mul=1000
-			_get_model title
 		fi
 
-		[ -r "$sysfs/size" ] &&
+		# Determine the canonical device name
+		[ -n "$sysfs" ] && [ -r "$sysfs/dm/name" ] &&
+		read -r text <"$sysfs/dm/name" &&
+		[ -n "$text" ] && [ -L "/dev/mapper/$text" ] ||
+			text="$devname"
+
+		# Determine the device capacity in bytes
+		[ -n "$sysfs" ] && [ -r "$sysfs/size" ] &&
 		read -r fssize <"$sysfs/size" ||
 			fssize=0
 		fssize="$(( $fssize * 512 ))"
 
+		# Human-readable size
 		for bs in bytes $ms; do
 			if [ "$bs" = "${ms##* }" ] || [ "$fssize" -lt "$mul" ]; then
 				fssize="$fssize $bs"
@@ -320,13 +442,17 @@ device_choice()
 			fssize=$(( $fssize / $mul ))
 		done
 
+		# File system type
 		_get_field fstype TYPE
 		[ -n "$fstype" ] ||
 			fstype=unknown
-		_get_field bs LABEL
 
+		# Volume label
+		_get_field bs LABEL
 		[ -z "$bs" ] ||
 			title="${bs//\"/\'}"
+
+		# Header formatting
 		if [ -n "$title" ]; then
 			title=": '$title'"
 		else
@@ -336,43 +462,60 @@ device_choice()
 		fi
 
 		bs=
-		if [ -r "$sysfs/partition" ]; then
+
+		# Partition number
+		if [ -n "$sysfs" ] && [ -r "$sysfs/partition" ]; then
 			read -r bs <"$sysfs/partition" ||
 				bs=
 			[ -z "$bs" ] ||
 				bs="Part #$bs"
 		fi
 
+		# Fill the item description
 		text="$text (${bs:-Volume}: $fssize, ${fstype}${title})"
 	}
 
-	text="Please choose the source"
-	if [ "$method" = oem ]; then
-		text="$text containing the OEM Drivers Update"
-	else
-		text="$text${squash:+ containing the squash $squash} on the boot"
-	fi
-	text="$text or cancel and try again."
+	text="Please choose"
 
-	[ -d "$udevdata" ] ||
-		udevdata=
+	if [ "$method" = oem ]; then
+		text="$text the source containing the OEM Drivers Update"
+	else
+		text="$text the boot source"
+
+		if [ -n "$squash" ]; then
+			text="$text containing the squash $squash"
+		elif [ -n "${OEM_DISTRIBUTION-}" ]; then
+			text="$text containing $OEM_DISTRIBUTION"
+		fi
+	fi
+
+	text="$text or cancel and try again."
 	dlgcmd="IM_choice devname \"$text\""
 
-	for text in $devices; do
-		number="${text%:*}"
-		devname="${text##*:}"
-		[ -r "/sys/block/$devname/dm/name" ] &&
-		read -r text <"/sys/block/$devname/dm/name" &&
-		[ -n "$text" ] && [ -L "/dev/mapper/$text" ] ||
-			text="$devname"
+	for devname in $devices; do
 		_fill_item_description
 		dlgcmd="$dlgcmd \"$devname\" \"$text\""
 	done
 
 	devname=
 	debug "RUN: $dlgcmd"
-	eval "$dlgcmd" && assign target "/dev/$devname" || rc=$?
+
+	if eval "$dlgcmd" && [ -n "$devname" ]; then
+		devname2target "$devname"
+		debug_found_target
+	else
+		rc="$?"
+		target=
+		whole=
+	fi
+
+	unset _fill_item_description
+	unset _get_lbsize
+	unset _get_model
+	unset _get_field
 
 	leave "device_choice"
 	return $rc
 }
+
+fi # __scandev_sh_functions
