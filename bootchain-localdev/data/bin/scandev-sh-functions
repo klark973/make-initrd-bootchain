@@ -17,6 +17,8 @@ target=
 method=
 devices=
 
+__scandev_last=
+
 
 start_dev_scan()
 {
@@ -119,6 +121,7 @@ scan_devices()
 	local major minor n_blocks devname
 	local x f excludes="0 1 2 7 35 37"
 	local n_targets=0 saved=
+	local all_parts=
 
 	_check_field()
 	{
@@ -184,7 +187,7 @@ scan_devices()
 		message "can't read the information about the partitions"
 		message "may be the /proc filesystem is not mounted?"
 		leave "scan_devices"
-		return 0
+		return 1
 	fi
 
 	debug "Idle before scan devices"
@@ -221,10 +224,24 @@ scan_devices()
 
 		[ "$f" = 0 ] ||
 			continue
+		all_parts="${all_parts:+$all_parts }$devname"
+	done < /proc/partitions
+
+	# Have the situations changed?
+	if [ "$all_parts" = "${__scandev_last}" ]; then
+		debug "the list of devices has not changed since the last scan"
+		all_parts=
+	fi
+
+	# Check only the new situation
+	for devname in $all_parts _; do
+		[ "$devname" != _ ] ||
+			continue
+		x="$(mountpoint -x -- "/dev/$devname")"
 		saved="$target"
 
 		# Use the specification to find the target device
-		debug "probing the device: /dev/$devname ($major:$minor)"
+		debug "probing the device: /dev/$devname ($x)"
 
 		if [ "$method" != cdrom ]; then
 			_check_volume ||
@@ -321,23 +338,31 @@ scan_devices()
 		n_targets=$((1 + $n_targets))
 		x="$(mountpoint -x -- "$target")"
 		message "a suitable device was found: $target ($x)"
-	done < /proc/partitions
-
-	debug "DEVICES: $devices"
-
-	if [ "$n_targets" = 1 ]; then
-		debug_found_target
-	else
-		target=
-		whole=
-	fi
+	done
 
 	unset _in_array
 	unset _add_device
 	unset _check_volume
 	unset _check_field
 
+	f=1
+
+	if [ -n "$all_parts" ]; then
+		debug "DEVICES: $devices"
+
+		if [ "$n_targets" = 1 ]; then
+			debug_found_target
+			f=0
+		else
+			target=
+			whole=
+		fi
+
+		__scandev_last="$all_parts"
+	fi
+
 	leave "scan_devices"
+	return $f
 }
 
 device_choice()

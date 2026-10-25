@@ -72,9 +72,7 @@ main_loop()
 	start_dev_scan
 
 	while :; do
-		scan_devices
-
-		try_with_partition && break ||:
+		scan_devices && try_with_partition && break ||:
 
 		nsec=$((1 + $nsec))
 		[ "$nsec" -ge "$timeout" ] ||

@@ -26,6 +26,8 @@ b_a options
 
 reset_devspec()
 {
+	[ -z "$devspec" ] ||
+		__scandev_last=
 	devspec=
 	label=
 	uuid=
@@ -307,9 +309,7 @@ main_loop()
 	start_dev_scan
 
 	while :; do
-		scan_devices
-
-		is_target_found && break ||:
+		scan_devices && is_target_found && break ||:
 
 		nsec=$((1 + $nsec))
 		[ "$nsec" -ge "$timeout" ] ||
@@ -373,7 +373,7 @@ if [[ -z "$devspec" && "$method" = disk ]] || [ -f "$altboot_auto" ]; then
 	if [ -z "$NOASKUSER" ]; then
 		start_dev_scan
 		reset_devspec
-		scan_devices
+		scan_devices ||:
 		stop_dev_scan
 
 		if boot_device_choice; then
