@@ -201,60 +201,72 @@ longtermop_start()
 {
 	# I hope this will break when the internal implementation
 	# of make-initrd changes and I will know about it
-	local filename="${_rootdelay_pause}/bc-counter"
+	local filename="/.initrd/rootdelay/bc-counter"
 	local counter=0
 
-	enter "longtermop_start"
-
-	# If timeout is enabled
-	if ! rootdelay_paused; then
-		# disable timeout
+	# Since make-initrd 2.61.0 this is enough
+	if [ -n "${rootdelay_pause_lock-}" ]; then
+		debug "the long-term operation started"
 		rootdelay_pause
-	elif [ -s "$filename" ]; then
-		# increment the counter
-		readline counter "$filename"
-		[ -z "$counter" ] && counter=0 ||
-			counter="$((1 + $counter))"
+		return 0
 	fi
 
-	# Save a counter value
-	debug "COUNTER=$counter"
-	printf '%s\n' "$counter" >"$filename"
+	# Load a counter value
+	if [ -s "$filename" ]; then
+		readline counter "$filename"
+		[ -n "$counter" ] || counter=0
+	fi
 
-	leave "longtermop_start"
+	# Disable timeout if it is enabled
+	if ! rootdelay_paused || [ "$counter" = 0 ]; then
+		rootdelay_pause
+	fi
+
+	# Increment the counter
+	counter="$((1 + $counter))"
+
+	# Save and show a new counter value
+	printf '%s\n' "$counter" >"$filename"
+	debug "LEVEL=$counter: the long-term operation started"
 }
 
 longtermop_end()
 {
 	# I hope this will break when the internal implementation
 	# of make-initrd changes and I will know about it
-	local filename="${_rootdelay_pause}/bc-counter"
-	local counter=0
+	local filename="/.initrd/rootdelay/bc-counter"
+	local counter=1
 
-	enter "longtermop_end"
-
-	# Decrement the counter
-	if [ -s "$filename" ]; then
-		readline counter "$filename"
-
-		if [ -z "$counter" ]; then
-			counter=0
-		elif [ "$counter" != 0 ]; then
-			# save a counter value
-			counter="$(( $counter - 1 ))"
-			printf '%s\n' "$counter" >"$filename"
-		fi
+	# Since make-initrd 2.61.0 this is enough
+	if [ -n "${rootdelay_pause_lock-}" ]; then
+		debug "the long-term operation finished"
+		rootdelay_unpause
+		return 0
 	fi
 
-	debug "COUNTER=$counter"
+	# Load a counter value
+	if [ -s "$filename" ]; then
+		readline counter "$filename"
+		[ -n "$counter" ] || counter=1
+	fi
+
+	# Show the current counter value
+	debug "LEVEL=$counter: the long-term operation finished"
+
+	# Decrement the counter
+	if [ "$counter" != 0 ]; then
+		counter="$(( $counter - 1 ))"
+
+		# and save a new counter value
+		printf '%s\n' "$counter" >"$filename"
+	fi
 
 	# Reset the timer and enable timeout
 	if [ "$counter" = 0 ]; then
+		run rm -f -- "$filename"
 		rootdelay_reset_timer
 		rootdelay_unpause
 	fi
-
-	leave "longtermop_end"
 }
 
 bypass_results()
