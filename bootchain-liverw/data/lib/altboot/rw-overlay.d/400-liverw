@@ -260,7 +260,7 @@ create_disk_slice_inner()
 
 		# Tell udevd about the changes
 		run udevadm trigger -- "$devname" 1>&2 ||:
-		run udevadm settle -t5 -- "$devname" 1>&2 ||:
+		run udevadm settle --timeout=5 1>&2 ||:
 		partn=0
 
 		# Wait until udevd creates the symlink
@@ -281,7 +281,7 @@ create_disk_slice_inner()
 
 		# Just tell udevd about the changes
 		run udevadm trigger -- "$devname" 1>&2 ||:
-		run udevadm settle -t5 -- "$devname" 1>&2 ||:
+		run udevadm settle --timeout=5 1>&2 ||:
 
 		partn="Can't create the filesystem on the partition $devname"
 		partn="$partn! Don't use sessions with this boot media."
