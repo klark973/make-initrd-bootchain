@@ -62,19 +62,19 @@ _IM_exit_handler()
 			chvt 1
 		fi
 
+		IM_show_bootsplash
+		rm -rf -- "${_IM_flag}"
+
 		# I hope this will break when the internal implementation
 		# of make-initrd changes and I will know about it. Here we
 		# are actually setting a new timeout for a few more seconds,
 		# as the boot process is almost complete. See also the source:
 		# make-initrd > initrd-sh-functions > rootdelay_reset_timer().
 		#
-		deadline="$(timestamp boottime raw)"
-		deadline="$(( 2 + ${deadline%.*} ))"
+		bc_seconds deadline
+		deadline="$((2 + $deadline))"
 		printf '%s\n' "$deadline" >"${_rootdelay_timestamp}"
 		rootdelay_unpause
-
-		IM_show_bootsplash
-		rm -rf -- "${_IM_flag}"
 	fi
 
 	[ -n "${pidfile-}" ] ||

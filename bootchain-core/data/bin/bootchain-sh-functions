@@ -197,6 +197,15 @@ bc_reboot()
 	run reboot -f -d
 }
 
+bc_seconds()
+{
+	local __v=
+
+	__v="$("${TIMESTAMP:-timestamp}" boottime raw 2>/dev/null)" ||:
+	__v="${__v%.*}"
+	eval "$1=\"\$__v\""
+}
+
 longtermop_start()
 {
 	# I hope this will break when the internal implementation

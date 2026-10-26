@@ -36,8 +36,8 @@ bc_fatal()
 	# as the boot process is almost complete. See also the source:
 	# make-initrd > initrd-sh-functions > rootdelay_reset_timer().
 	#
-	deadline="$(timestamp boottime raw)"
-	deadline="$(( 2 + ${deadline%.*} ))"
+	bc_seconds deadline
+	deadline="$((2 + $deadline))"
 	printf '%s\n' "$deadline" >"${_rootdelay_timestamp}"
 	rootdelay_unpause
 

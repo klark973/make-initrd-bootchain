@@ -251,6 +251,8 @@ addressing, as if they are hidden.
   of this step, however, must work to the end and end with a zero status code
   in order for the daemon to process the received signal.
 - `bc_reboot()` - performs a logged restart of the computer.
+- `bc_seconds()` - writes the current number of seconds from the start to
+  the specified variable.
 - `longtermop_start()` - suspends the restrictive boot process timer while
   performing a long-term operation or working with the data input dialog;
   nested calls are allowed and accounted for.
