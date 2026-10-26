@@ -155,12 +155,15 @@ IM_activate()
 	if [ -n "$NOASKUSER" ]; then
 		message "TTY's not used, dialogs are disabled"
 	elif [ -n "$CONSOLE" ]; then
+		echo 1 >/.initrd/rootdelay/bc-counter
 		activate-interactive-vt
 		message "TTY's not available, using current system console"
 	elif [ -z "$delay" ]; then
+		echo 1 >/.initrd/rootdelay/bc-counter
 		activate-interactive-vt
 		message "TTY${_IM_VT_number} now active"
 	else
+		echo 1 >/.initrd/rootdelay/bc-counter
 		activate-interactive-vt "$delay" &
 		message "TTY${_IM_VT_number} will be activated after $((1 + $delay)) seconds"
 	fi
