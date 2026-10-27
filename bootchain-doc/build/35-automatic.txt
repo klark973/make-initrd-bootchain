@@ -12,7 +12,8 @@ _<<_методы_загрузки_altboot,методами загрузки>>_, 
 * *disk* — имя диска с образом, например, nvme0n1;
 * `*domain*` — название SMB-домена (_новое в altboot_);
 * `*fuid*` — название проверочного файла в корне загрузочного раздела
-  на локальном носителе (_новое в altboot и в propagator_);
+  на локальном носителе (_новое в altboot и в propagator_), а с версии
+  *0.1.5-alt30* — ещё и часть спецификации для поиска раздела по UUID;
 * `*imgsize*` — (целое) размер загружаемого образа (_новое в altboot_);
 * *label* — метка тома файловой системы раздела с образом;
 * *method* — название _<<_методы_загрузки_altboot,метода загрузки>>_
@@ -45,13 +46,15 @@ _gateway_, _netmask_, _hostname_ и _interface_), поскольку в make-ini
 конфигурируется через отдельную фичу
 «link:https://github.com/osboot/make-initrd/tree/master/features/network[network]».
 
+<<<
 Например, в link:https://www.altlinux.org/Propagator[пропагаторе] таймауты в
-каждом методе загрузки задавались жёстко прямо в коде, но в *altboot* через
-/proc/cmdline дефолтный таймаут для любого метода загрузки можно переопределить:
+каждом методе загрузки задавались жёстко прямо в коде, тогда как в *altboot*
+через /proc/cmdline дефолтный таймаут *$BC_DEVICE_TIMEOUT* (60 секунд) можно
+переопределить для любого метода загрузки:
 
 [,,subs="verbatim,quotes"]
 ----
-root=bootchain bootchain=fg,`*altboot ip=dhcp4*` \
+root=bootchain bootchain=fg,`*altboot ip=dhcp4*` stagename=live \
     automatic=method:nfs,server:192.168.15.1,`*timeout*`:120,...
 ----
 

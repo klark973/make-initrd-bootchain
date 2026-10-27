@@ -7,6 +7,8 @@
 * https://lists.altlinux.org/pipermail/make-initrd/
 * https://bugzilla.altlinux.org/30315#c29
 * https://lists.altlinux.org/pipermail/devel/2018-April/204192.html
+* https://lore.altlinux.org/make-initrd/?q=bootchain
+* https://lore.altlinux.org/devel-distro/?q=bootchain
 * https://packages.altlinux.org/ru/sisyphus/srpms/make-initrd-bootchain/
 * https://github.com/klark973/make-initrd-bootchain
 * https://youtu.be/C-NsPKvsCAw?t=6855

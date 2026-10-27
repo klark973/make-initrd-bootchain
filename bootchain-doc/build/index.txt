@@ -1,6 +1,6 @@
 = От пропагатора к altboot
 Леонид Кривошеин <klark@altlinux.org>; Антон Мидюков <antohami@altlinux.org>
-4.3, 18.05.2025
+4.4, 27.10.2026
 :doctype: book
 :chapter-signifier:
 :toc:
@@ -33,10 +33,10 @@ include::25-basesteps.txt[]
 include::30-parameters.txt[]
 include::35-automatic.txt[]
 include::40-configure.txt[]
-include::45-diagnostic.txt[]
 include::50-pipeline.txt[]
 include::51-propagator.txt[]
 include::55-interactive.txt[]
+include::56-mediacheck.txt[]
 include::58-persistent.txt[]
 include::59-layers.txt[]
 include::60-bootchain.txt[]
@@ -53,6 +53,7 @@ include::70-oemsetup.txt[]
 include::71-overlayroot.txt[]
 include::72-squashfs.txt[]
 include::93-inout.txt[]
+include::94-diagnostic.txt[]
 include::95-developer.txt[]
 include::96-widgets.txt[]
 include::97-extension.txt[]

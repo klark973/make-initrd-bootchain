@@ -10,10 +10,12 @@ link:https://www.altlinux.org/Make-initrd-propagator[make-initrd-propagator].
 раздела, куда будут сохраняться изменения.
 
 *liveboot*, в основном, неинтерактивный «шаг», но диалоги могут возникнуть
-при использовании в /proc/cmdline параметра *live_rw* и первом запуске LiveCD
-либо Rescue в _<<_постоянное_хранилище_сеансов_livecd,режиме сохранения сеансов
-LiveCD>>_ с «локальными» _<<_методы_загрузки_altboot,методами загрузки>>_
-(*disk* или *cdrom*). При этом будут задействованы виджеты *ponder* и *errmsg*:
+при использовании в /proc/cmdline параметра *live_rw* с «локальными»
+_<<_методы_загрузки_altboot,методами загрузки>>_ (*disk* или *cdrom*),
+при этом будут задействованы виджеты *ponder* и *errmsg*.
+В случае самой первой загрузки LiveCD либо Rescue в
+_<<_постоянное_хранилище_сеансов_livecd,режиме сохранения сеансов LiveCD>>_,
+создаётся постоянное хранилище сеансовых данных (R/W-раздел):
 
 image::../images/bc06.jpg[align="center",scaledwidth="75%"]
 
@@ -21,13 +23,15 @@ image::../images/bc-err2.jpg[align="center",scaledwidth="75%"]
 
 Параметры загрузки:
 
-* *altboot_liveboot* — набор аргументов в виде «ключ=значение»,
-  перечисленных через «;» (см. ниже).
+* *altboot_liveboot* — аргументы в виде «ключ=значение», перечисленные
+  через «;» (см. ниже).
 
 Поддерживаемые аргументы:
 
 * *method* — _<<_методы_загрузки_altboot,метод загрузки>>_ altboot (см. выше);
-* *stagename* — название файла второй стадии загрузки (stage2);
+* *squash* — название файла второй стадии загрузки (stage2), вплоть до версии
+  *0.1.5-alt32* данный аргумент назывлся *stagename*, но с *0.1.6-alt1*
+  переименован для единообразия;
 * *overlayroot* — используется для закрытия обычной Linux rootfs на запись:
   - *disabled* — позволяет временно отключить overlayroot и загрузиться как
     с обычной rootfs;
@@ -51,15 +55,27 @@ image::../images/bc-err2.jpg[align="center",scaledwidth="75%"]
     находится rootfs;
 * *flags* — различные флаги создания оверлея LiveCD, передаваемые
   данному «шагу»:
-  - *live_ro* — предписывает создавать оверлей над read-only LiveCD;
+  - *live_ro* — предписывает накладывать
+    _<<_read_only_слои_livecd,read-only слои LiveCD>>_;
   - *live_rw* — предписывает использовать
     _<<_постоянное_хранилище_сеансов_livecd,хранилище сеансов LiveCD>>_;
   - *rescue* — влияет только на сообщения в журнале при загрузке с Rescue;
 * *timeout* — предел временного ожидания для поиска
   _<<_постоянное_хранилище_сеансов_livecd,хранилища сеансов LiveCD>>_;
 
-В случае шага *liveboot*, не все аргументы можно передать через пропагаторный
-параметр *automatic*.
+Начиная с версии *0.1.5-alt12*, если «шаг» *liveboot* работает в
+_<<_совместимость_с_propagator_и_init_bottom,режиме совместимости с пропагатором>>_,
+то в самом конце проверяется наличие программы INIT внутри stage2 rootfs.
+При её отсутствии, будет выдана соответствующая фатальная ошибка:
+
+image::../images/bc-err7.jpg[align="center",scaledwidth="75%"]
+
+NOTE: Не все аргументы можно передать через пропагаторный
+параметр *automatic*! Начиная с версии *0.1.6-alt1*, в
+_<<_совместимость_с_propagator_и_init_bottom,режиме полной совместимости
+с пропагатором>>_ некоторые флаги включаются и выключаются автоматически,
+если сквош stage2 (squash) имеет одно из стандартных для ОС Альт названий,
+при этом название сквоша stage2 может быть произвольным.
 
 .Примеры использования:
 [,,subs="verbatim,quotes"]
@@ -74,15 +90,11 @@ root=bootchain bootchain=waitdev,mountfs,`*liveboot*`,rootfs \
   waitdev=UUID=e199d396-eb13-4575-b4fa-d2d160c67b6c \
   mountfs=DEVNAME \
   `*altboot_liveboot*`=method=
-----
 
-.Ещё один пример использования:
-[,,subs="verbatim,quotes"]
-----
 root=bootchain bootchain=fg,localdev,download,squashfs,`*liveboot*`,rootfs \
   altboot_localdev=method=cdrom;uuid=2021-05-31-01-09-58-00;directory=/rescue \
   altboot_download=to=RD;method=url;url=file:///rescue ramdisk_size=497773 \
-  `*altboot_liveboot*`=stagename=rescue;method=cdrom;overlays=SLICES;flags=live_ro,rescue
+  `*altboot_liveboot*`=method=cdrom;squash=rescue;overlays=SLICES;flags=live_ro,rescue,live_rw
 ----
 
 См. также:
@@ -91,4 +103,6 @@ root=bootchain bootchain=fg,localdev,download,squashfs,`*liveboot*`,rootfs \
 * https://bugzilla.altlinux.org/30564
 * https://bugzilla.altlinux.org/27852
 * https://bugzilla.altlinux.org/32562
+* https://bugzilla.altlinux.org/44061
+* https://bugzilla.altlinux.org/60732
 

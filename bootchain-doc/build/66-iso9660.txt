@@ -14,6 +14,6 @@ root=bootchain bootchain=fg,`*altboot*` ip=dhcp4 \
 root=bootchain bootchain=fg,download,`*iso9660*`,squashfs,liveboot,rootfs ip=dhcp4 \
   altboot_download=method=`*http*`;server=192.168.15.1;directory=/netinst/current \
   altboot_squashfs=/rescue \
-  altboot_liveboot=stagename=rescue;method=http;flags=live_ro,live_rw
+  altboot_liveboot=method=http;squash=rescue;flags=live_ro,rescue
 ----
 

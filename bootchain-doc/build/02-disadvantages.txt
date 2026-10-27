@@ -10,7 +10,8 @@
 * скрипты и диалоги *altboot*, как и установщика ОС Альт, пока не рассчитаны
   на работу с IPv6, хотя фича make-initrd «network» понимает IPv6;
 * *propagator* умел конфигурировать ADSL-соединение, фича make-initrd
-  «network» не предназначена для настройки ADSL/PPPoE;
+  «link:https://github.com/osboot/make-initrd/tree/master/features/network[network]»,
+  не предназначена для настройки ADSL/PPPoE;
 * не все фичи bootchain+altboot снабжены полноценным *README.md*;
 * *review* кода bootchain+altboot был выполнен примерно наполовину и в
   этом коде пока остаются неисправленные замечания, вследствие чего он ещё

@@ -16,7 +16,18 @@ _<<_методы_загрузки_altboot,методы загрузки>>_ *url*
 
 * *altboot_download* — набор аргументов в виде «ключ=значение», перечисленных
   через «;» (см. ниже);
-* `*curlopts*` — дополнительные опции curl для всех «шагов» download.
+* `*curlopts*` — дополнительные опции curl для всех «шагов» download,
+  см. пояснения далее.
+
+<<<
+NOTE: На самом деле параметра `*curlopts*` в bootchain/altboot нет.
+Принимается только переменная `*CURLOPTS*`, если таковая определена
+в _<<_конфигурирование_bootchain_и_altboot,конфигурационном файле>>_.
+Но если образ initramfs будет собран с какой-нибудь фичей, которая
+зарегистрирует в make-initrd данный параметр, тогда этими опциями
+можно будет управлять и через /proc/cmdline. Однако, ввиду того,
+что параметры *curl* разделяются пробелами, вряд ли стоит ожидать
+такой реализации.
 
 image::../images/bc02.jpg[align="center",scaledwidth="75%"]
 
@@ -101,7 +112,7 @@ root=bootchain bootchain=waitdev,fg,`*download*`,... ip=dhcp4 \
 root=bootchain bootchain=fg,localdev,`*download*`,squashfs,liveboot,rootfs \
   altboot_localdev=method=cdrom;uuid=2021-05-31-01-09-58-00;directory=/rescue \
   `*altboot_download*`=to=RD;method=**url**;**url**=file:///rescue ramdisk_size=497773 \
-  altboot_liveboot=stagename=rescue;method=cdrom;overlays=SLICES;flags=live_ro,rescue
+  altboot_liveboot=method=cdrom;squash=rescue;overlays=SLICES;flags=live_ro,rescue,live_rw
 ----
 
 См. также:
