@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+%define _unpackaged_files_terminate_build 1
+
 %define parent make-initrd
 %define child  bootchain
 
@@ -11,7 +14,7 @@ Version: 0.1.5
 Release: alt32
 
 Summary: %child modules set for %parent
-License: GPL-3.0
+License: GPL-3.0+
 Group: System/Configuration/Boot and Init
 BuildArch: noarch
 
@@ -180,6 +183,7 @@ Documentation, testing and development files for %parent-%child.
 
 %install
 ./mix-altboot.sh
+mv -f -- LICENSE %child-doc/
 mkdir -p -- "%buildroot%_datadir/%parent"/features "%buildroot%_docdir"
 cp -aRf -- %child-* "%buildroot%_datadir/%parent"/features/
 mv -f -- "%buildroot%_datadir/%parent/features/%child-doc" "%buildroot%_docdir/%name"
