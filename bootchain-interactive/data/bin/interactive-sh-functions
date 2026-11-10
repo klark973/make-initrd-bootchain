@@ -49,7 +49,7 @@ IM_ponder_stop()
 
 _IM_exit_handler()
 {
-	local deadline rc="$?"
+	local now rc="$?"
 
 	trap - EXIT
 
@@ -64,18 +64,17 @@ _IM_exit_handler()
 
 		IM_show_bootsplash
 		rm -rf -- "${_IM_flag}"
-
-		# I hope this will break when the internal implementation
-		# of make-initrd changes and I will know about it. Here we
-		# are actually setting a new timeout for a few more seconds,
-		# as the boot process is almost complete. See also the source:
-		# make-initrd > initrd-sh-functions > rootdelay_reset_timer().
-		#
-		bc_seconds deadline
-		deadline="$((2 + $deadline))"
-		printf '%s\n' "$deadline" >"${_rootdelay_timestamp}"
-		rootdelay_unpause
 	fi
+
+	# I hope this will break when the internal implementation
+	# of make-initrd changes and I will know about it. Here we
+	# are actually setting a new timeout for a few more seconds,
+	# as the boot process is almost complete. See also the source:
+	# make-initrd > initrd-sh-functions > rootdelay_set_deadline().
+	#
+	current_seconds now
+	rootdelay_set_deadline "$((2 + $now))"
+	rootdelay_unpause
 
 	[ -n "${pidfile-}" ] ||
 		rm -f -- "${pidfile-}"
@@ -155,15 +154,12 @@ IM_activate()
 	if [ -n "$NOASKUSER" ]; then
 		message "TTY's not used, dialogs are disabled"
 	elif [ -n "$CONSOLE" ]; then
-		echo 1 >/.initrd/rootdelay/bc-counter
 		activate-interactive-vt
 		message "TTY's not available, using current system console"
 	elif [ -z "$delay" ]; then
-		echo 1 >/.initrd/rootdelay/bc-counter
 		activate-interactive-vt
 		message "TTY${_IM_VT_number} now active"
 	else
-		echo 1 >/.initrd/rootdelay/bc-counter
 		activate-interactive-vt "$delay" &
 		message "TTY${_IM_VT_number} will be activated after $((1 + $delay)) seconds"
 	fi

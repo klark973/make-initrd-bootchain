@@ -85,16 +85,13 @@ copy_file_dialog()
 
 	message "copying '$src' to '$dst'..."
 
-	longtermop_start
 	{ pv -n -W -i 1 -S -s "$size" -- "$src" >"$dst" ||
 		:>"$datadir/ERROR"
 	} 2>&1 |IM_gauge "[ Copying file... ]" "$text"
 
 	if [ ! -f "$datadir/ERROR" ]; then
 		run sync
-		longtermop_end
 	else
-		longtermop_end
 		rm -f -- "$datadir/ERROR"
 		IM_fatal "copy operation failed"
 	fi

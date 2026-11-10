@@ -1,6 +1,6 @@
 = От пропагатора к altboot
 Леонид Кривошеин <klark@altlinux.org>; Антон Мидюков <antohami@altlinux.org>
-4.4, 27.10.2026
+4.5, 10.11.2026
 :doctype: book
 :chapter-signifier:
 :toc:

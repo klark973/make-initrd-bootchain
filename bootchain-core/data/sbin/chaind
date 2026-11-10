@@ -14,8 +14,20 @@ BC_IM_supported=
 
 bc_exit_handler()
 {
-	local rc="$?"
+	local now rc="$?"
+
 	trap - EXIT
+
+	# I hope this will break when the internal implementation
+	# of make-initrd changes and I will know about it. Here we
+	# are actually setting a new timeout for a few more seconds,
+	# as the boot process is almost complete. See also the source:
+	# make-initrd > initrd-sh-functions > rootdelay_set_deadline().
+	#
+	current_seconds now
+	rootdelay_set_deadline "$((2 + $now))"
+	rootdelay_unpause
+
 	rm -f -- "$pidfile"
 	exit $rc
 }
@@ -28,19 +40,6 @@ debug()
 
 bc_fatal()
 {
-	local deadline
-
-	# I hope this will break when the internal implementation
-	# of make-initrd changes and I will know about it. Here we
-	# are actually setting a new timeout for a few more seconds,
-	# as the boot process is almost complete. See also the source:
-	# make-initrd > initrd-sh-functions > rootdelay_reset_timer().
-	#
-	bc_seconds deadline
-	deadline="$((2 + $deadline))"
-	printf '%s\n' "$deadline" >"${_rootdelay_timestamp}"
-	rootdelay_unpause
-
 	echo > /etc/initrd/method
 	fatal "$*"
 }
@@ -51,12 +50,14 @@ if [ "${1-}" = "--foreground" ]; then
 	debug "daemon has been restarted in foreground"
 	trap bc_exit_handler EXIT
 	echo "$$" >"$pidfile"
+	rootdelay_pause
 else
 	# Daemon started
 	[ ! -f "$pidfile" ] ||
 		fatal "already running"
 	trap bc_exit_handler EXIT
 	echo "$$" >"$pidfile"
+	rootdelay_pause
 
 	if [ "${RDLOG-}" = console ]; then
 		BC_LOGFILE=/dev/console

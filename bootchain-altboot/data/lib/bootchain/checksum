@@ -95,13 +95,11 @@ debug "hash check program: $hashprog"
 
 message "calculating image checksum for '$filename'..."
 
-longtermop_start
 { head -c "$datasize" -- "$fullpath" |
   pv -n -i 0.5 -s $datasize |
   "$hashprog" |
   cut -f1 -d' ' >"$datadir/CHECKSUM"
 } 2>&1 |IM_gauge "[ Validating image... ]"
-longtermop_end
 
 [ -r "$datadir/CHECKSUM" ] &&
 	read -r check <"$datadir/CHECKSUM" ||

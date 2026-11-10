@@ -46,8 +46,8 @@ Summary: The module %child-core for %parent
 Group: System/Configuration/Boot and Init
 BuildArch: noarch
 # [2.23.0] commit 78001064a introduces has_feature()
-# [2.36.0] commit db32bd39d introduces rootdelay_reset_timer()
-Requires: %parent >= 2.36.0
+# [2.61.0] commit 419171172 introduces rootdelay_set_deadline()
+Requires: %parent >= 2.61.0
 AutoReq: noshell, noshebang
 
 %description core

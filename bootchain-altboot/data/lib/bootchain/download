@@ -388,11 +388,9 @@ download_image()
 
 	message "downloading the image: '$url'..."
 
-	longtermop_start
 	text="Downloading ${url##*/} into $target..."
 	(read_image |save_image) 2>&1 |
 	IM_gauge "[ Downloading image... ]" "$text"
-	longtermop_end
 
 	leave "download_image"
 }

@@ -79,9 +79,7 @@ create_disk_slice()
 {
 	enter "create_disk_slice"
 
-	longtermop_start
 	create_disk_slice_inner
-	longtermop_end
 
 	leave "create_disk_slice"
 }
@@ -312,13 +310,11 @@ check_disk_slice()
 	IM_start_output ponder errmsg
 	IM_ponder_start "[ Checking the persistent storage... ]"
 
-	longtermop_start
 	message "checking the partition '$1'"
 	debug "RUN: e2fsck -p -y -E discard -- $1"
 	e2fsck -p -y -E discard -- "$1" >"$tmpf" 2>&1 || rc="$?"
 	fdump "$tmpf"
 	run rm -f -- "$tmpf"
-	longtermop_end
 	IM_ponder_stop
 
 	case "$rc" in

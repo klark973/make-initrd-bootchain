@@ -1,7 +1,7 @@
 #!/bin/bash -efu
 
 # PDF version
-version="v4.4"
+version="v4.5"
 outfile="${TMPDIR-/tmp}/altboot-$version.pdf"
 n="$(type -P asciidoctor-pdf xdg-open |wc -l)"
 

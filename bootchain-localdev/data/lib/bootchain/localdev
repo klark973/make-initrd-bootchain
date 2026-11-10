@@ -307,7 +307,7 @@ main_loop()
 
 	_reset_deadline()
 	{
-		bc_seconds currtime
+		current_seconds currtime
 		deadline="$(( $currtime + ${1-$timeout} ))"
 	}
 
@@ -321,7 +321,7 @@ main_loop()
 
 		whole=
 		target=
-		bc_seconds currtime
+		current_seconds currtime
 		[ "$currtime" -ge "$deadline" ] ||
 			continue
 
