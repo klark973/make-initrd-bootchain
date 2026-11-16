@@ -129,6 +129,7 @@ scan_devices()
 	local major minor n_blocks devname
 	local x f excludes="0 1 2 7 35 37"
 	local n_targets=0 saved=
+	local saved_part=
 	local all_parts=
 
 	_check_field()
@@ -281,6 +282,7 @@ scan_devices()
 
 		# Determine the target devices and save them
 		devname2target "$devname"
+		saved_part="${target#/dev/}"
 		n_blocks="$target"
 		major="$whole"
 
@@ -288,7 +290,7 @@ scan_devices()
 		# and all partitions of the ISO Hybrid disk
 		#
 		[ -n "$whole" ] && devname="${whole#/dev/}" ||
-			devname="${target#/dev/}"
+			devname="$saved_part"
 		if _in_array "$devname" $devices; then
 			target="$saved"
 			whole="$f"
@@ -320,7 +322,7 @@ scan_devices()
 		fi
 
 		if [ -n "$part" ]; then
-			if [ "$part" = "$devname" ]; then
+			if [ "$part" = "$saved_part" ]; then
 				target=1
 			else
 				_add_device "$saved"
@@ -328,7 +330,7 @@ scan_devices()
 			fi
 		fi
 
-		if [ "$disk" = "$devname" ]; then
+		if [ -n "$major" ] && [ "$disk" = "$devname" ]; then
 			target=1
 		elif [ -n "$disk" ] && [ -z "$part" ]; then
 			_add_device "$saved"
